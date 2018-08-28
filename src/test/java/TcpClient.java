@@ -19,10 +19,11 @@ public class TcpClient implements Closeable {
 
   void connect(Optional<Integer> timeout) throws IOException {
     assert !this.socket.isPresent();
-    Socket socket = new Socket();
-    this.socket = Optional.of(socket);
-    SocketAddress address = new InetSocketAddress(this.host, this.port);
-    socket.connect(address, timeout.orElse(0));
+    try (Socket socket = new Socket()) {
+      SocketAddress address = new InetSocketAddress(this.host, this.port);
+      socket.connect(address, timeout.orElse(0));
+      this.socket = Optional.of(socket);
+    }
   }
 
   @Override
