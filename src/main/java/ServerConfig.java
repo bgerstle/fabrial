@@ -1,5 +1,4 @@
-
-public class ServerConfig {
+class ServerConfig {
   final int port;
 
   ServerConfig() {

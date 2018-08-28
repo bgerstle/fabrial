@@ -2,7 +2,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class ConfigTest {
+class ConfigTest {
   @Test
   void defaultPort() {
     ServerConfig conf = new ServerConfig();
@@ -15,5 +15,4 @@ public class ConfigTest {
     ServerConfig conf = new ServerConfig(port);
     assertThat(conf.port, equalTo(port));
   }
-
 }
