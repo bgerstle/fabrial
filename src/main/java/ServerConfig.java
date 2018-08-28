@@ -1,9 +1,12 @@
-import org.immutables.value.Value;
 
-@Value.Immutable
-public abstract class ServerConfig {
+public class ServerConfig {
+  final int port;
 
-  @Value.Default
-  public int port() {
-    return 80; }
+  ServerConfig() {
+    this.port = 80;
+  }
+
+  ServerConfig(int port) {
+    this.port = port;
+  }
 }
