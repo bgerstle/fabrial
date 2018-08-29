@@ -1,4 +1,8 @@
-import java.io.EOFException;
+package com.eighthlight.fabrial;
+
+import com.eighthlight.fabrial.server.ServerConfig;
+import com.eighthlight.fabrial.server.TcpServer;
+
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;

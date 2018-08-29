@@ -1,3 +1,5 @@
+package com.eighthlight.fabrial.server;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,25 +13,22 @@ import java.util.logging.Logger;
 
 public class TcpServer implements Closeable {
   // TODO: make logger instance-specific, prefixing logs w/ config & object info
-  static final Logger logger = Logger.getLogger(TcpServer.class.getName());
+  private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
 
-  // configuration used to initialize the serverSocket
-  final ServerConfig config;
+  public final ServerConfig config;
 
   // number of clients currently connected to the server socket
   private final AtomicInteger connectionCount;
 
-  // executor for handling of new connections
   private final ExecutorService connectionHandlerExecutor;
 
-  // Thread where new connections are accepted from serverSocket
   private Optional<Thread> acceptThread;
 
   // socket which manages client connections
   // Initialized to empty, and set to a Socket object once started.
   private Optional<ServerSocket> serverSocket;
 
-  TcpServer(ServerConfig config) {
+  public TcpServer(ServerConfig config) {
     this.config = config;
     this.serverSocket = Optional.empty();
     this.acceptThread = Optional.empty();
@@ -37,21 +36,18 @@ public class TcpServer implements Closeable {
     this.connectionHandlerExecutor = Executors.newFixedThreadPool(this.config.maxConnections);
   }
 
-  /**
-   * @see connectionCount
-    */
-  int getConnectionCount() {
+  public int getConnectionCount() {
     return connectionCount.get();
   }
 
   /**
-   * Start listening on the specified port.
+   * Start listening on the port in `config`.
    *
    * Must not be called more than once.
    *
    * @throws IOException If the underlying socket couldn't bind successfully.
    */
-  void start() throws IOException {
+  public void start() throws IOException {
     assert !serverSocket.isPresent();
     ServerSocket socket = new ServerSocket(this.config.port, this.config.maxConnections);
     this.serverSocket = Optional.of(socket);
@@ -60,7 +56,6 @@ public class TcpServer implements Closeable {
     acceptThread.start();
   }
 
-  // Accept and handle new connections
   private void acceptConnections() {
     assert acceptThread.isPresent();
     assert Thread.currentThread().equals(acceptThread.get());
@@ -114,7 +109,7 @@ public class TcpServer implements Closeable {
   /**
    * @return Whether or not the underlying socket is closed.
    */
-  boolean isClosed() {
+  public boolean isClosed() {
     return serverSocket.map(ServerSocket::isClosed).orElse(true);
   }
 

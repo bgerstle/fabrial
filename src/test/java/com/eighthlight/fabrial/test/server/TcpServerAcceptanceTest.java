@@ -1,3 +1,8 @@
+package com.eighthlight.fabrial.test.server;
+
+import com.eighthlight.fabrial.server.ServerConfig;
+import com.eighthlight.fabrial.server.TcpServer;
+import com.eighthlight.fabrial.test.TcpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
