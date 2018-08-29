@@ -6,8 +6,13 @@ import java.net.Socket;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TcpServer implements Closeable {
+  // TODO: make logger instance-specific, prefixing logs w/ config & object info
+  static final Logger logger = Logger.getLogger(TcpServer.class.getName());
+
   // configuration used to initialize the serverSocket
   final ServerConfig config;
 
@@ -43,7 +48,6 @@ public class TcpServer implements Closeable {
   }
 
   void start() throws IOException {
-    // TODO: wrap in listenExecutor to prevent start/stop races
     assert !serverSocket.isPresent();
     ServerSocket socket = new ServerSocket(this.config.port, this.config.maxConnections);
     this.serverSocket = Optional.of(socket);
@@ -65,7 +69,9 @@ public class TcpServer implements Closeable {
           try {
             return serverSocket.accept();
           } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.FINE,
+                       "Exception while accepting new connection",
+                       e);
             return null;
           }
         });
@@ -85,14 +91,24 @@ public class TcpServer implements Closeable {
         // TODO: write b to outstream
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.log(Level.FINE,
+              "Exception while handling connection to "  + connection.getInetAddress(),
+                 e);
     }
     try {
       connection.close();
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.log(Level.SEVERE,
+              "Connection to "
+                     + connection.getInetAddress()
+                     + " encountered exception while closing",
+                 e);
     }
     this.connectionCount.decrementAndGet();
+  }
+
+  boolean isClosed() {
+    return serverSocket.map(ServerSocket::isClosed).orElse(true);
   }
 
   public void close() throws IOException {
@@ -100,6 +116,8 @@ public class TcpServer implements Closeable {
     connectionHandlerExecutor.shutdownNow();
     if (this.serverSocket.isPresent()) {
       this.serverSocket.get().close();
+    } else {
+      logger.info("Server socket was absent, missing call to start.");
     }
   }
 }

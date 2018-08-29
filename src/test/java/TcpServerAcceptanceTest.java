@@ -26,8 +26,12 @@ public class TcpServerAcceptanceTest {
   @AfterEach
   void tearDown() {
     try {
-      client.close();
-      server.close();
+      if (!client.isClosed()) {
+        client.close();
+      }
+      if (!server.isClosed()) {
+        server.close();
+      }
     } catch (IOException e) {
       fail(e);
     }

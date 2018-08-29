@@ -24,11 +24,14 @@ public class TcpClient implements Closeable {
     this.socket = Optional.of(socket);
   }
 
+  boolean isClosed() {
+    return socket.map(Socket::isClosed).orElse(true);
+  }
+
   @Override
   public void close() throws IOException {
     if (this.socket.isPresent()) {
       this.socket.get().close();
-      this.socket = Optional.empty();
     }
   }
 }
