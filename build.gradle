@@ -55,4 +55,9 @@ task testIntegration(type: Test) {
     mustRunAfter tasks.jar
 }
 
-mainClassName = 'App'
+mainClassName = 'com.eighthlight.fabrial.App'
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}

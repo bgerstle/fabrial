@@ -30,6 +30,7 @@ public class App {
   }
 
   public static void shutdown() {
+    logger.info("Shutting down");
     try {
       server.close();
     } catch (IOException e) {
