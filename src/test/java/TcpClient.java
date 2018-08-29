@@ -14,7 +14,7 @@ public class TcpClient implements Closeable {
   }
 
   void connect() throws IOException {
-    connect(0);
+    connect(100);
   }
 
   void connect(int timeout) throws IOException {
