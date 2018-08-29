@@ -19,15 +19,13 @@ public class TcpServer implements Closeable {
   // number of connections to the server socket
   private final AtomicInteger connectionCount;
 
-  // executor for scheduling the handling of new connections
+  // executor for handling of new connections
   private final ExecutorService connectionHandlerExecutor;
 
-  // executor for managing the server serverSocket
+  // executor for acceptin new connections from serverSocket
   private final ExecutorService listenExecutor;
 
   // socket which manages client connections
-  // !!!: All modifications should be performed via listenerExecutor
-  // TODO: wrap in
   // Initialized to empty, and set to a Socket object once started.
   private Optional<ServerSocket> serverSocket;
 
