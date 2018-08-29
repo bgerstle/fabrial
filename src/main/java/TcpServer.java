@@ -110,8 +110,6 @@ public class TcpServer implements Closeable {
   }
 
   public void close() throws IOException {
-    listenExecutor.shutdownNow();
-    connectionHandlerExecutor.shutdownNow();
     if (this.serverSocket.isPresent()) {
       this.serverSocket.get().close();
     } else {
