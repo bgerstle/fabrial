@@ -2,11 +2,11 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-class ConfigTest {
+class ServerConfigTest {
   @Test
   void defaultPort() {
     ServerConfig conf = new ServerConfig();
-    assertThat(conf.port, equalTo(80));
+    assertThat(conf.port, equalTo(ServerConfig.DEFAULT_PORT));
   }
 
   @Test
@@ -14,5 +14,6 @@ class ConfigTest {
     int port = 81;
     ServerConfig conf = new ServerConfig(port);
     assertThat(conf.port, equalTo(port));
+    assertThat(conf.maxConnections, equalTo(ServerConfig.DEFAULT_MAX_CONNECTIONS));
   }
 }
