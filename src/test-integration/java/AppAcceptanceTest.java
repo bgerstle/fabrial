@@ -1,5 +1,6 @@
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -10,7 +11,10 @@ public class AppAcceptanceTest {
 
   @BeforeEach
   void setUp() throws IOException {
-    appProcess = new ProcessBuilder("java", "-jar", "./build/libs/fabrial*.jar").start();
+    // hard-coded to SNAPSHOT version. might need to fix this eventually...
+    appProcess =
+        new ProcessBuilder("java", "-jar", "./build/libs/fabrial-1.0-SNAPSHOT.jar")
+            .start();
   }
 
   @AfterEach
