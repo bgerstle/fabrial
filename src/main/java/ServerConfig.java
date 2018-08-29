@@ -3,7 +3,7 @@ class ServerConfig {
   final int maxConnections;
   final int readTimeout;
 
-  static final int DEFAULT_PORT = 80;
+  static final int DEFAULT_PORT = 8080;
   static final int DEFAULT_MAX_CONNECTIONS = 50;
   static final int DEFAULT_READ_TIMEOUT = 10000;
 
