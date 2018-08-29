@@ -16,14 +16,14 @@ public class TcpServer implements Closeable {
   // configuration used to initialize the serverSocket
   final ServerConfig config;
 
-  // number of connections to the server socket
+  // number of clients currently connected to the server socket
   private final AtomicInteger connectionCount;
 
   // executor for handling of new connections
   private final ExecutorService connectionHandlerExecutor;
 
-  // executor for acceptin new connections from serverSocket
-  private final ExecutorService listenExecutor;
+  // Thread where new connections are accepted from serverSocket
+  private Optional<Thread> acceptThread;
 
   // socket which manages client connections
   // Initialized to empty, and set to a Socket object once started.
@@ -32,47 +32,49 @@ public class TcpServer implements Closeable {
   TcpServer(ServerConfig config) {
     this.config = config;
     this.serverSocket = Optional.empty();
-    this.listenExecutor = Executors.newSingleThreadExecutor();
+    this.acceptThread = Optional.empty();
     this.connectionCount = new AtomicInteger(0);
     this.connectionHandlerExecutor = Executors.newFixedThreadPool(this.config.maxConnections);
   }
 
+  /**
+   * @see connectionCount
+    */
   int getConnectionCount() {
     return connectionCount.get();
   }
 
-  private void resetConnections() {
-    connectionCount.set(0);
-  }
-
+  /**
+   * Start listening on the specified port.
+   *
+   * Must not be called more than once.
+   *
+   * @throws IOException If the underlying socket couldn't bind successfully.
+   */
   void start() throws IOException {
     assert !serverSocket.isPresent();
     ServerSocket socket = new ServerSocket(this.config.port, this.config.maxConnections);
     this.serverSocket = Optional.of(socket);
-    listenExecutor.execute(this::listen);
+    Thread acceptThread = new Thread(this::acceptConnections);
+    acceptThread.start();
+    this.acceptThread = Optional.of(acceptThread);
   }
 
-  private void listen() {
-    Optional<Socket> connection = accept();
-    if(connection.isPresent()) {
-      Socket clientSocket = connection.get();
-      connectionHandlerExecutor.execute(() -> handleConnection(clientSocket));
-      this.listenExecutor.execute(this::listen);
+  // Accept and handle new connections
+  // Must be called on listenExecutor
+  private void acceptConnections() {
+    assert serverSocket.isPresent();
+    ServerSocket serverSocket = this.serverSocket.get();
+    while (!serverSocket.isClosed()) {
+      try {
+        Socket clientConnection = serverSocket.accept();
+        connectionHandlerExecutor.execute(() -> handleConnection(clientConnection));
+      } catch (IOException e) {
+        logger.log(Level.FINE,
+                   "Exception while accepting new connection",
+                   e);
+      }
     }
-  }
-
-  private Optional<Socket> accept() {
-    return this.serverSocket
-        .map((serverSocket) -> {
-          try {
-            return serverSocket.accept();
-          } catch (IOException e) {
-            logger.log(Level.FINE,
-                       "Exception while accepting new connection",
-                       e);
-            return null;
-          }
-        });
   }
 
   private void handleConnection(Socket connection) {
@@ -93,6 +95,7 @@ public class TcpServer implements Closeable {
               "Exception while handling connection to "  + connection.getInetAddress(),
                  e);
     }
+
     try {
       connection.close();
     } catch (IOException e) {
