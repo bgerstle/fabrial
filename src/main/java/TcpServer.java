@@ -56,14 +56,16 @@ public class TcpServer implements Closeable {
     ServerSocket socket = new ServerSocket(this.config.port, this.config.maxConnections);
     this.serverSocket = Optional.of(socket);
     Thread acceptThread = new Thread(this::acceptConnections);
-    acceptThread.start();
     this.acceptThread = Optional.of(acceptThread);
+    acceptThread.start();
   }
 
   // Accept and handle new connections
-  // Must be called on listenExecutor
   private void acceptConnections() {
+    assert acceptThread.isPresent();
+    assert Thread.currentThread().equals(acceptThread.get());
     assert serverSocket.isPresent();
+
     ServerSocket serverSocket = this.serverSocket.get();
     while (!serverSocket.isClosed()) {
       try {
