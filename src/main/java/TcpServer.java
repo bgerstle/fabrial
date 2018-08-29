@@ -79,6 +79,7 @@ public class TcpServer implements Closeable {
     }
   }
 
+  // Handle new client connections
   private void handleConnection(Socket connection) {
     this.connectionCount.incrementAndGet();
     try {
@@ -110,6 +111,9 @@ public class TcpServer implements Closeable {
     this.connectionCount.decrementAndGet();
   }
 
+  /**
+   * @return Whether or not the underlying socket is closed.
+   */
   boolean isClosed() {
     return serverSocket.map(ServerSocket::isClosed).orElse(true);
   }
