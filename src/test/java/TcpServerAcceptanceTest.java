@@ -17,14 +17,17 @@ public class TcpServerAcceptanceTest {
   @BeforeEach
   void setUp() {
     client = new TcpClient(new InetSocketAddress(8080));
-    server = new TcpServer(new ServerConfig(8080, ServerConfig.DEFAULT_MAX_CONNECTIONS, 50));
+    // shorten read timeout for testing connection closures due to the socket being idle
+    server = new TcpServer(new ServerConfig(8080,
+                                            ServerConfig.DEFAULT_MAX_CONNECTIONS,
+                                            50));
   }
 
   @AfterEach
   void tearDown() {
     try {
       client.close();
-      server.stop();
+      server.close();
     } catch (IOException e) {
       fail(e);
     }
@@ -44,7 +47,7 @@ public class TcpServerAcceptanceTest {
     server.start();
     client.connect(100);
     assertThat(() -> server.getConnectionCount(), eventuallyEval(is(1)));
-    server.stop();
+    server.close();
     assertThat(() -> server.getConnectionCount(), eventuallyEval(is(0)));
   }
 }

@@ -1,13 +1,13 @@
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Optional;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TcpServer {
+public class TcpServer implements Closeable {
   // configuration used to initialize the serverSocket
   final ServerConfig config;
 
@@ -15,10 +15,10 @@ public class TcpServer {
   private final AtomicInteger connectionCount;
 
   // executor for scheduling the handling of new connections
-  private final Executor connectionHandlerExecutor;
+  private final ExecutorService connectionHandlerExecutor;
 
   // executor for managing the server serverSocket
-  private final Executor listenExecutor;
+  private final ExecutorService listenExecutor;
 
   // socket which manages client connections
   // !!!: All modifications should be performed via listenerExecutor
@@ -43,6 +43,7 @@ public class TcpServer {
   }
 
   void start() throws IOException {
+    // TODO: wrap in listenExecutor to prevent start/stop races
     assert !serverSocket.isPresent();
     ServerSocket socket = new ServerSocket(this.config.port, this.config.maxConnections);
     this.serverSocket = Optional.of(socket);
@@ -71,7 +72,6 @@ public class TcpServer {
   }
 
   private void handleConnection(Socket connection) {
-
     this.connectionCount.incrementAndGet();
     try {
       connection.setSoTimeout(this.config.readTimeout);
@@ -87,23 +87,19 @@ public class TcpServer {
     } catch (IOException e) {
       e.printStackTrace();
     }
+    try {
+      connection.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     this.connectionCount.decrementAndGet();
   }
 
-  void stop() {
-    this.listenExecutor.execute(() -> {
-      try {
-        close();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    });
-  }
-
-  private void close() throws IOException {
+  public void close() throws IOException {
+    listenExecutor.shutdownNow();
+    connectionHandlerExecutor.shutdownNow();
     if (this.serverSocket.isPresent()) {
       this.serverSocket.get().close();
-      this.serverSocket = Optional.empty();
     }
   }
 }
