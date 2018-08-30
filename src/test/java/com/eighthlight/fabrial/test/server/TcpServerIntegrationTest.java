@@ -8,11 +8,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 
 import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class TcpServerIntegrationTest {
@@ -21,11 +23,10 @@ public class TcpServerIntegrationTest {
 
   @BeforeEach
   void setUp() {
-    client = new TcpClient(new InetSocketAddress(8080));
     // shorten read timeout for testing connection closures due to the socket being idle
     server = new TcpServer(new ServerConfig(8080,
-                                            ServerConfig.DEFAULT_MAX_CONNECTIONS,
                                             50));
+    client = new TcpClient(new InetSocketAddress(server.config.port));
   }
 
   @AfterEach
@@ -65,7 +66,7 @@ public class TcpServerIntegrationTest {
     server.start();
     client.connect();
     assertThat(() -> server.getConnectionCount(), eventuallyEval(is(1)));
-    TcpClient secondClient = new TcpClient(new InetSocketAddress(8080));
+    TcpClient secondClient = new TcpClient(new InetSocketAddress(server.config.port));
     secondClient.connect();
     assertThat(() -> server.getConnectionCount(), eventuallyEval(is(2)));
     client.close();

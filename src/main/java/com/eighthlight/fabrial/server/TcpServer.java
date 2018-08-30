@@ -33,7 +33,7 @@ public class TcpServer implements Closeable {
     this.serverSocket = Optional.empty();
     this.acceptThread = Optional.empty();
     this.connectionCount = new AtomicInteger(0);
-    this.connectionHandlerExecutor = Executors.newFixedThreadPool(this.config.maxConnections);
+    this.connectionHandlerExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
   }
 
   public int getConnectionCount() {
@@ -49,7 +49,7 @@ public class TcpServer implements Closeable {
    */
   public void start() throws IOException {
     assert !serverSocket.isPresent();
-    ServerSocket socket = new ServerSocket(this.config.port, this.config.maxConnections);
+    ServerSocket socket = new ServerSocket(this.config.port);
     logger.info("Server started on " + this.config.port);
     this.serverSocket = Optional.of(socket);
     Thread acceptThread = new Thread(this::acceptConnections);
