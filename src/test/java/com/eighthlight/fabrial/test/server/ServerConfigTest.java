@@ -1,6 +1,10 @@
+package com.eighthlight.fabrial.test.server;
+
+import com.eighthlight.fabrial.server.ServerConfig;
 import org.junit.jupiter.api.Test;
+
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 
 class ServerConfigTest {
   @Test
