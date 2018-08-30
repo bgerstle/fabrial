@@ -39,18 +39,19 @@ test {
 }
 
 
-task testAcceptance(type: Test) {
+task testAcceptance(dependsOn: 'jar', type: Test) {
     description = 'Runs the acceptance tests against assembled jar.'
 
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
 
-    mustRunAfter tasks.jar
+
 
     useJUnitPlatform {
         includeTags 'acceptance'
     }
 }
+testAcceptance.dependsOn tasks.jar
 
 mainClassName = 'com.eighthlight.fabrial.App'
 jar {
