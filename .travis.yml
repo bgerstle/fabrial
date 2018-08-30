@@ -11,5 +11,5 @@ cache:
 jdk:
   - oraclejdk10
 script:
-  - ./gradlew check
-  - ./gradlew testAcceptance
+  - ./gradlew check -i
+  - ./gradlew testAcceptance -i
