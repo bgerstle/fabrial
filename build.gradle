@@ -29,30 +29,27 @@ dependencies {
     testCompile('com.github.grantwest.eventually:hamcrest-eventually-matchers:0.0.1')
     testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.2.0')
-
-    integrationCompile sourceSets.main.output
-    integrationCompile sourceSets.test.output
-    integrationCompile configurations.compile
-    integrationCompile configurations.testCompile
-    integrationRuntime configurations.runtime
-    integrationRuntime configurations.testRuntime
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'acceptance'
+    }
 
 }
 
 
-task testIntegration(type: Test) {
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-    description = 'Runs the integration tests.'
+task testAcceptance(type: Test) {
+    description = 'Runs the acceptance tests against assembled jar.'
 
-    testClassesDir = sourceSets.integration.output.classesDir
-    classpath = sourceSets.integration.runtimeClasspath
-    debug = false
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
 
     mustRunAfter tasks.jar
+
+    useJUnitPlatform {
+        includeTags 'acceptance'
+    }
 }
 
 mainClassName = 'com.eighthlight.fabrial.App'

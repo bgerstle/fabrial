@@ -1,5 +1,7 @@
-package com.eighthlight.fabrial.integration;
+package com.eighthlight.fabrial.test.server;
 
+import com.eighthlight.fabrial.server.ServerConfig;
+import com.eighthlight.fabrial.test.TcpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -8,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
+@Tag("acceptance")
 public class AppAcceptanceTest {
   Process appProcess;
 
@@ -26,7 +29,7 @@ public class AppAcceptanceTest {
 
   @Test
   void clientConnectsToAppServer() throws IOException {
-    TcpClient client = new TcpClient(new InetSocketAddress(8080));
+    TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT));
     client.connect(2000);
   }
 }
