@@ -34,6 +34,6 @@ public class AppAcceptanceTest {
   @Test
   void clientConnectsToAppServer() throws IOException {
     TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT));
-    client.connect(2000);
+    client.connect(5000);
   }
 }
