@@ -9,12 +9,19 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 @Tag("acceptance")
 public class AppAcceptanceTest {
+  static final Logger logger = Logger.getLogger(AppAcceptanceTest.class.getName());
+
   Process appProcess;
 
   @BeforeEach
@@ -34,6 +41,14 @@ public class AppAcceptanceTest {
   @Test
   void clientConnectsToAppServer() throws IOException {
     TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT));
-    client.connect(5000);
+    assertThat(() -> {
+      try {
+        client.connect(1000);
+        return true;
+      } catch (IOException e) {
+        logger.info("Failed to connect (" + e.getMessage() + "). Retrying...");
+        return false;
+      }
+    }, eventuallyEval(is(true)));
   }
 }
