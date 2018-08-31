@@ -16,7 +16,7 @@ public class EchoRequest {
     this.logger = Logger.getLogger(this.toString());
   }
 
-  public <T extends Serializable> T send(T object) throws IOException {
+  public <T extends Serializable> T send(T object) throws IOException, ClassNotFoundException {
     write(object);
     return read();
   }
@@ -31,11 +31,11 @@ public class EchoRequest {
     }
   }
 
-  private <T extends Serializable> T read() throws IOException {
+  private <T extends Serializable> T read() throws IOException, ClassNotFoundException {
     try (ObjectInputStream objectReader = new ObjectInputStream(inputStream)) {
+      // If the server is writing back the data we wrote, the cast should succeed. Otherwise,
+      // an exception will be thrown and the request will fail
       return (T) objectReader.readObject();
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
     }
   }
 }

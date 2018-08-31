@@ -3,6 +3,7 @@ package com.eighthlight.fabrial.server;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Optional;
@@ -80,15 +81,11 @@ public class TcpServer implements Closeable {
     this.connectionCount.incrementAndGet();
     try {
       connection.setSoTimeout(this.config.readTimeout);
-      InputStream stream = connection.getInputStream();
-      while (connection.isConnected()) {
-        int b = stream.read();
-        if (b == -1) {
-          // EOF
-          break;
-        }
-        // TODO: write b to outstream
+      try (InputStream is = connection.getInputStream();
+          OutputStream os = connection.getOutputStream()) {
+        is.transferTo(os);
       }
+
     } catch (IOException e) {
       logger.log(Level.FINE,
               "Exception while handling connection to "  + connection.getInetAddress(),
