@@ -18,6 +18,5 @@ class ServerConfigTest {
     int port = 81;
     ServerConfig conf = new ServerConfig(port);
     assertThat(conf.port, equalTo(port));
-    assertThat(conf.maxConnections, equalTo(ServerConfig.DEFAULT_MAX_CONNECTIONS));
   }
 }
