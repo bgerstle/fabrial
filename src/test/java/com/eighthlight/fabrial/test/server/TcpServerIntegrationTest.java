@@ -22,8 +22,7 @@ public class TcpServerIntegrationTest {
   @BeforeEach
   void setUp() {
     // shorten read timeout for testing connection closures due to the socket being idle
-    server = new TcpServer(new ServerConfig(8080,
-                                            50));
+    server = new TcpServer(new ServerConfig(8080,50));
     client = new TcpClient(new InetSocketAddress(server.config.port));
   }
 
