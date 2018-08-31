@@ -43,7 +43,12 @@ public class AppAcceptanceTest {
         client.connect(1000);
         return true;
       } catch (IOException e) {
-        logger.info("Failed to connect (" + e.getMessage() + "). Retrying...");
+        logger.info("Failed to connect (" + e.getMessage() + "). Retrying in 1s...");
+        try {
+          Thread.sleep(500);
+        } catch (InterruptedException inte) {
+          Thread.currentThread().interrupt();
+        }
         return false;
       }
     }, eventuallyEval(is(true)));
