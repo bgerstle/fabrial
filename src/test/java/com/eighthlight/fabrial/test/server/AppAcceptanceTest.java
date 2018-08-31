@@ -1,17 +1,14 @@
 package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.server.ServerConfig;
-import com.eighthlight.fabrial.test.TcpClient;
-import org.junit.After;
+import com.eighthlight.fabrial.test.client.TcpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;

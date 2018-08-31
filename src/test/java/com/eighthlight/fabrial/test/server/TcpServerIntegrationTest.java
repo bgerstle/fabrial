@@ -2,17 +2,13 @@ package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
-import com.eighthlight.fabrial.test.TcpClient;
+import com.eighthlight.fabrial.test.client.TcpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class TcpServerIntegrationTest {
@@ -22,7 +18,7 @@ public class TcpServerIntegrationTest {
   @BeforeEach
   void setUp() {
     // shorten read timeout for testing connection closures due to the socket being idle
-    server = new TcpServer(new ServerConfig(8080,50));
+    server = new TcpServer(new ServerConfig(8080, 50));
     client = new TcpClient(new InetSocketAddress(server.config.port));
   }
 
@@ -38,36 +34,5 @@ public class TcpServerIntegrationTest {
     } catch (IOException e) {
       fail(e);
     }
-  }
-
-  @Test
-  void connectionCountDecrementedByClientClosing() throws IOException {
-    server.start();
-    client.connect();
-    assertThat(() -> server.getConnectionCount(), eventuallyEval(is(1)));
-    client.close();
-    assertThat(() -> server.getConnectionCount(), eventuallyEval(is(0)));
-  }
-
-  @Test
-  void connectionCountDecrementedByServerStopping() throws IOException {
-    server.start();
-    client.connect();
-    assertThat(() -> server.getConnectionCount(), eventuallyEval(is(1)));
-    server.close();
-    assertThat(() -> server.getConnectionCount(), eventuallyEval(is(0)));
-  }
-
-  @Test
-  void connectionCountMatchesNumberOfClients() throws IOException {
-    server.start();
-    client.connect();
-    assertThat(() -> server.getConnectionCount(), eventuallyEval(is(1)));
-    TcpClient secondClient = new TcpClient(new InetSocketAddress(server.config.port));
-    secondClient.connect();
-    assertThat(() -> server.getConnectionCount(), eventuallyEval(is(2)));
-    client.close();
-    secondClient.close();
-    assertThat(() -> server.getConnectionCount(), eventuallyEval(is(0)));
   }
 }
