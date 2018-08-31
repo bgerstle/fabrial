@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 
 public class TcpServer implements Closeable {
   // TODO: make logger instance-specific, prefixing logs w/ config & object info
-  private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
+  private final Logger logger;
 
   public final ServerConfig config;
 
@@ -35,6 +35,7 @@ public class TcpServer implements Closeable {
     this.acceptThread = Optional.empty();
     this.connectionCount = new AtomicInteger(0);
     this.connectionHandlerExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    this.logger = Logger.getLogger(this.toString());
   }
 
   public int getConnectionCount() {
@@ -112,8 +113,15 @@ public class TcpServer implements Closeable {
   }
 
   public void close() throws IOException {
-    if (this.serverSocket.isPresent()) {
-      this.serverSocket.get().close();
+    logger.info("Closing...");
+    if (serverSocket.isPresent()) {
+      serverSocket.get().close();
+      assert acceptThread.isPresent();
+      try {
+        acceptThread.get().join();
+      } catch (InterruptedException e) {
+        logger.warning("Failed to wait for accept thread to join.");
+      }
     } else {
       logger.info("Server socket was absent, missing call to start.");
     }
