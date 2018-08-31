@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
 import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
+import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -37,15 +38,14 @@ public class AppAcceptanceTest {
 
   @Test
   void clientConnectsToAppServer() throws IOException {
-    TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT));
     assertThat(() -> {
-      try {
+      try (TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT))) {
         client.connect(1000);
         return true;
       } catch (IOException e) {
         logger.info("Failed to connect (" + e.getMessage() + "). Retrying in 1s...");
         try {
-          Thread.sleep(500);
+          sleep(1000);
         } catch (InterruptedException inte) {
           Thread.currentThread().interrupt();
         }
