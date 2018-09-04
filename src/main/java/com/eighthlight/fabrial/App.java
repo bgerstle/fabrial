@@ -17,7 +17,9 @@ public class App {
 
   public static ServerConfig parseConfig(String[] args) {
     // TODO get project name
-    ArgumentParser parser = ArgumentParsers.newFor("fabrial").build();
+    ArgumentParser parser = ArgumentParsers.newFor("fabrial").build()
+        .description("Minimal HTTP file server.");
+
     parser.addArgument("-p").type(Integer.class).dest("port");
     try {
       Namespace ns = parser.parseArgs(args);
