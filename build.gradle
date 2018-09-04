@@ -29,8 +29,9 @@ dependencies {
 
     testCompile('org.hamcrest:hamcrest-junit:2.0.0.0')
     testCompile('com.github.grantwest.eventually:hamcrest-eventually-matchers:0.0.1')
-    testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
-    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.2.0')
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.3.0')
+    testCompile('org.junit.jupiter:junit-jupiter-params:5.3.0')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.0')
 }
 
 test {
@@ -39,8 +40,6 @@ test {
     }
 
 }
-
-
 
 mainClassName = 'com.eighthlight.fabrial.App'
 jar {

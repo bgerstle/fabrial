@@ -59,8 +59,9 @@ public class TcpServer implements Closeable {
    */
   public void start() throws IOException {
     assert !serverSocket.isPresent();
-    ServerSocket socket = new ServerSocket(this.config.port);
-    logger.info("Server started on " + this.config.port);
+    ServerSocket socket = new ServerSocket(config.port);
+    logger.info("Server started on " + config.port);
+    logger.info("Serving files from " + config.directoryPath);
     this.serverSocket = Optional.of(socket);
     Thread acceptThread = new Thread(this::acceptConnections);
     this.acceptThread = Optional.of(acceptThread);
