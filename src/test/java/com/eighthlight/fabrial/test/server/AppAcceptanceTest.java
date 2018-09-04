@@ -26,7 +26,7 @@ public class AppAcceptanceTest {
   void setUp() throws IOException {
     // hard-coded to SNAPSHOT version. might need to fix this eventually...
     appProcess =
-        new ProcessBuilder("java", "-jar", "./build/libs/fabrial-1.0-SNAPSHOT.jar")
+        new ProcessBuilder("java", "-jar", "./build/libs/fabrial-all-1.0-SNAPSHOT.jar")
             .inheritIO()
             .start();
   }

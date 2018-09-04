@@ -25,6 +25,8 @@ sourceSets {
 
 dependencies {
     compile('net.sourceforge.argparse4j:argparse4j:0.8.1')
+    compile('commons-cli:commons-cli:1.4')
+
     testCompile('org.hamcrest:hamcrest-junit:2.0.0.0')
     testCompile('com.github.grantwest.eventually:hamcrest-eventually-matchers:0.0.1')
     testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
@@ -39,6 +41,24 @@ test {
 }
 
 
+
+mainClassName = 'com.eighthlight.fabrial.App'
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
+
+//create a single Jar with all dependencies
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
 task testAcceptance(dependsOn: 'jar', type: Test) {
     description = 'Runs the acceptance tests against assembled jar.'
 
@@ -51,11 +71,4 @@ task testAcceptance(dependsOn: 'jar', type: Test) {
         includeTags 'acceptance'
     }
 }
-testAcceptance.dependsOn tasks.jar
-
-mainClassName = 'com.eighthlight.fabrial.App'
-jar {
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-}
+testAcceptance.dependsOn tasks.fatJar
