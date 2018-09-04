@@ -8,15 +8,11 @@ import static org.hamcrest.Matchers.equalTo;
 
 class ServerConfigTest {
   @Test
-  void defaultPort() {
-    ServerConfig conf = new ServerConfig();
-    assertThat(conf.port, equalTo(ServerConfig.DEFAULT_PORT));
-  }
-
-  @Test
   void customPort() {
     int port = 81;
-    ServerConfig conf = new ServerConfig(port);
+    ServerConfig conf = new ServerConfig(port,
+                                         ServerConfig.DEFAULT_READ_TIMEOUT,
+                                         ServerConfig.DEFAULT_DIRECTORY_PATH);
     assertThat(conf.port, equalTo(port));
   }
 }
