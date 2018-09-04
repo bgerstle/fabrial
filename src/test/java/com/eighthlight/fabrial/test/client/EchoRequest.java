@@ -3,6 +3,9 @@ package com.eighthlight.fabrial.test.client;
 import java.io.*;
 import java.util.logging.Logger;
 
+/**
+ * Given client streams, send data to a server and read back the response.
+ */
 public class EchoRequest {
   OutputStream outputStream;
   InputStream inputStream;
@@ -16,6 +19,11 @@ public class EchoRequest {
     this.logger = Logger.getLogger(this.toString());
   }
 
+  /**
+   * @param object The object to be serialized and sent to the server.
+   *
+   * @return An object which was de-serialized from the server response.
+   */
   public <T extends Serializable> T send(T object) throws IOException, ClassNotFoundException {
     write(object);
     return read();
