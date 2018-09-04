@@ -10,7 +10,7 @@ import static com.eighthlight.fabrial.App.parseConfig;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class ArgParserIntegrationTest {
+public class ArgParserPortIntegrationTest {
   @Test
   void emptyArgsYieldsDefaultConfig() {
     String[] args = List.of().toArray(new String[0]);
