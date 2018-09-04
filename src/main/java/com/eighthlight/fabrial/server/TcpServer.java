@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,8 +30,15 @@ public class TcpServer implements Closeable {
   // Initialized to empty, and set to a Socket object once started.
   private Optional<ServerSocket> serverSocket;
 
+  private final ConnectionHandler handler;
+
   public TcpServer(ServerConfig config) {
+    this(config, new EchoConnectionHandler());
+  }
+
+  public TcpServer(ServerConfig config, ConnectionHandler handler) {
     this.config = config;
+    this.handler = handler;
     this.serverSocket = Optional.empty();
     this.acceptThread = Optional.empty();
     this.connectionCount = new AtomicInteger(0);
@@ -84,9 +92,10 @@ public class TcpServer implements Closeable {
       connection.setSoTimeout(this.config.readTimeout);
       try (InputStream is = connection.getInputStream();
           OutputStream os = connection.getOutputStream()) {
-        is.transferTo(os);
+        handler.handle(is, os);
+      } catch(Throwable t) {
+        logger.log(Level.FINE, "Connection handler exception", t);
       }
-
     } catch (IOException e) {
       logger.log(Level.FINE,
               "Exception while handling connection to "  + connection.getInetAddress(),
