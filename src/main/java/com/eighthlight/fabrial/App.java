@@ -45,7 +45,7 @@ public class App {
       String pathString = ns.getString("directory");
       Path directoryPath;
       try {
-        directoryPath = Paths.get(pathString);
+        directoryPath = Paths.get(pathString).toAbsolutePath();
       } catch (InvalidPathException e) {
         throw new ArgumentParserException("\"" + pathString + "\" is not a valid path",
                                           e,
