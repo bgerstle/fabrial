@@ -25,6 +25,8 @@ sourceSets {
 
 dependencies {
     compile('net.sourceforge.argparse4j:argparse4j:0.8.1')
+    compile(group: 'commons-cli', name: 'commons-cli', version: '1.4')
+
     testCompile('org.hamcrest:hamcrest-junit:2.0.0.0')
     testCompile('com.github.grantwest.eventually:hamcrest-eventually-matchers:0.0.1')
     testCompile('org.junit.jupiter:junit-jupiter-api:5.2.0')
