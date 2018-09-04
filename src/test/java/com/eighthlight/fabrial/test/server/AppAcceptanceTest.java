@@ -37,7 +37,7 @@ public class AppAcceptanceTest {
   }
 
   @Test
-  void clientConnectsToAppServer() throws IOException {
+  void clientConnectsToAppServer() {
     assertThat(() -> {
       try (TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT))) {
         client.connect(1000);
