@@ -1,20 +1,18 @@
 package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.server.ServerConfig;
-import com.eighthlight.fabrial.test.TcpClient;
-import org.junit.After;
+import com.eighthlight.fabrial.test.client.TcpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
+import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -39,14 +37,18 @@ public class AppAcceptanceTest {
   }
 
   @Test
-  void clientConnectsToAppServer() throws IOException {
-    TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT));
+  void clientConnectsToAppServer() {
     assertThat(() -> {
-      try {
+      try (TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT))) {
         client.connect(1000);
         return true;
       } catch (IOException e) {
-        logger.info("Failed to connect (" + e.getMessage() + "). Retrying...");
+        logger.info("Failed to connect (" + e.getMessage() + "). Retrying in 1s...");
+        try {
+          sleep(1000);
+        } catch (InterruptedException inte) {
+          Thread.currentThread().interrupt();
+        }
         return false;
       }
     }, eventuallyEval(is(true)));

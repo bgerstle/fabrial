@@ -3,8 +3,10 @@ package com.eighthlight.fabrial.server;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,7 +15,7 @@ import java.util.logging.Logger;
 
 public class TcpServer implements Closeable {
   // TODO: make logger instance-specific, prefixing logs w/ config & object info
-  private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
+  private final Logger logger;
 
   public final ServerConfig config;
 
@@ -28,12 +30,20 @@ public class TcpServer implements Closeable {
   // Initialized to empty, and set to a Socket object once started.
   private Optional<ServerSocket> serverSocket;
 
+  private final ConnectionHandler handler;
+
   public TcpServer(ServerConfig config) {
+    this(config, new EchoConnectionHandler());
+  }
+
+  public TcpServer(ServerConfig config, ConnectionHandler handler) {
     this.config = config;
+    this.handler = handler;
     this.serverSocket = Optional.empty();
     this.acceptThread = Optional.empty();
     this.connectionCount = new AtomicInteger(0);
     this.connectionHandlerExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    this.logger = Logger.getLogger(this.toString());
   }
 
   public int getConnectionCount() {
@@ -80,14 +90,11 @@ public class TcpServer implements Closeable {
     this.connectionCount.incrementAndGet();
     try {
       connection.setSoTimeout(this.config.readTimeout);
-      InputStream stream = connection.getInputStream();
-      while (connection.isConnected()) {
-        int b = stream.read();
-        if (b == -1) {
-          // EOF
-          break;
-        }
-        // TODO: write b to outstream
+      try (InputStream is = connection.getInputStream();
+          OutputStream os = connection.getOutputStream()) {
+        handler.handle(is, os);
+      } catch(Throwable t) {
+        logger.log(Level.FINE, "Connection handler exception", t);
       }
     } catch (IOException e) {
       logger.log(Level.FINE,
@@ -115,8 +122,15 @@ public class TcpServer implements Closeable {
   }
 
   public void close() throws IOException {
-    if (this.serverSocket.isPresent()) {
-      this.serverSocket.get().close();
+    logger.info("Closing...");
+    if (serverSocket.isPresent()) {
+      serverSocket.get().close();
+      assert acceptThread.isPresent();
+      try {
+        acceptThread.get().join();
+      } catch (InterruptedException e) {
+        logger.warning("Failed to wait for accept thread to join.");
+      }
     } else {
       logger.info("Server socket was absent, missing call to start.");
     }
