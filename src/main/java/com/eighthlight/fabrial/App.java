@@ -20,13 +20,16 @@ public class App {
     ArgumentParser parser = ArgumentParsers.newFor("fabrial").build()
         .description("Minimal HTTP file server.");
 
-    parser.addArgument("-p").type(Integer.class).dest("port");
+    parser.addArgument("-p")
+          .type(Integer.class)
+          .dest("port")
+          .help("A port number between 0-65535. Specifying 0 will cause the server to listen on a random port.");
     try {
       Namespace ns = parser.parseArgs(args);
       int port =
           Optional.ofNullable(ns.getInt("port")).orElse(ServerConfig.DEFAULT_PORT);
       if (port <= 0 || port > 65535) {
-        throw new ArgumentParserException("port must be between 1-65535", parser);
+        throw new ArgumentParserException("port must be between 0-65535", parser);
       }
       return new ServerConfig(port);
     } catch (ArgumentParserException e) {
