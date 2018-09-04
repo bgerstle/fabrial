@@ -32,4 +32,11 @@ public class ArgParserDirectoryIntegrationTest {
     ServerConfig config = parseConfig(args).get();
     assertThat(config.directoryPath, equalTo(ServerConfig.DEFAULT_DIRECTORY_PATH));
   }
+
+  @Test
+  void expandsRelativePaths() {
+    String[] args = List.of("-d", "foo").toArray(new String[0]);
+    ServerConfig config = parseConfig(args).get();
+    assertThat(config.directoryPath, equalTo(Paths.get("foo").toAbsolutePath()));
+  }
 }
