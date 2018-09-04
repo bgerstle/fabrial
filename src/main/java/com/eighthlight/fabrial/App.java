@@ -15,32 +15,37 @@ import java.util.logging.Logger;
 public class App {
   static final Logger logger = Logger.getLogger(App.class.getName());
 
-  public static ServerConfig parseConfig(String[] args) {
+  public static Optional<ServerConfig> parseConfig(String[] args) {
     // TODO get project name
     ArgumentParser parser = ArgumentParsers.newFor("fabrial").build()
         .description("Minimal HTTP file server.");
 
     parser.addArgument("-p")
           .type(Integer.class)
+          .setDefault(ServerConfig.DEFAULT_PORT)
           .dest("port")
           .help("A port number between 0-65535. Specifying 0 will cause the server to listen on a random port.");
     try {
       Namespace ns = parser.parseArgs(args);
-      int port =
-          Optional.ofNullable(ns.getInt("port")).orElse(ServerConfig.DEFAULT_PORT);
-      if (port <= 0 || port > 65535) {
+
+      int port = ns.getInt("port");
+      if (port < 0 || port > 65535) {
         throw new ArgumentParserException("port must be between 0-65535", parser);
       }
-      return new ServerConfig(port);
+
+      return Optional.of(new ServerConfig(port));
     } catch (ArgumentParserException e) {
       parser.handleError(e);
-      System.exit(1);
-      return null;
+      return Optional.empty();
     }
   }
 
   public static void main(String[] args) {
-    final TcpServer server = new TcpServer(parseConfig(args));
+    Optional<ServerConfig> config = parseConfig(args);
+    if (!config.isPresent()) {
+      System.exit(1);
+    }
+    final TcpServer server = new TcpServer(config.get());
 
     try {
       server.start();
