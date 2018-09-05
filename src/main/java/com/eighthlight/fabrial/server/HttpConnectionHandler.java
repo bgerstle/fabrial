@@ -3,6 +3,7 @@ package com.eighthlight.fabrial.server;
 import com.eighthlight.fabrial.http.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,10 +40,14 @@ public class HttpConnectionHandler implements ConnectionHandler {
       new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
       return;
     }
-    logger.trace("Parsed request: " + request);
-    Response response = responseTo(request);
-    logger.trace("Writing response: " + response);
-    response.writeTo(os);
+    try (MDC.MDCCloseable reqctxt = MDC.putCloseable("request", request.toString())) {
+      logger.trace("Handling request");
+      MDC.put("response", response.toString());
+      Response response = responseTo(request);
+      logger.trace("Writing response");
+      response.writeTo(os);
+      MDC.remove("response");
+    }
   }
 
   public Response responseTo(Request request) {

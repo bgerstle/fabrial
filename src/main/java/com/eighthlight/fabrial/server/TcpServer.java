@@ -4,6 +4,7 @@ import com.eighthlight.fabrial.http.FileHttpResponder;
 import com.eighthlight.fabrial.http.FileResponderDataSourceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -86,7 +87,6 @@ public class TcpServer implements Closeable {
     while (!serverSocket.isClosed()) {
       try {
         Socket clientConnection = serverSocket.accept();
-        logger.trace("Accepted connection");
         connectionHandlerExecutor.execute(() -> handleConnection(clientConnection));
       } catch (IOException e) {
         if (SocketException.class.isInstance(e) && e.getMessage().equals("Socket closed")) {
@@ -101,33 +101,37 @@ public class TcpServer implements Closeable {
 
   // Handle new client connections
   private void handleConnection(Socket connection) {
-    this.connectionCount.incrementAndGet();
+    try (MDC.MDCCloseable cra = MDC.putCloseable("connectionId",
+                                                 Integer.toHexString(connection.hashCode()))) {
+      logger.trace("Accepted connection");
 
-    try {
-      connection.setSoTimeout(this.config.readTimeout);
-    } catch (IOException e) {
-      logger.warn("Exception while configuring client connection "  + connection.getRemoteSocketAddress(),
-                 e);
-    }
+      this.connectionCount.incrementAndGet();
 
-    try (InputStream is = connection.getInputStream();
-        OutputStream os = connection.getOutputStream()) {
-      handler.handle(is, os);
-    } catch(Throwable t) {
-      logger.warn("Connection handler exception", t);
-    }
+      try {
+        connection.setSoTimeout(this.config.readTimeout);
+      } catch (IOException e) {
+        logger.warn("Exception while configuring client connection", e);
+      }
 
-    try {
-      connection.close();
-      logger.trace("Closed connection " + connection.getRemoteSocketAddress());
-    } catch (IOException e) {
-      logger.error("Connection to "
+      try (InputStream is = connection.getInputStream();
+          OutputStream os = connection.getOutputStream()) {
+        handler.handle(is, os);
+      } catch(Throwable t) {
+        logger.warn("Connection handler exception", t);
+      }
+
+      try {
+        connection.close();
+        logger.trace("Closed connection");
+      } catch (IOException e) {
+        logger.error("Connection to "
                      + connection.getRemoteSocketAddress()
                      + " encountered exception while closing",
-                  e);
-    }
+                     e);
+      }
 
-    this.connectionCount.decrementAndGet();
+      this.connectionCount.decrementAndGet();
+    }
   }
 
   /**

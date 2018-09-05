@@ -52,6 +52,12 @@ jar {
     }
 }
 
+run {
+    systemProperties([
+        "rootLevel": System.getenv("LOGLEVEL") ?: "TRACE"
+    ])
+}
+
 //create a single Jar with all dependencies
 task fatJar(type: Jar) {
     manifest {
