@@ -11,19 +11,20 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.logging.Logger;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Tag("acceptance")
 public class AppAcceptanceTest {
-  static final Logger logger = Logger.getLogger(AppAcceptanceTest.class.getName());
+  static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class.getName());
 
   Process appProcess;
 

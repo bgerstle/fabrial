@@ -2,6 +2,8 @@ package com.eighthlight.fabrial.server;
 
 import com.eighthlight.fabrial.http.FileHttpResponder;
 import com.eighthlight.fabrial.http.FileResponderDataSourceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -15,8 +17,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class TcpServer implements Closeable {
   // TODO: make logger instance-specific, prefixing logs w/ config & object info
@@ -86,14 +86,13 @@ public class TcpServer implements Closeable {
     while (!serverSocket.isClosed()) {
       try {
         Socket clientConnection = serverSocket.accept();
-        logger.fine("Accepted connection " + clientConnection.getRemoteSocketAddress());
+        logger.trace("Accepted connection");
         connectionHandlerExecutor.execute(() -> handleConnection(clientConnection));
       } catch (IOException e) {
         if (SocketException.class.isInstance(e) && e.getMessage().equals("Socket closed")) {
-          logger.finer("Server socket closed");
+          logger.trace("Server socket closed");
         } else {
-          logger.log(Level.WARNING,
-                     "Exception while accepting new connection",
+          logger.warn("Exception while accepting new connection",
                      e);
         }
       }
@@ -107,8 +106,7 @@ public class TcpServer implements Closeable {
     try {
       connection.setSoTimeout(this.config.readTimeout);
     } catch (IOException e) {
-      logger.log(Level.FINE,
-                 "Exception while configuring client connection "  + connection.getRemoteSocketAddress(),
+      logger.warn("Exception while configuring client connection "  + connection.getRemoteSocketAddress(),
                  e);
     }
 
@@ -116,18 +114,17 @@ public class TcpServer implements Closeable {
         OutputStream os = connection.getOutputStream()) {
       handler.handle(is, os);
     } catch(Throwable t) {
-      logger.log(Level.WARNING, "Connection handler exception", t);
+      logger.warn("Connection handler exception", t);
     }
 
     try {
       connection.close();
-      logger.fine("Closed connection " + connection.getRemoteSocketAddress());
+      logger.trace("Closed connection " + connection.getRemoteSocketAddress());
     } catch (IOException e) {
-      logger.log(Level.SEVERE,
-                 "Connection to "
-                 + connection.getRemoteSocketAddress()
-                 + " encountered exception while closing",
-                 e);
+      logger.error("Connection to "
+                     + connection.getRemoteSocketAddress()
+                     + " encountered exception while closing",
+                  e);
     }
 
     this.connectionCount.decrementAndGet();
@@ -148,7 +145,7 @@ public class TcpServer implements Closeable {
       try {
         acceptThread.get().join();
       } catch (InterruptedException e) {
-        logger.warning("Failed to wait for accept thread to join.");
+        logger.warn("Failed to wait for accept thread to join.");
       }
     } else {
       logger.info("Server socket was absent, missing call to start.");
