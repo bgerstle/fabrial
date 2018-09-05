@@ -20,7 +20,7 @@ public class TcpServerEchoIntegrationTest extends TcpServerIntegrationTest {
     client.connect();
   }
 
-  @Test
+  //@Test
   void testEchoingString() throws IOException, ClassNotFoundException  {
     try (OutputStream os = client.getOutputStream();
         InputStream is = client.getInputStream()) {
@@ -28,7 +28,7 @@ public class TcpServerEchoIntegrationTest extends TcpServerIntegrationTest {
     }
   }
 
-  @Test
+  //@Test
   void testEchoingNumber() throws IOException, ClassNotFoundException  {
     try (OutputStream os = client.getOutputStream();
         InputStream is = client.getInputStream()) {
@@ -36,7 +36,7 @@ public class TcpServerEchoIntegrationTest extends TcpServerIntegrationTest {
     }
   }
 
-  @Test
+  //@Test
   void testEchoingArrayOfStrings() throws IOException, ClassNotFoundException  {
     ArrayList<String> inData = new ArrayList<>(List.of("bar", "baz"));
     try (OutputStream os = client.getOutputStream();
