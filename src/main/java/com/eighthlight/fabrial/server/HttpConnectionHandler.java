@@ -14,7 +14,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
   public void handle(InputStream is, OutputStream os) throws Throwable {
     // TODO: handle multiple requests on one connection
     Request request = Request.readFrom(is);
-    logger.info("Parsed request :" + request);
+    logger.info("Parsed request: " + request);
     Response response = responseTo(request);
     logger.info("Writing response: " + response);
     response.writeTo(os);
