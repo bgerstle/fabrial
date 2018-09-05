@@ -33,7 +33,7 @@ public class TcpServer implements Closeable {
   private final ConnectionHandler handler;
 
   public TcpServer(ServerConfig config) {
-    this(config, new EchoConnectionHandler());
+    this(config, new HttpConnectionHandler());
   }
 
   public TcpServer(ServerConfig config, ConnectionHandler handler) {
@@ -79,7 +79,7 @@ public class TcpServer implements Closeable {
         Socket clientConnection = serverSocket.accept();
         connectionHandlerExecutor.execute(() -> handleConnection(clientConnection));
       } catch (IOException e) {
-        logger.log(Level.FINE,
+        logger.log(Level.INFO,
                    "Exception while accepting new connection",
                    e);
       }
@@ -89,18 +89,20 @@ public class TcpServer implements Closeable {
   // Handle new client connections
   private void handleConnection(Socket connection) {
     this.connectionCount.incrementAndGet();
+
     try {
       connection.setSoTimeout(this.config.readTimeout);
-      try (InputStream is = connection.getInputStream();
-          OutputStream os = connection.getOutputStream()) {
-        handler.handle(is, os);
-      } catch(Throwable t) {
-        logger.log(Level.FINE, "Connection handler exception", t);
-      }
     } catch (IOException e) {
       logger.log(Level.FINE,
-              "Exception while handling connection to "  + connection.getInetAddress(),
+              "Exception while configuring client connection "  + connection.getInetAddress(),
                  e);
+    }
+
+    try (InputStream is = connection.getInputStream();
+        OutputStream os = connection.getOutputStream()) {
+      handler.handle(is, os);
+    } catch(Throwable t) {
+      logger.log(Level.WARNING, "Connection handler exception", t);
     }
 
     try {
@@ -112,6 +114,7 @@ public class TcpServer implements Closeable {
                      + " encountered exception while closing",
                  e);
     }
+
     this.connectionCount.decrementAndGet();
   }
 
