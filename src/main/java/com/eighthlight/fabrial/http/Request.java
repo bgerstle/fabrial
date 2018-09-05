@@ -50,9 +50,11 @@ public class Request {
     // TODO: check for leading whitespace in request line
     String requestLine = reader.readLine();
     String[] components = requestLine.split(" ");
+    // Checking for `< 3` to permit extra whitespace before CRLF
     if (components.length < 3) {
       throw new RequestParsingException(
-          "Request line missing components (expected method, uri, and HTTP version.");
+          "Malformed request line. Expected space-separated method, uri, and HTTP version, but got "
+          + requestLine);
     }
     Method method;
     try {
