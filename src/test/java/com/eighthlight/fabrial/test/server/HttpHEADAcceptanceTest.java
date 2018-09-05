@@ -24,6 +24,7 @@ public class HttpHEADAcceptanceTest extends TcpServerIntegrationTest {
   void simpleHEADRequest() throws Throwable {
     Request req = new Request("1.1", Method.HEAD, new URI("/test")) ;
     req.writeTo(client.getOutputStream());
+
     BufferedReader reader = new BufferedReader(new InputStreamReader((client.getInputStream())));
     String response = reader.readLine();
     assertThat(response, containsString("200"));

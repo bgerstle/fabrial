@@ -78,11 +78,16 @@ public class TcpServer implements Closeable {
     while (!serverSocket.isClosed()) {
       try {
         Socket clientConnection = serverSocket.accept();
+        logger.fine("Accepted connection " + clientConnection.getRemoteSocketAddress());
         connectionHandlerExecutor.execute(() -> handleConnection(clientConnection));
       } catch (IOException e) {
-        logger.log(Level.INFO,
-                   "Exception while accepting new connection",
-                   e);
+        if (SocketException.class.isInstance(e) && e.getMessage().equals("Socket closed")) {
+          logger.finer("Server socket closed");
+        } else {
+          logger.log(Level.WARNING,
+                     "Exception while accepting new connection",
+                     e);
+        }
       }
     }
   }
@@ -95,7 +100,7 @@ public class TcpServer implements Closeable {
       connection.setSoTimeout(this.config.readTimeout);
     } catch (IOException e) {
       logger.log(Level.FINE,
-              "Exception while configuring client connection "  + connection.getInetAddress(),
+              "Exception while configuring client connection "  + connection.getRemoteSocketAddress(),
                  e);
     }
 
@@ -108,10 +113,11 @@ public class TcpServer implements Closeable {
 
     try {
       connection.close();
+      logger.fine("Closed connection " + connection.getRemoteSocketAddress());
     } catch (IOException e) {
       logger.log(Level.SEVERE,
               "Connection to "
-                     + connection.getInetAddress()
+                     + connection.getRemoteSocketAddress()
                      + " encountered exception while closing",
                  e);
     }
