@@ -53,7 +53,10 @@ public class HttpConnectionHandlerTests {
   void responds501ToUnimplementedMethods() throws Throwable {
     String version = HttpVersion.ONE_ONE;
     assertThat(sendRequest(new Request(version, Method.DELETE, new URI("/"))),
-               equalTo("HTTP/" + version + " 200 \r\n"));
+               allOf(
+                   startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
+                   endsWith("\r\n")
+               ));
   }
 
   @Test
