@@ -12,6 +12,9 @@ public class Request {
   public final URI uri;
 
   public Request(String version, Method method, URI uri) {
+    if (!HttpVersion.allVersions.contains(version)) {
+      throw new IllegalArgumentException("Unexpected HTTP version: " + version);
+    }
     this.version = version;
     this.method = method;
     this.uri = uri;
@@ -53,9 +56,8 @@ public class Request {
 
   public static Request readFrom(InputStream stream) throws IOException, RequestParsingException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-    // TODO: skip up to N empty lines before throwing bad request
-    // TODO: check for leading whitespace in request line
     String requestLine = reader.readLine();
+
     String[] components = requestLine.split(" ");
     // Checking for `< 3` to permit extra whitespace before CRLF
     if (components.length < 3) {
@@ -63,27 +65,27 @@ public class Request {
           "Malformed request line. Expected space-separated method, uri, and HTTP version, but got "
           + requestLine);
     }
-    Method method;
-    try {
-      method = Method.valueOf(components[0]);
-    } catch (IllegalArgumentException e) {
-      throw new RequestParsingException("Invalid HTTP method", e);
-    }
+
+    String method = components[0];
+
     URI uri;
     try {
       uri = new URI(components[1]);
     } catch (URISyntaxException e) {
       throw new RequestParsingException("Failed to parse URI", e);
     }
-    String version;
+
     String versionComponent = components[2];
     String[] versionSubcomponents = versionComponent.split("/");
     if (versionSubcomponents.length < 2) {
       throw new RequestParsingException("Malformed HTTP version: " + versionComponent);
     }
-    version = versionSubcomponents[1];
-    return new Request(version, method, uri);
+    String version = versionSubcomponents[1];
+
+    try {
+      return new Request(version, Method.valueOf(method), uri);
+    } catch (IllegalArgumentException e) {
+      throw new RequestParsingException("Failed to construct request", e);
+    }
   }
-
-
 }
