@@ -13,7 +13,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
   private static final Logger logger = Logger.getLogger(HttpConnectionHandler.class.getName());
 
   // ???: if this changes, probably need to also "match" the request version somehow?
-  public static final List<String> supportedHttpVersions = List.of(HttpVersion.ONE_ONE);
+  public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
   @Override
   public void handle(InputStream is, OutputStream os) throws Throwable {
@@ -27,12 +27,17 @@ public class HttpConnectionHandler implements ConnectionHandler {
   }
 
   public Response responseTo(Request request) {
+    if (!SUPPORTED_HTTP_VERSIONS.contains(request.version)) {
+      return new Response(HttpVersion.ONE_ONE,
+                          501,
+                          "Requests must use one of the supported HTTP versions: " + SUPPORTED_HTTP_VERSIONS);
+    }
     switch (request.method) {
       case HEAD: {
         return responseToHEAD(request);
       }
       default: {
-        return new Response(HttpVersion.ONE_ONE, 501, null);
+        return new Response(HttpVersion.ONE_ONE, 501, request.method + "not implemented yet");
       }
     }
   }
