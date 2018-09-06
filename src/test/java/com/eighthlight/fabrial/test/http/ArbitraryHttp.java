@@ -14,14 +14,16 @@ import static org.quicktheories.generators.Generate.*;
 import static org.quicktheories.generators.SourceDSL.lists;
 
 public class ArbitraryHttp {
-  // all of these "length" args are rough approximations. proper DSL necessary
+  // !!!: all of these "length" args are rough approximations. proper DSL necessary
 
+  // Characters which can be included in URI paths without percent encoding
   public static Gen<String> unreservedCharacters(int length) {
     return lists().of(pick(List.of("~", ".", "-", "_")))
                   .ofSize(length)
                   .map(ss -> ss.stream().reduce(String::concat).get());
   }
 
+  // Currently doesn't include optional port specifications or IP addresses
   public static Gen<String> hosts(int length) {
     return alphanumeric(length/2)
         .zip(constant("-").toOptionals(10),
@@ -31,6 +33,7 @@ public class ArbitraryHttp {
         );
   }
 
+  // Doesn't include percent-encoded reserved characters
   public static Gen<String> paths(int length) {
     Gen<String> root = constant("/");
     Gen<Optional<String>> firstComponent = alphanumeric(length/2).toOptionals(10);
@@ -48,6 +51,7 @@ public class ArbitraryHttp {
     );
   }
 
+  // Just covering HTTP for now
   public static Gen<String> schemes() {
     return oneOf(constant("http"), constant("https"));
   }
