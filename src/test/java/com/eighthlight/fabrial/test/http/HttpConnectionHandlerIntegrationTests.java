@@ -102,7 +102,6 @@ public class HttpConnectionHandlerIntegrationTests {
 
   @Test
   void handlesMalformedRequests() {
-
     assertThat(
         sendRequest("FOO"),
         allOf(
