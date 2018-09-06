@@ -3,21 +3,14 @@ package com.eighthlight.fabrial.test.http;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.Request;
-import com.eighthlight.fabrial.http.Response;
 import com.eighthlight.fabrial.server.HttpConnectionHandler;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Stack;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,7 +18,7 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.StringStartsWith.startsWith;
 
-public class HttpConnectionHandlerTests {
+public class HttpConnectionHandlerIntegrationTests {
   HttpConnectionHandler handler = new HttpConnectionHandler();
 
   String sendRequest(Request req) throws Throwable {
