@@ -28,9 +28,21 @@ public class HttpConnectionHandlerIntegrationTests {
     } catch (IOException e) {
       throw new RuntimeException("Failed to serialize test request", e);
     }
-    ByteArrayInputStream is = new ByteArrayInputStream(reqOs.toByteArray());
+    return sendRequest(reqOs.toByteArray());
+  }
+
+  String sendRequest(String request) {
+    return sendRequest(StandardCharsets.UTF_8.encode(request).array());
+  }
+
+  String sendRequest(byte[] request) {
+    ByteArrayInputStream is = new ByteArrayInputStream(request);
     ByteArrayOutputStream respOs = new ByteArrayOutputStream();
-    handler.handle(is, respOs);
+    try {
+      handler.handle(is, respOs);
+    } catch (Throwable t) {
+      throw new RuntimeException(t);
+    }
     return new String(respOs.toByteArray(), StandardCharsets.UTF_8);
   }
 
@@ -38,39 +50,64 @@ public class HttpConnectionHandlerIntegrationTests {
   @Test
   void responds200ToTestHeadRequest() throws Throwable {
     String version = HttpVersion.ONE_ONE;
-    assertThat(sendRequest(new Request(version, Method.HEAD, new URI("/test"))),
-               equalTo("HTTP/" + version + " 200 \r\n"));
+    assertThat(
+        sendRequest(Request.builder()
+                           .withVersion (version)
+                           .withMethod(Method.HEAD)
+                           .withUriString("/test").build()),
+        equalTo("HTTP/" + version + " 200 \r\n"));
   }
 
   @Test
   void responds501ToUnimplementedMethods() throws Throwable {
     String version = HttpVersion.ONE_ONE;
-    assertThat(sendRequest(new Request(version, Method.DELETE, new URI("/"))),
-               allOf(
-                   startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
-                   endsWith("\r\n")
-               ));
+    assertThat(
+        sendRequest(Request.builder()
+                           .withVersion (version)
+                           .withMethod(Method.DELETE)
+                           .withUriString("/")
+                           .build()),
+        allOf(
+            startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
+            endsWith("\r\n")
+        ));
   }
 
   @Test
   void responds404ToNonTestPaths() throws Throwable {
     String version = HttpVersion.ONE_ONE;
-    assertThat(sendRequest(new Request(version, Method.HEAD, new URI("/foobarbazbuz"))),
-               equalTo("HTTP/" + version + " 404 \r\n"));
+    assertThat(
+        sendRequest(Request.builder()
+                           .withVersion (version)
+                           .withMethod(Method.HEAD)
+                           .withUriString("/foobarbuz")
+                           .build()),
+        equalTo("HTTP/" + version + " 404 \r\n"));
   }
 
   @Test
   void responds501ToUnsupportedHttpVersions() throws Throwable {
     String version = HttpVersion.ZERO_NINE;
-    assertThat(sendRequest(new Request(version, Method.HEAD, new URI("/test"))),
-               allOf(
-                   startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
-                   endsWith("\r\n")
-               ));
+    assertThat(
+        sendRequest(Request.builder()
+                           .withVersion (version)
+                           .withMethod(Method.HEAD)
+                           .withUriString("/test")
+                           .build()),
+        allOf(
+            startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
+            endsWith("\r\n")
+        ));
   }
 
   @Test
   void handlesMalformedRequests() {
 
+    assertThat(
+        sendRequest("FOO"),
+        allOf(
+            startsWith("HTTP/" + HttpVersion.ONE_ONE + " 400 "),
+            endsWith("\r\n")
+        ));
   }
 }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 
+import static com.eighthlight.fabrial.http.HttpVersion.ONE_ONE;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -22,8 +23,12 @@ public class HttpHeadIntegrationTest extends TcpServerIntegrationTest {
 
   @Test
   void simpleHEADRequest() throws Throwable {
-    Request req = new Request("1.1", Method.HEAD, new URI("/test")) ;
-    req.writeTo(client.getOutputStream());
+    Request.builder()
+           .withVersion(ONE_ONE)
+           .withMethod(Method.HEAD)
+           .withUriString("/test")
+           .build()
+           .writeTo(client.getOutputStream());
 
     BufferedReader reader = new BufferedReader(new InputStreamReader((client.getInputStream())));
     String response = reader.readLine();

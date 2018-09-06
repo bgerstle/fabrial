@@ -56,12 +56,12 @@ public class HttpRequestLineParsingTests {
         .checkAssert((m, u, v) -> {
           Object req;
           try {
-            req = Request.readFrom(requestLineFromComponents(m.name(), u.toString(), v));
+            req = Request.builder().buildWithStream(requestLineFromComponents(m.name(), u.toString(), v));
           } catch (RequestParsingException e) {
             req = e;
           }
           assertThat(req,
-                     equalTo(new Request(v, m, u)));
+                     equalTo(Request.builder().withVersion(v).withMethod(m).withUri(u).build()));
         });
   }
 
@@ -80,7 +80,7 @@ public class HttpRequestLineParsingTests {
                   u.map(URI::toString).orElse(""),
                   v.orElse(""));
       assertThrows(RequestParsingException.class, () -> {
-        Request.readFrom(is);
+        Request.builder().buildWithStream(is);
       });
     });
   }
@@ -90,7 +90,7 @@ public class HttpRequestLineParsingTests {
     qt().forAll(invalidMethods(), invalidUris(), httpVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(RequestParsingException.class, () -> {
-            Request.readFrom(requestLineFromComponents(m, u, v));
+            Request.builder().buildWithStream(requestLineFromComponents(m, u, v));
           });
         });
   }
@@ -100,7 +100,7 @@ public class HttpRequestLineParsingTests {
     qt().forAll(methods(), requestTargets(), invalidVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(RequestParsingException.class, () -> {
-            Request.readFrom(requestLineFromComponents(m.name(), u.toString(), v));
+            Request.builder().buildWithStream(requestLineFromComponents(m.name(), u.toString(), v));
           });
         });
   }
@@ -114,8 +114,8 @@ public class HttpRequestLineParsingTests {
           ("GET " + uri.toString() + " HTTP/" + version + " \r\n"
         ).getBytes(StandardCharsets.UTF_8));
 
-    assertThat(Request.readFrom(is),
-               equalTo(new Request(version, Method.GET, uri)));
+    assertThat(Request.builder().buildWithStream(is),
+               equalTo(Request.builder().withVersion(version).withMethod(Method.GET).withUri(uri).build()));
   }
 
 
@@ -123,7 +123,7 @@ public class HttpRequestLineParsingTests {
   void leadingWhitespaceCausesError() throws Exception{
     InputStream is = new ByteArrayInputStream(" GET / HTTP/1.1\r\n".getBytes(StandardCharsets.UTF_8));
     assertThrows(RequestParsingException.class, () -> {
-      Request.readFrom(is);
+      Request.builder().buildWithStream(is);
     });
   }
 }
