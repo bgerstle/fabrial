@@ -9,10 +9,6 @@ public class Response {
   public final int statusCode;
   public final Optional<String> reason;
 
-  public static Response withStatus(int statusCode) {
-    return new Response("1.1", statusCode, null);
-  }
-
   public Response(String version, int statusCode, String reason) {
     this.version = version;
     this.statusCode = statusCode;

@@ -1,14 +1,19 @@
 package com.eighthlight.fabrial.server;
 
+import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Request;
 import com.eighthlight.fabrial.http.Response;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class HttpConnectionHandler implements ConnectionHandler {
   private static final Logger logger = Logger.getLogger(HttpConnectionHandler.class.getName());
+
+  // ???: if this changes, probably need to also "match" the request version somehow?
+  public static final List<String> supportedHttpVersions = List.of(HttpVersion.ONE_ONE);
 
   @Override
   public void handle(InputStream is, OutputStream os) throws Throwable {
@@ -27,7 +32,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
         return responseToHEAD(request);
       }
       default: {
-        return Response.withStatus(501);
+        return new Response(HttpVersion.ONE_ONE, 501, null);
       }
     }
   }
@@ -35,9 +40,9 @@ public class HttpConnectionHandler implements ConnectionHandler {
 
   public Response responseToHEAD(Request request) {
     if (request.uri.getPath().equals("/test")) {
-      return Response.withStatus(200);
+      return new Response(HttpVersion.ONE_ONE, 200, null);
     } else {
-      return Response.withStatus(404);
+      return new Response(HttpVersion.ONE_ONE, 404, null);
     }
   }
 }
