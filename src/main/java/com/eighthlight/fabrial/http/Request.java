@@ -11,6 +11,21 @@ public class Request {
   public final Method method;
   public final URI uri;
 
+  public Request(String version, Method method, URI uri) {
+    this.version = version;
+    this.method = method;
+    this.uri = uri;
+  }
+  
+  @Override
+  public String toString() {
+    return "Request{" +
+           "version='" + version + '\'' +
+           ", method=" + method +
+           ", uri=" + uri +
+           '}';
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o)
@@ -26,14 +41,6 @@ public class Request {
   @Override
   public int hashCode() {
     return Objects.hash(version, method, uri);
-  }
-
-  @Override
-  public String toString() {
-    return "Request{" +
-           "method=" + method +
-           ", uri=" + uri +
-           '}';
   }
 
   public void writeTo(OutputStream os) throws IOException {
@@ -78,9 +85,5 @@ public class Request {
     return new Request(version, method, uri);
   }
 
-  public Request(String version, Method method, URI uri) {
-    this.version = version;
-    this.method = method;
-    this.uri = uri;
-  }
+
 }

@@ -52,7 +52,8 @@ public class Response {
   @Override
   public String toString() {
     return "Response{" +
-           "statusCode=" + statusCode +
+           "version='" + version + '\'' +
+           ", statusCode=" + statusCode +
            ", reason=" + reason +
            '}';
   }
