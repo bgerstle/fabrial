@@ -63,10 +63,10 @@ public class HttpResponseTesting {
 
   @Test
   void throwsWhenGivenInvalidReason() {
-    qt().forAll(invalidReasons())
-        .checkAssert(r ->
+    qt().forAll(httpVersions(), statusCodes(), invalidReasons())
+        .checkAssert((v, s, r) ->
                          assertThrows(IllegalArgumentException.class, () ->
-                             new Response("1.1", 200, r)
+                             new Response(v, s, r)
                          )
         );
   }
