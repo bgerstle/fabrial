@@ -24,9 +24,7 @@ public class HttpResponseTesting {
 
   // characters outside ascii code points
   static Gen<String> invalidReasons() {
-    final int LAST_ASCII_CODE_POINT = 0x007F;
-    return strings().betweenCodePoints(LAST_ASCII_CODE_POINT + 1, Character.MAX_CODE_POINT)
-                    .ofLengthBetween(1, 32);
+    return nonAsciiStrings();
   }
 
 

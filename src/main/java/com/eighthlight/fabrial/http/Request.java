@@ -2,7 +2,6 @@ package com.eighthlight.fabrial.http;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 
@@ -12,9 +11,6 @@ public class Request {
   public final URI uri;
 
   public Request(String version, Method method, URI uri) {
-    if (!HttpVersion.allVersions.contains(version)) {
-      throw new IllegalArgumentException("Unexpected HTTP version: " + version);
-    }
     this.version = version;
     this.method = method;
     this.uri = uri;
@@ -54,40 +50,7 @@ public class Request {
     writer.flush();
   }
 
-  public static Request readFrom(InputStream stream) throws IOException, RequestParsingException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-    String requestLine = reader.readLine();
-
-    String[] components = requestLine.split(" ");
-    // Checking for `< 3` to permit extra whitespace before CRLF
-    if (components.length < 3) {
-      throw new RequestParsingException(
-          "Malformed request line. Expected space-separated method, uri, and HTTP version, but got "
-          + requestLine);
-    }
-
-    String method = components[0];
-
-    URI uri;
-    String uriStr = components[1];
-    try {
-      uri = new URI(uriStr);
-    } catch (URISyntaxException e) {
-      throw new RequestParsingException("Failed to parse URI from: " + uriStr, e);
-    }
-
-    // "HTTP/X.Y"
-    String versionComponent = components[2];
-    String[] versionSubcomponents = versionComponent.split("/");
-    if (versionSubcomponents.length < 2) {
-      throw new RequestParsingException("Expected 'HTTP/X.Y', got: " + versionComponent);
-    }
-    String version = versionSubcomponents[1];
-
-    try {
-      return new Request(version, Method.valueOf(method), uri);
-    } catch (IllegalArgumentException e) {
-      throw new RequestParsingException("Failed to construct request", e);
-    }
+  public static Request readFrom(InputStream stream) throws RequestParsingException {
+    return new RequestBuilder().buildWithStream(stream);
   }
 }

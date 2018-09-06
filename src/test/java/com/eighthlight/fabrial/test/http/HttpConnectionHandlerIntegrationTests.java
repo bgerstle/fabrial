@@ -68,4 +68,9 @@ public class HttpConnectionHandlerIntegrationTests {
                    endsWith("\r\n")
                ));
   }
+
+  @Test
+  void handlesMalformedRequests() {
+
+  }
 }

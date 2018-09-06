@@ -25,6 +25,12 @@ public class ArbitraryHttp {
     return strings().ascii().ofLengthBetween(1, length).mix(htab());
   }
 
+  public static Gen<String> nonAsciiStrings() {
+    final int LAST_ASCII_CODE_POINT = 0x007F;
+    return strings().betweenCodePoints(LAST_ASCII_CODE_POINT + 1, Character.MAX_CODE_POINT)
+                    .ofLengthBetween(1, 32);
+  }
+
   // Characters which can be included in URI paths without percent encoding
   public static Gen<String> unreservedCharacters(int length) {
     return lists().of(pick(List.of("~", ".", "-", "_")))
