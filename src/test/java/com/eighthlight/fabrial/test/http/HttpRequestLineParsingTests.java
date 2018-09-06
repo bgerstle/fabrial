@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.logging.Logger;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -21,7 +20,7 @@ import static org.quicktheories.QuickTheory.qt;
 
 public class HttpRequestLineParsingTests {
   @Test
-  void getWithoutHeaders() throws Exception {
+  void requestsWithoutHeadersOrBody() throws Exception {
     qt()
         .forAll(methods(), requestTargets(), versions())
         .checkAssert((m, u, v) -> {
