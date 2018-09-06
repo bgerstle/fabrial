@@ -69,16 +69,18 @@ public class Request {
     String method = components[0];
 
     URI uri;
+    String uriStr = components[1];
     try {
-      uri = new URI(components[1]);
+      uri = new URI(uriStr);
     } catch (URISyntaxException e) {
-      throw new RequestParsingException("Failed to parse URI", e);
+      throw new RequestParsingException("Failed to parse URI from: " + uriStr, e);
     }
 
+    // "HTTP/X.Y"
     String versionComponent = components[2];
     String[] versionSubcomponents = versionComponent.split("/");
     if (versionSubcomponents.length < 2) {
-      throw new RequestParsingException("Malformed HTTP version: " + versionComponent);
+      throw new RequestParsingException("Expected 'HTTP/X.Y', got: " + versionComponent);
     }
     String version = versionSubcomponents[1];
 
