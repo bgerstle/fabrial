@@ -12,17 +12,23 @@ public class Response {
   public Response(String version, int statusCode, String reason) {
     this.version = version;
     this.statusCode = statusCode;
-    this.reason = Optional.ofNullable(reason);
+    this.reason = Optional.ofNullable(reason).filter(s -> !s.isEmpty());
   }
 
   public void writeTo(OutputStream os) throws IOException {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
+
+    // write the status line according to sect 3.1.2 which specifies ABNF:
+    //
+    //    status-line = HTTP-version SP status-code SP reason-phrase CRLF
+    //
     writer.write("HTTP/" + version);
     writer.write(" ");
     writer.write(Integer.toString(statusCode));
     writer.write(" ");
     if (reason.isPresent()) {
       writer.write(reason.get());
+      // no space after reason (though reason could contain a space)
     }
     writer.write("\r\n");
     writer.flush();

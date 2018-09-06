@@ -11,16 +11,29 @@ import java.util.Optional;
 
 import static com.eighthlight.fabrial.test.gen.ArbitraryStrings.alphanumeric;
 import static org.quicktheories.generators.Generate.*;
+import static org.quicktheories.generators.SourceDSL.integers;
 import static org.quicktheories.generators.SourceDSL.lists;
+import static org.quicktheories.generators.SourceDSL.strings;
 
 public class ArbitraryHttp {
+  static Gen<String> htab() {
+    return constant(String.valueOf(0X2B7E));
+  }
+
   // !!!: all of these "length" args are rough approximations. proper DSL necessary
+  public static Gen<String> responseReasons(int length) {
+    return strings().ascii().ofLengthBetween(1, length).mix(htab());
+  }
 
   // Characters which can be included in URI paths without percent encoding
   public static Gen<String> unreservedCharacters(int length) {
     return lists().of(pick(List.of("~", ".", "-", "_")))
                   .ofSize(length)
                   .map(ss -> ss.stream().reduce(String::concat).get());
+  }
+
+  public static Gen<Integer> statusCodes() {
+    return integers().between(100, 999);
   }
 
   // Currently doesn't include optional port specifications or IP addresses
@@ -71,7 +84,7 @@ public class ArbitraryHttp {
     });
   }
 
-  public static final Gen<String> versions() {
+  public static final Gen<String> httpVersions() {
     return pick(HttpVersion.allVersions);
   }
 

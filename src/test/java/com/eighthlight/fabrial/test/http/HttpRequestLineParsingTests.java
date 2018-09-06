@@ -22,7 +22,7 @@ public class HttpRequestLineParsingTests {
   @Test
   void requestsWithoutHeadersOrBody() throws Exception {
     qt()
-        .forAll(methods(), requestTargets(), versions())
+        .forAll(methods(), requestTargets(), httpVersions())
         .checkAssert((m, u, v) -> {
           String requestLine = m.name() + " "
                                + u.toString()+ " "
