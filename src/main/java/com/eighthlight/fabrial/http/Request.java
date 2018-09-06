@@ -32,9 +32,6 @@ public class Request {
     }
 
     public RequestBuilder withVersion(String version) {
-      if (!HttpVersion.allVersions.contains(version)) {
-        throw new IllegalArgumentException("Unexpected HTTP version: " + version);
-      }
       this.version = version;
       return this;
     }
@@ -65,7 +62,13 @@ public class Request {
     }
 
     public Request build() {
-      return new Request(version, method, uri);
+      try {
+        return new Request(Optional.ofNullable(version).orElseThrow(),
+                           Optional.ofNullable(method).orElseThrow(),
+                           Optional.ofNullable(uri).orElseThrow());
+      } catch (NoSuchElementException e) {
+        throw new IllegalArgumentException(e);
+      }
     }
 
     public RequestBuilder withRequestLine(String requestLine) throws RequestParsingException {
@@ -98,7 +101,10 @@ public class Request {
   }
 
 
-  private Request(String version, Method method, URI uri) {
+  public Request(String version, Method method, URI uri) {
+    if (!HttpVersion.allVersions.contains(version)) {
+      throw new IllegalArgumentException("Unexpected HTTP version: " + version);
+    }
     this.version = version;
     this.method = method;
     this.uri = uri;
