@@ -13,7 +13,7 @@ import java.net.URI;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class HttpHEADAcceptanceTest extends TcpServerIntegrationTest {
+public class HttpHeadIntegrationTest extends TcpServerIntegrationTest {
   @BeforeEach
   void startAndConnect() throws IOException {
     server.start();
