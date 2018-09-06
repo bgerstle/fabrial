@@ -1,6 +1,10 @@
 package com.eighthlight.fabrial.http;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -13,6 +17,23 @@ public class Response {
     this.version = version;
     this.statusCode = statusCode;
     this.reason = Optional.ofNullable(reason).filter(s -> !s.isEmpty());
+
+    if (!HttpVersion.allVersions.contains(this.version)) {
+      throw new IllegalArgumentException(
+          version + " is not one of the known HTTP version: " + HttpVersion.allVersions);
+    }
+    if (!(statusCode > 99 && statusCode < 1000)) {
+      throw new IllegalArgumentException(
+          statusCode + " is not a valid status code [100, 999]."
+      );
+    }
+    if (this.reason.isPresent()
+        && !this.reason.get().chars().allMatch(c -> StandardCharsets.US_ASCII.newEncoder().canEncode((char)c))) {
+      // TODO: allow HTAB and opaque octets
+      throw new IllegalArgumentException(
+          reason + " contains illegal characters (must be ASCII)."
+      );
+    }
   }
 
   public void writeTo(OutputStream os) throws IOException {

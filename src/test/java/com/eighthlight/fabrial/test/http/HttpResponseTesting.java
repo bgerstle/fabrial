@@ -22,9 +22,11 @@ public class HttpResponseTesting {
                  integers().between(1000, Integer.MAX_VALUE));
   }
 
+  // characters outside ascii code points
   static Gen<String> invalidReasons() {
-    // characters outside ascii code points
-    return strings().betweenCodePoints(0x007F, 65533).ofLengthBetween(1, 32);
+    final int LAST_ASCII_CODE_POINT = 0x007F;
+    return strings().betweenCodePoints(LAST_ASCII_CODE_POINT + 1, Character.MAX_CODE_POINT)
+                    .ofLengthBetween(1, 32);
   }
 
 
@@ -53,18 +55,18 @@ public class HttpResponseTesting {
   void throwsWhenGivenInvalidStatusCode() {
     qt().forAll(httpVersions(), invalidStatuses(), responseReasons(32).toOptionals(30))
         .checkAssert((v, s, r) ->
-          assertThrows(IllegalArgumentException.class, () ->
-              new Response(v, s,null)
-          )
+                         assertThrows(IllegalArgumentException.class, () ->
+                             new Response(v, s,null)
+                         )
         );
   }
 
   @Test
   void throwsWhenGivenInvalidReason() {
-    qt().forAll(httpVersions(), statusCodes(), invalidReasons())
-        .checkAssert((v, s, r) ->
+    qt().forAll(invalidReasons())
+        .checkAssert(r ->
                          assertThrows(IllegalArgumentException.class, () ->
-                             new Response(v, s, r)
+                             new Response("1.1", 200, r)
                          )
         );
   }
