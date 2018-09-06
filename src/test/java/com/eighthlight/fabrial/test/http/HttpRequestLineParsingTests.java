@@ -36,7 +36,6 @@ public class HttpRequestLineParsingTests {
           } catch (IOException | RequestParsingException e) {
             req = e;
           }
-          Logger.getAnonymousLogger().info("Testing " + requestLine);
           assertThat(req,
                      equalTo(new Request(v, m, u)));
         });
