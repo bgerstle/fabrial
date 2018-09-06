@@ -2,6 +2,7 @@ package com.eighthlight.fabrial.server;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Request;
+import com.eighthlight.fabrial.http.RequestParsingException;
 import com.eighthlight.fabrial.http.Response;
 
 import java.io.InputStream;
@@ -18,7 +19,13 @@ public class HttpConnectionHandler implements ConnectionHandler {
   @Override
   public void handle(InputStream is, OutputStream os) throws Throwable {
     // TODO: handle multiple requests on one connection
-    Request request = Request.builder().buildWithStream(is);
+    Request request;
+    try {
+      request = Request.builder().buildWithStream(is);
+    } catch (RequestParsingException e) {
+      new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
+      return;
+    }
     logger.info("Parsed request: " + request);
     Response response = responseTo(request);
     logger.info("Writing response: " + response);
