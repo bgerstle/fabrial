@@ -57,6 +57,9 @@ public class Request {
     }
 
     public RequestBuilder withUri(URI uri) {
+      if (uri.toString().isEmpty()) {
+        throw new IllegalArgumentException("URI request targets must not be empty.");
+      }
       this.uri = uri;
       return this;
     }

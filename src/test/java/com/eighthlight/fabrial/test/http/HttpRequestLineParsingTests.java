@@ -70,10 +70,8 @@ public class HttpRequestLineParsingTests {
     qt().forAll(methods().toOptionals(75),
                 requestTargets().toOptionals(75),
                 httpVersions().toOptionals(75))
-        .assuming((m, u, v) ->
-            // make sure either method or version are absent
-            // uri is allowed to be empty
-          !(m.isPresent() && v.isPresent())
+        .assuming((m, u , v) ->
+          !(m.isPresent() && u.isPresent() && v.isPresent())
         )
         .checkAssert((m, u, v) -> {
           ByteArrayInputStream is =
@@ -122,7 +120,7 @@ public class HttpRequestLineParsingTests {
 
 
   @Test
-  void leadingWhitespaceCausesError() {
+  void leadingWhitespaceCausesError() throws Exception{
     InputStream is = new ByteArrayInputStream(" GET / HTTP/1.1\r\n".getBytes(StandardCharsets.UTF_8));
     assertThrows(RequestParsingException.class, () -> {
       Request.builder().buildWithStream(is);
