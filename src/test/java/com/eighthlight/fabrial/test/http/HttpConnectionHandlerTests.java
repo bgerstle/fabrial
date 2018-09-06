@@ -21,6 +21,9 @@ import java.util.Stack;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.core.AllOf.allOf;
+import static org.hamcrest.core.StringStartsWith.startsWith;
 
 public class HttpConnectionHandlerTests {
   HttpConnectionHandler handler = new HttpConnectionHandler();
@@ -64,6 +67,9 @@ public class HttpConnectionHandlerTests {
   void responds501ToUnsupportedHttpVersions() throws Throwable {
     String version = HttpVersion.ZERO_NINE;
     assertThat(sendRequest(new Request(version, Method.HEAD, new URI("/test"))),
-               equalTo("HTTP/" + HttpVersion.ONE_ONE + " 501 \r\n"));
+               allOf(
+                   startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
+                   endsWith("\r\n")
+               ));
   }
 }
