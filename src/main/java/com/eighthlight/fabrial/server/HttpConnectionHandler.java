@@ -16,7 +16,9 @@ public class HttpConnectionHandler implements ConnectionHandler {
   public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
   public HttpConnectionHandler() {
-    this.responders = Set.of(new FileHttpResponder(new FileResponderDataSourceImpl()));
+    this.responders = Set.of(
+        new FileHttpResponder(
+            new FileResponderDataSourceImpl(null)));
   }
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
