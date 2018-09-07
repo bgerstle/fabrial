@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HttpConnectionHandler implements ConnectionHandler {

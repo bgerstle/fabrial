@@ -1,7 +1,6 @@
 package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.Request;
 import com.eighthlight.fabrial.http.RequestBuilder;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
@@ -15,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static com.eighthlight.fabrial.http.HttpVersion.ONE_ONE;
 import static org.hamcrest.CoreMatchers.containsString;
