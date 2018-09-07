@@ -109,8 +109,8 @@ public class HttpConnectionHandlerTests {
         });
   }
 
-  @Disabled
+  @Test
   void throwsWhenRespondersEmpty() {
-
+    assertThrows(IllegalArgumentException.class, () -> new HttpConnectionHandler(Set.of()));
   }
 }
