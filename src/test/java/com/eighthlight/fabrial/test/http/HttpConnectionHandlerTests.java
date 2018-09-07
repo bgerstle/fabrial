@@ -12,12 +12,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.eighthlight.fabrial.test.http.ArbitraryHttp.methods;
-import static com.eighthlight.fabrial.test.http.ArbitraryHttp.requestTargets;
-import static com.eighthlight.fabrial.test.http.ArbitraryHttp.statusCodes;
+import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.AllOf.allOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
 
@@ -97,9 +96,17 @@ public class HttpConnectionHandlerTests {
         });
   }
 
-  @Disabled
+  @Test
   void responds404WhenNoResponderFound() {
-
+    qt().forAll(mockResponderLists().map(Set::copyOf), http11Requests())
+        .assuming((responders, req) ->
+          responders.stream().noneMatch(r -> r.matches(req))
+        )
+        .checkAssert((rs, req) -> {
+          HttpConnectionHandler handler = new HttpConnectionHandler(rs);
+          assertThat(handler.responseTo(req),
+                     equalTo(new Response(HttpVersion.ONE_ONE, 404, null)));
+        });
   }
 
   @Disabled

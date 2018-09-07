@@ -52,10 +52,10 @@ public class HttpConnectionHandler implements ConnectionHandler {
         responders.stream()
                   .filter(r -> r.matches(request))
                   .findFirst();
-    logger.fine("Found responder " + responder);
+    logger.finer("Found responder " + responder);
     return responder.map(r -> r.getResponse(request))
                     .orElseGet(() -> {
-                      logger.info("No responder found");
+                      logger.finer("No responder found");
                       return new Response(HttpVersion.ONE_ONE, 404, null);
                     });
   }

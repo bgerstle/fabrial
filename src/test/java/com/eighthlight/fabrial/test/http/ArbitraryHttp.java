@@ -2,6 +2,7 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.Request;
 import org.quicktheories.core.Gen;
 
 import java.net.URI;
@@ -18,6 +19,18 @@ import static org.quicktheories.generators.SourceDSL.strings;
 public class ArbitraryHttp {
   static Gen<String> htab() {
     return constant(String.valueOf(0X2B7E));
+  }
+
+  public static Gen<Request> requests() {
+    return requests(methods(), requestTargets(), httpVersions());
+  }
+
+  public static Gen<Request> http11Requests() {
+    return requests(methods(), requestTargets(), constant(HttpVersion.ONE_ONE));
+  }
+
+  public static Gen<Request> requests(Gen<Method> methods, Gen<URI> uris, Gen<String> versions) {
+    return versions.zip(methods, uris, Request::new);
   }
 
   // !!!: all of these "length" args are rough approximations. proper DSL necessary
