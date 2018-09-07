@@ -6,13 +6,13 @@ import java.util.logging.Logger;
 
 public class FileHttpResponder implements HttpResponder {
   private static final Logger logger = Logger.getLogger(FileHttpResponder.class.getName());
-  private final FileResponderDataSource dataSource;
+  private final DataSource dataSource;
 
-  public static interface FileResponderDataSource {
+  public static interface DataSource {
     public boolean fileExistsAtPath(Path path);
   }
 
-  public FileHttpResponder(FileResponderDataSource dataSource) {
+  public FileHttpResponder(DataSource dataSource) {
     this.dataSource = dataSource;
   }
 

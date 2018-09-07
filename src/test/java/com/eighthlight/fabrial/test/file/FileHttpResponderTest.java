@@ -40,7 +40,7 @@ public class FileHttpResponderTest {
   }
 
   static FileHttpResponder responderForListOfExistingFiles(Set<Path> files) {
-    return new FileHttpResponder(new FileHttpResponder.FileResponderDataSource() {
+    return new FileHttpResponder(new FileHttpResponder.DataSource() {
       @Override
       public boolean fileExistsAtPath(Path path) {
         return files.contains(path);
