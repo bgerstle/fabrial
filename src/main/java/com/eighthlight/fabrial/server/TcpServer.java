@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -33,7 +34,7 @@ public class TcpServer implements Closeable {
   private final ConnectionHandler handler;
 
   public TcpServer(ServerConfig config) {
-    this(config, new EchoConnectionHandler());
+    this(config, new HttpConnectionHandler());
   }
 
   public TcpServer(ServerConfig config, ConnectionHandler handler) {
@@ -77,11 +78,16 @@ public class TcpServer implements Closeable {
     while (!serverSocket.isClosed()) {
       try {
         Socket clientConnection = serverSocket.accept();
+        logger.fine("Accepted connection " + clientConnection.getRemoteSocketAddress());
         connectionHandlerExecutor.execute(() -> handleConnection(clientConnection));
       } catch (IOException e) {
-        logger.log(Level.FINE,
-                   "Exception while accepting new connection",
-                   e);
+        if (SocketException.class.isInstance(e) && e.getMessage().equals("Socket closed")) {
+          logger.finer("Server socket closed");
+        } else {
+          logger.log(Level.WARNING,
+                     "Exception while accepting new connection",
+                     e);
+        }
       }
     }
   }
@@ -89,29 +95,33 @@ public class TcpServer implements Closeable {
   // Handle new client connections
   private void handleConnection(Socket connection) {
     this.connectionCount.incrementAndGet();
+
     try {
       connection.setSoTimeout(this.config.readTimeout);
-      try (InputStream is = connection.getInputStream();
-          OutputStream os = connection.getOutputStream()) {
-        handler.handle(is, os);
-      } catch(Throwable t) {
-        logger.log(Level.FINE, "Connection handler exception", t);
-      }
     } catch (IOException e) {
       logger.log(Level.FINE,
-              "Exception while handling connection to "  + connection.getInetAddress(),
+              "Exception while configuring client connection "  + connection.getRemoteSocketAddress(),
                  e);
+    }
+
+    try (InputStream is = connection.getInputStream();
+        OutputStream os = connection.getOutputStream()) {
+      handler.handle(is, os);
+    } catch(Throwable t) {
+      logger.log(Level.WARNING, "Connection handler exception", t);
     }
 
     try {
       connection.close();
+      logger.fine("Closed connection " + connection.getRemoteSocketAddress());
     } catch (IOException e) {
       logger.log(Level.SEVERE,
               "Connection to "
-                     + connection.getInetAddress()
+                     + connection.getRemoteSocketAddress()
                      + " encountered exception while closing",
                  e);
     }
+
     this.connectionCount.decrementAndGet();
   }
 
