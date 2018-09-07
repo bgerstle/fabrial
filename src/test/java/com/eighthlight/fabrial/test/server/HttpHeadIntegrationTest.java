@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
 
 import static com.eighthlight.fabrial.http.HttpVersion.ONE_ONE;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -26,7 +25,7 @@ public class HttpHeadIntegrationTest extends TcpServerIntegrationTest {
     Request.builder()
            .withVersion(ONE_ONE)
            .withMethod(Method.HEAD)
-           .withUriString("/test")
+           .withUriString("src")
            .build()
            .writeTo(client.getOutputStream());
 

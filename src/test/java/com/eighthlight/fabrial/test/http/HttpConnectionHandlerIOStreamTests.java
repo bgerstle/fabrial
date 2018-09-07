@@ -1,8 +1,6 @@
 package com.eighthlight.fabrial.test.http;
 
-import com.eighthlight.fabrial.http.HttpVersion;
-import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.Request;
+import com.eighthlight.fabrial.http.*;
 import com.eighthlight.fabrial.server.HttpConnectionHandler;
 import org.junit.jupiter.api.Test;
 
@@ -10,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -17,8 +16,21 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.StringStartsWith.startsWith;
 
-public class HttpConnectionHandlerIntegrationTests {
-  HttpConnectionHandler handler = new HttpConnectionHandler();
+public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
+  @Override
+  public boolean matches(Request request) {
+    return request.uri.getPath().equals("/test");
+  }
+
+  @Override
+  public Response getResponse(Request request) {
+    if (!request.method.equals(Method.HEAD)) {
+      return new Response(HttpVersion.ONE_ONE, 501, null);
+    }
+    return new Response(HttpVersion.ONE_ONE, 200, null);
+  }
+
+  HttpConnectionHandler handler = new HttpConnectionHandler(Set.of(this));
 
   String sendRequest(Request req) throws Throwable {
     ByteArrayOutputStream reqOs = new ByteArrayOutputStream();

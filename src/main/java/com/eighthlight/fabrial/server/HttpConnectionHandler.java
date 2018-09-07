@@ -15,22 +15,8 @@ public class HttpConnectionHandler implements ConnectionHandler {
   // ???: if this changes, probably need to also "match" the request version somehow?
   public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
-  // TEMP
   public HttpConnectionHandler() {
-    this.responders = Set.of(new HttpResponder() {
-      @Override
-      public boolean matches(Request request) {
-        return request.uri.getPath().equals("/test");
-      }
-
-      @Override
-      public Response getResponse(Request request) {
-        if (!request.method.equals(Method.HEAD)) {
-          return new Response(HttpVersion.ONE_ONE, 501, null);
-        }
-        return new Response(HttpVersion.ONE_ONE, 200, null);
-      }
-    });
+    this.responders = Set.of(new FileHttpResponder(new FileResponderDataSourceImpl()));
   }
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
