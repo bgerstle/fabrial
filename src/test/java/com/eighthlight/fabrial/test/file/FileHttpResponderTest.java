@@ -3,7 +3,9 @@ package com.eighthlight.fabrial.test.file;
 import com.eighthlight.fabrial.http.*;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.quicktheories.api.Subject1;
 import org.quicktheories.core.Gen;
+import org.quicktheories.dsl.TheoryBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,26 +28,35 @@ public class FileHttpResponderTest {
       return Paths.get(s);
     });
   }
+
+  static final Subject1<List<HashSet<Path>>> forAllListsOfExistingAndNonExistingFiles() {
+    return qt().forAll(lists().of(filePaths()).ofSizeBetween(1, 5),
+                       lists().of(filePaths()).ofSizeBetween(1, 5))
+               .as((paths1, paths2) -> {
+                 HashSet<Path> ps1 = new HashSet(paths1);
+                 ps1.removeAll(paths2);
+                 HashSet<Path> ps2 = new HashSet(paths2);
+                 ps2.removeAll(paths1);
+                 return List.of(ps1, ps2);
+               });
+  }
+
+  static FileHttpResponder responderForListOfExistingFiles(Set<Path> files) {
+    return new FileHttpResponder(new FileHttpResponder.FileResponderDataSource() {
+      @Override
+      public boolean fileExistsAtPath(Path path) {
+        return files.contains(path);
+      }
+    });
+  }
+
   @Test
   void responds200ToHeadForExistingFiles() {
-    qt().forAll(lists().of(filePaths()).ofSizeBetween(1, 5),
-                lists().of(filePaths()).ofSizeBetween(1, 5))
-        .as((paths1, paths2) -> {
-          HashSet<Path> ps1 = new HashSet(paths1);
-          ps1.removeAll(paths2);
-          HashSet<Path> ps2 = new HashSet(paths2);
-          ps2.removeAll(paths1);
-          return List.of(ps1, ps2);
-        })
+    forAllListsOfExistingAndNonExistingFiles()
         .checkAssert((files) -> {
           Set<Path> existingFilePaths = files.get(0);
           Set<Path> nonExistingFilePaths = files.get(1);
-          FileHttpResponder responder = new FileHttpResponder(new FileHttpResponder.FileResponderDataSource() {
-            @Override
-            public boolean fileExistsAtPath(Path path) {
-              return existingFilePaths.contains(path);
-            }
-          });
+          FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
           ArrayList<Path> allFilePaths = new ArrayList<>();
           allFilePaths.addAll(existingFilePaths);
           allFilePaths.addAll(nonExistingFilePaths);
@@ -65,13 +76,26 @@ public class FileHttpResponderTest {
         });
   }
 
-  @Disabled
-  void responds404ToHeadForNonExitingFiles() {
 
-  }
-
-  @Disabled
+  @Test
   void responds501ToUnsupportedMethodsOnExistingFiles() {
-
+    forAllListsOfExistingAndNonExistingFiles()
+        .checkAssert((files) -> {
+          Set<Path> existingFilePaths = files.get(0);
+          Set<Path> nonExistingFilePaths = files.get(1);
+          FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
+          nonExistingFilePaths.forEach(p -> {
+            URI pathURI;
+            try {
+              pathURI = new URI(p.toString());
+            } catch (URISyntaxException e) {
+              throw new RuntimeException(e);
+            }
+            Request req = new Request(HttpVersion.ONE_ONE, Method.DELETE, pathURI);
+            assertThat(
+                responder.getResponse(req),
+                equalTo(new Response(HttpVersion.ONE_ONE, 501, null)));
+          });
+        });
   }
 }
