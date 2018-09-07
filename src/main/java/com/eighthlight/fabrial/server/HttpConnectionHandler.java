@@ -21,6 +21,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
   }
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
+    assert !responders.isEmpty();
     this.responders = responders;
   }
 

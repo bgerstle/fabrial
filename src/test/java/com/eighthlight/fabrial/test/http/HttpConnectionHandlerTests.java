@@ -111,6 +111,6 @@ public class HttpConnectionHandlerTests {
 
   @Test
   void throwsWhenRespondersEmpty() {
-    assertThrows(IllegalArgumentException.class, () -> new HttpConnectionHandler(Set.of()));
+    assertThrows(AssertionError.class, () -> new HttpConnectionHandler(Set.of()));
   }
 }
