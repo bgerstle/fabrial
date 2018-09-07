@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 public class TcpServer implements Closeable {
   // TODO: make logger instance-specific, prefixing logs w/ config & object info
-  private final Logger logger;
+  private static final Logger logger = LoggerFactory.getLogger(TcpServer.class);
 
   public final ServerConfig config;
 
@@ -44,7 +44,6 @@ public class TcpServer implements Closeable {
     this.acceptThread = Optional.empty();
     this.connectionCount = new AtomicInteger(0);
     this.connectionHandlerExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    this.logger = Logger.getLogger(this.toString());
   }
 
   public int getConnectionCount() {
