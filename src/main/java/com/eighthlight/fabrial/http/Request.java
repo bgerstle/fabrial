@@ -96,7 +96,11 @@ public class Request {
       if (!firstLine.isPresent()) {
         throw new RequestParsingException("Request is empty");
       }
-      return withRequestLine(firstLine.get()).build();
+      try {
+        return withRequestLine(firstLine.get()).build();
+      } catch (Exception e) {
+        throw new RequestParsingException(e);
+      }
     }
   }
 
