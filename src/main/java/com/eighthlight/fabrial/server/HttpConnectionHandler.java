@@ -5,6 +5,7 @@ import com.eighthlight.fabrial.http.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -16,7 +17,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
 
   // TEMP
   public HttpConnectionHandler() {
-    this.responders = null;
+    this.responders = Set.of();
   }
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
@@ -36,26 +37,27 @@ public class HttpConnectionHandler implements ConnectionHandler {
       return;
     }
     logger.info("Parsed request: " + request);
-    Response response = responseTo(request);
-    logger.info("Writing response: " + response);
-    response.writeTo(os);
-    os.flush();
+
   }
 
   public Response responseTo(Request request) {
     if (!SUPPORTED_HTTP_VERSIONS.contains(request.version)) {
       return new Response(HttpVersion.ONE_ONE,
                           501,
-                          "Requests must use one of the supported HTTP versions: " + SUPPORTED_HTTP_VERSIONS);
+                          "Requests must use one of the supported HTTP versions: "
+                          + SUPPORTED_HTTP_VERSIONS);
     }
-    switch (request.method) {
-      case HEAD: {
-        return responseToHEAD(request);
-      }
-      default: {
-        return new Response(HttpVersion.ONE_ONE, 501, request.method + "not implemented yet");
-      }
-    }
+
+    Optional<? extends HttpResponder> responder =
+        responders.stream()
+                  .filter(r -> r.matches(request))
+                  .findFirst();
+    logger.fine("Found responder " + responder);
+    return responder.map(r -> r.getResponse(request))
+                    .orElseGet(() -> {
+                      logger.info("No responder found");
+                      return new Response(HttpVersion.ONE_ONE, 404, null);
+                    });
   }
 
 
