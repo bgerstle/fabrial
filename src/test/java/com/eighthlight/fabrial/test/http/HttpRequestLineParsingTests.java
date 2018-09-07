@@ -54,7 +54,7 @@ public class HttpRequestLineParsingTests {
             req = e;
           }
           assertThat(req,
-                     equalTo(Request.builder().withVersion(v).withMethod(m).withUri(u).build()));
+                     equalTo(new RequestBuilder().withVersion(v).withMethod(m).withUri(u).build()));
         });
   }
 
@@ -110,7 +110,7 @@ public class HttpRequestLineParsingTests {
         ).getBytes(StandardCharsets.UTF_8));
 
     assertThat(new RequestReader(is).readRequest(),
-               equalTo(Request.builder().withVersion(version).withMethod(Method.GET).withUri(uri).build()));
+               equalTo(new RequestBuilder().withVersion(version).withMethod(Method.GET).withUri(uri).build()));
   }
 
 

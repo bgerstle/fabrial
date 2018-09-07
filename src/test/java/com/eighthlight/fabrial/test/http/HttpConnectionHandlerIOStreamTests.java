@@ -62,7 +62,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   void responds200ToTestHeadRequest() throws Throwable {
     String version = HttpVersion.ONE_ONE;
     assertThat(
-        sendRequest(Request.builder()
+        sendRequest(new RequestBuilder()
                            .withVersion (version)
                            .withMethod(Method.HEAD)
                            .withUriString("/test").build()),
@@ -73,7 +73,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   void responds501ToUnimplementedMethods() throws Throwable {
     String version = HttpVersion.ONE_ONE;
     assertThat(
-        sendRequest(Request.builder()
+        sendRequest(new RequestBuilder()
                            .withVersion (version)
                            .withMethod(Method.DELETE)
                            .withUriString("/test")
@@ -88,7 +88,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   void responds404ToNonTestPaths() throws Throwable {
     String version = HttpVersion.ONE_ONE;
     assertThat(
-        sendRequest(Request.builder()
+        sendRequest(new RequestBuilder()
                            .withVersion (version)
                            .withMethod(Method.HEAD)
                            .withUriString("/foobarbuz")
@@ -100,7 +100,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   void responds501ToUnsupportedHttpVersions() throws Throwable {
     String version = HttpVersion.ZERO_NINE;
     assertThat(
-        sendRequest(Request.builder()
+        sendRequest(new RequestBuilder()
                            .withVersion (version)
                            .withMethod(Method.HEAD)
                            .withUriString("/test")

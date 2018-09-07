@@ -10,7 +10,7 @@ public class RequestBuilder {
   private Method method;
   private URI uri;
 
-  RequestBuilder() {}
+  public RequestBuilder() {}
 
   // Set version from a string with the format "HTTP/X.Y"
   public RequestBuilder withPrefixedVersion(String prefixedVersion) {

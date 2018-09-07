@@ -2,6 +2,7 @@ package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.Request;
+import com.eighthlight.fabrial.http.RequestBuilder;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
 import com.eighthlight.fabrial.test.http.RequestWriter;
@@ -51,10 +52,10 @@ public class HttpHeadIntegrationTest extends TcpServerIntegrationTest {
   void simpleHEADRequest() throws Throwable {
     new RequestWriter(client.getOutputStream())
         .writeRequest(
-            Request.builder()
+            new RequestBuilder()
                    .withVersion(ONE_ONE)
                    .withMethod(Method.HEAD)
-                   .withUriString("/test")
+                   .withUriString(tempFilePath.getFileName().toString())
                    .build());
     String response =
         new BufferedReader(new InputStreamReader((client.getInputStream())))

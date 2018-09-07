@@ -8,10 +8,6 @@ public class Request {
   public final Method method;
   public final URI uri;
 
-  public static RequestBuilder builder() {
-    return new RequestBuilder();
-  }
-
   public Request(String version, Method method, URI uri) {
     if (!HttpVersion.allVersions.contains(version)) {
       throw new IllegalArgumentException("Unexpected HTTP version: " + version);
