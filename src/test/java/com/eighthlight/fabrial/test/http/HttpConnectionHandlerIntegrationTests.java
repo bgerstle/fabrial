@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -65,7 +64,7 @@ public class HttpConnectionHandlerIntegrationTests {
         sendRequest(Request.builder()
                            .withVersion (version)
                            .withMethod(Method.DELETE)
-                           .withUriString("/")
+                           .withUriString("/test")
                            .build()),
         allOf(
             startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
