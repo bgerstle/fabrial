@@ -23,11 +23,7 @@ import static org.quicktheories.generators.SourceDSL.lists;
 public class FileHttpResponderTest {
   static final Gen<Path> filePaths() {
     return paths(32).map(s -> {
-      try {
-        return Paths.get(new URI("file", s, null));
-      } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
+      return Paths.get(s);
     });
   }
   @Test
@@ -61,7 +57,7 @@ public class FileHttpResponderTest {
               throw new RuntimeException(e);
             }
             Request req = new Request(HttpVersion.ONE_ONE, Method.HEAD, pathURI);
-            int expectedStatus = existingFilePaths.contains(p) ? 200 : 501;
+            int expectedStatus = existingFilePaths.contains(p) ? 200 : 404;
             assertThat(
                 responder.getResponse(req),
                 equalTo(new Response(HttpVersion.ONE_ONE, expectedStatus, null)));
