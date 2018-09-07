@@ -62,12 +62,12 @@ public class HttpConnectionHandlerTests {
 
     @Override
     public boolean matches(Request request) {
-      return false;
+      return request.uri.equals(targetURI) && request.method.equals(targetMethod);
     }
 
     @Override
-    public Response responseFor(Request request) {
-      return null;
+    public Response getResponse(Request request) {
+      return response;
     }
   }
 
