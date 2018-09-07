@@ -1,11 +1,9 @@
 package com.eighthlight.fabrial.test.file;
 
 import com.eighthlight.fabrial.http.*;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Subject1;
 import org.quicktheories.core.Gen;
-import org.quicktheories.dsl.TheoryBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -75,7 +73,6 @@ public class FileHttpResponderTest {
           });
         });
   }
-
 
   @Test
   void responds501ToUnsupportedMethodsOnExistingFiles() {
