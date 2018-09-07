@@ -17,7 +17,20 @@ public class HttpConnectionHandler implements ConnectionHandler {
 
   // TEMP
   public HttpConnectionHandler() {
-    this.responders = Set.of();
+    this.responders = Set.of(new HttpResponder() {
+      @Override
+      public boolean matches(Request request) {
+        return request.uri.getPath().equals("/test");
+      }
+
+      @Override
+      public Response getResponse(Request request) {
+        if (!request.method.equals(Method.HEAD)) {
+          return new Response(HttpVersion.ONE_ONE, 501, null);
+        }
+        return new Response(HttpVersion.ONE_ONE, 200, null);
+      }
+    });
   }
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
@@ -38,7 +51,9 @@ public class HttpConnectionHandler implements ConnectionHandler {
       return;
     }
     logger.info("Parsed request: " + request);
-
+    Response response = responseTo(request);
+    logger.fine("Writing response " + response);
+    response.writeTo(os);
   }
 
   public Response responseTo(Request request) {
@@ -59,14 +74,5 @@ public class HttpConnectionHandler implements ConnectionHandler {
                       logger.finer("No responder found");
                       return new Response(HttpVersion.ONE_ONE, 404, null);
                     });
-  }
-
-
-  public Response responseToHEAD(Request request) {
-    if (request.uri.getPath().equals("/test")) {
-      return new Response(HttpVersion.ONE_ONE, 200, null);
-    } else {
-      return new Response(HttpVersion.ONE_ONE, 404, null);
-    }
   }
 }
