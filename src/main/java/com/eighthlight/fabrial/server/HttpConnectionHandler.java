@@ -1,13 +1,11 @@
 package com.eighthlight.fabrial.server;
 
-import com.eighthlight.fabrial.http.HttpVersion;
-import com.eighthlight.fabrial.http.Request;
-import com.eighthlight.fabrial.http.RequestParsingException;
-import com.eighthlight.fabrial.http.Response;
+import com.eighthlight.fabrial.http.*;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 public class HttpConnectionHandler implements ConnectionHandler {
@@ -15,6 +13,17 @@ public class HttpConnectionHandler implements ConnectionHandler {
 
   // ???: if this changes, probably need to also "match" the request version somehow?
   public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
+
+  // TEMP
+  public HttpConnectionHandler() {
+    this.responders = null;
+  }
+
+  public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
+    this.responders = responders;
+  }
+
+  private final Set<? extends HttpResponder> responders;
 
   @Override
   public void handle(InputStream is, OutputStream os) throws Throwable {
