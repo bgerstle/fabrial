@@ -1,5 +1,8 @@
 package com.eighthlight.fabrial.server;
 
+import com.eighthlight.fabrial.http.FileHttpResponder;
+import com.eighthlight.fabrial.http.FileResponderDataSourceImpl;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +12,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -34,7 +38,12 @@ public class TcpServer implements Closeable {
   private final ConnectionHandler handler;
 
   public TcpServer(ServerConfig config) {
-    this(config, new HttpConnectionHandler());
+    this(config,
+         new HttpConnectionHandler(
+             Set.of(
+                 new FileHttpResponder(
+                     new FileResponderDataSourceImpl(config.directoryPath)
+                 ))));
   }
 
   public TcpServer(ServerConfig config, ConnectionHandler handler) {
@@ -100,7 +109,7 @@ public class TcpServer implements Closeable {
       connection.setSoTimeout(this.config.readTimeout);
     } catch (IOException e) {
       logger.log(Level.FINE,
-              "Exception while configuring client connection "  + connection.getRemoteSocketAddress(),
+                 "Exception while configuring client connection "  + connection.getRemoteSocketAddress(),
                  e);
     }
 
@@ -116,9 +125,9 @@ public class TcpServer implements Closeable {
       logger.fine("Closed connection " + connection.getRemoteSocketAddress());
     } catch (IOException e) {
       logger.log(Level.SEVERE,
-              "Connection to "
-                     + connection.getRemoteSocketAddress()
-                     + " encountered exception while closing",
+                 "Connection to "
+                 + connection.getRemoteSocketAddress()
+                 + " encountered exception while closing",
                  e);
     }
 

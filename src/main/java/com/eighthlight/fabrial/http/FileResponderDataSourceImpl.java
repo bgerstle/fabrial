@@ -13,6 +13,8 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
 
   @Override
   public boolean fileExistsAtPath(Path path) {
-    return path.toFile().exists();
+    return Paths.get(baseDirPath.toAbsolutePath().toString(), path.toString())
+                .toFile()
+                .exists();
   }
 }
