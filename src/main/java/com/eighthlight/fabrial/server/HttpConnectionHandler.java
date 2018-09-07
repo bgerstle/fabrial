@@ -34,11 +34,12 @@ public class HttpConnectionHandler implements ConnectionHandler {
     // TODO: handle multiple requests on one connection
     Request request;
     try {
-      request = Request.builder().buildWithStream(is);
+      request = new RequestReader(is).readRequest();
     } catch (RequestParsingException e) {
       new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
       return;
     }
+
     logger.info("Parsed request: " + request);
     Response response = responseTo(request);
     logger.info("Writing response " + response);
@@ -57,10 +58,13 @@ public class HttpConnectionHandler implements ConnectionHandler {
         responders.stream()
                   .filter(r -> r.matches(request))
                   .findFirst();
-    logger.finer("Found responder " + responder);
-    return responder.map(r -> r.getResponse(request))
+
+    return responder.map(r -> {
+      logger.trace("Found responder {}", StructuredArguments.kv("responder", r));
+      return r.getResponse(request);
+    })
                     .orElseGet(() -> {
-                      logger.finer("No responder found");
+                      logger.trace("No responder found");
                       return new Response(HttpVersion.ONE_ONE, 404, null);
                     });
   }

@@ -1,19 +1,14 @@
 package com.eighthlight.fabrial.test.http;
 
-import com.eighthlight.fabrial.http.HttpVersion;
-import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.Request;
-import com.eighthlight.fabrial.http.RequestParsingException;
+import com.eighthlight.fabrial.http.*;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -23,8 +18,6 @@ import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.Generate.constant;
 import static org.quicktheories.generators.Generate.oneOf;
 import static org.quicktheories.generators.Generate.pick;
-import static org.quicktheories.generators.SourceDSL.lists;
-import static org.quicktheories.generators.SourceDSL.strings;
 
 public class HttpRequestLineParsingTests {
   public static Gen<String> invalidMethods() {
@@ -56,7 +49,7 @@ public class HttpRequestLineParsingTests {
         .checkAssert((m, u, v) -> {
           Object req;
           try {
-            req = Request.builder().buildWithStream(requestLineFromComponents(m.name(), u.toString(), v));
+            req = new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest();
           } catch (RequestParsingException e) {
             req = e;
           }
@@ -71,18 +64,20 @@ public class HttpRequestLineParsingTests {
                 requestTargets().toOptionals(75),
                 httpVersions().toOptionals(75))
         .assuming((m, u , v) ->
-          !(m.isPresent() && u.isPresent() && v.isPresent())
+                      !(m.isPresent() && u.isPresent() && v.isPresent())
         )
-        .checkAssert((m, u, v) -> {
+        .checkAssert((method, uri, version) -> {
           ByteArrayInputStream is =
               requestLineFromComponents(
-                  m.map(Method::name).orElse(""),
-                  u.map(URI::toString).orElse(""),
-                  v.orElse(""));
-      assertThrows(RequestParsingException.class, () -> {
-        Request.builder().buildWithStream(is);
-      });
-    });
+                  method.map(Method::name).orElse(""),
+                  uri.map(URI::toString).orElse(""),
+                  version.orElse("")
+              );
+
+          assertThrows(RequestParsingException.class, () -> {
+            new RequestReader(is).readRequest();
+          });
+        });
   }
 
   @Test
@@ -90,7 +85,7 @@ public class HttpRequestLineParsingTests {
     qt().forAll(invalidMethods(), invalidUris(), httpVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(RequestParsingException.class, () -> {
-            Request.builder().buildWithStream(requestLineFromComponents(m, u, v));
+            new RequestReader(requestLineFromComponents(m, u, v)).readRequest();
           });
         });
   }
@@ -100,7 +95,7 @@ public class HttpRequestLineParsingTests {
     qt().forAll(methods(), requestTargets(), invalidVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(RequestParsingException.class, () -> {
-            Request.builder().buildWithStream(requestLineFromComponents(m.name(), u.toString(), v));
+            new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest();
           });
         });
   }
@@ -114,7 +109,7 @@ public class HttpRequestLineParsingTests {
           ("GET " + uri.toString() + " HTTP/" + version + " \r\n"
         ).getBytes(StandardCharsets.UTF_8));
 
-    assertThat(Request.builder().buildWithStream(is),
+    assertThat(new RequestReader(is).readRequest(),
                equalTo(Request.builder().withVersion(version).withMethod(Method.GET).withUri(uri).build()));
   }
 
@@ -123,7 +118,7 @@ public class HttpRequestLineParsingTests {
   void leadingWhitespaceCausesError() throws Exception{
     InputStream is = new ByteArrayInputStream(" GET / HTTP/1.1\r\n".getBytes(StandardCharsets.UTF_8));
     assertThrows(RequestParsingException.class, () -> {
-      Request.builder().buildWithStream(is);
+      new RequestReader(is).readRequest();
     });
   }
 }
