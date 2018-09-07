@@ -60,11 +60,11 @@ public class HttpConnectionHandler implements ConnectionHandler {
                   .findFirst();
 
     return responder.map(r -> {
-      logger.trace("Found responder {}", StructuredArguments.kv("responder", r));
+      logger.finer("Found responder " + r);
       return r.getResponse(request);
     })
                     .orElseGet(() -> {
-                      logger.trace("No responder found");
+                      logger.finer("No responder found");
                       return new Response(HttpVersion.ONE_ONE, 404, null);
                     });
   }

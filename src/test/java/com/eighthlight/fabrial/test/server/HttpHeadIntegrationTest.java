@@ -4,6 +4,7 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.Request;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
+import com.eighthlight.fabrial.test.http.RequestWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,15 +49,16 @@ public class HttpHeadIntegrationTest extends TcpServerIntegrationTest {
 
   @Test
   void simpleHEADRequest() throws Throwable {
-    Request.builder()
-           .withVersion(ONE_ONE)
-           .withMethod(Method.HEAD)
-           .withUriString(Paths.get("/", tempFilePath.getFileName().toString()).toString())
-                               .build()
-                               .writeTo(client.getOutputStream());
-
-    BufferedReader reader = new BufferedReader(new InputStreamReader((client.getInputStream())));
-    String response = reader.readLine();
+    new RequestWriter(client.getOutputStream())
+        .writeRequest(
+            Request.builder()
+                   .withVersion(ONE_ONE)
+                   .withMethod(Method.HEAD)
+                   .withUriString("/test")
+                   .build());
+    String response =
+        new BufferedReader(new InputStreamReader((client.getInputStream())))
+            .readLine();
     assertThat(response, containsString("200"));
   }
 }

@@ -1,11 +1,6 @@
 package com.eighthlight.fabrial.http;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.URI;
-import java.util.List;
 import java.util.Objects;
 
 public class Request {
@@ -50,13 +45,5 @@ public class Request {
   @Override
   public int hashCode() {
     return Objects.hash(version, method, uri);
-  }
-
-  public void writeTo(OutputStream os) throws IOException {
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
-    String line = String.join(" ", List.of(method.name(), uri.toString(), "HTTP/" + version))
-                  + "\r\n";
-    writer.write(line);
-    writer.flush();
   }
 }

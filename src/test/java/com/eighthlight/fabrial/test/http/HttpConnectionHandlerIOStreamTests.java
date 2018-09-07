@@ -35,7 +35,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   String sendRequest(Request req) throws Throwable {
     ByteArrayOutputStream reqOs = new ByteArrayOutputStream();
     try {
-      req.writeTo(reqOs);
+      new RequestWriter(reqOs).writeRequest(req);
     } catch (IOException e) {
       throw new RuntimeException("Failed to serialize test request", e);
     }
