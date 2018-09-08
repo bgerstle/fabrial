@@ -11,19 +11,20 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.logging.Logger;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @Tag("acceptance")
 public class AppAcceptanceTest {
-  static final Logger logger = Logger.getLogger(AppAcceptanceTest.class.getName());
+  static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class.getName());
 
   Process appProcess;
 
@@ -31,7 +32,11 @@ public class AppAcceptanceTest {
   void setUp() throws IOException {
     // hard-coded to SNAPSHOT version. might need to fix this eventually...
     appProcess =
-        new ProcessBuilder("java", "-jar", "./build/libs/fabrial-all-1.0-SNAPSHOT.jar")
+        new ProcessBuilder(
+            "java",
+            // disable logback error messages (no logstash here)
+            "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
+            "-jar", "./build/libs/fabrial-all-1.0-SNAPSHOT.jar")
             .inheritIO()
             .start();
   }
@@ -45,7 +50,7 @@ public class AppAcceptanceTest {
   void clientConnectsToAppServer() throws IOException {
     try (TcpClientFixture clientFixture =
         new TcpClientFixture(ServerConfig.DEFAULT_PORT)) {
-      clientFixture.client.connect(1000, 3, 500);
+      clientFixture.client.connect(1000, 3, 1000);
     }
   }
 
@@ -55,7 +60,7 @@ public class AppAcceptanceTest {
         // TEMP: serve from current directory
         // TODO: set -d to tmp dir
         TempFileFixture tempFileFixture = new TempFileFixture(Paths.get("."))) {
-      clientFixture.client.connect(1000, 3, 500);
+      clientFixture.client.connect(1000, 3, 1000);
       new RequestWriter(clientFixture.client.getOutputStream())
           .writeRequest(new RequestBuilder()
                             .withUriString(tempFileFixture.tempFilePath.getFileName().toString())

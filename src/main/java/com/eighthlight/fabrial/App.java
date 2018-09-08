@@ -6,17 +6,17 @@ import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class App {
-  static final Logger logger = Logger.getLogger(App.class.getName());
+  static final Logger logger = LoggerFactory.getLogger(App.class);
 
   public static Optional<ServerConfig> parseConfig(String[] args) {
     // TODO run project name
@@ -62,8 +62,6 @@ public class App {
   }
 
   public static void main(String[] args) {
-    LogConfig.apply();
-
     Optional<ServerConfig> config = parseConfig(args);
     if (!config.isPresent()) {
       System.exit(1);
@@ -73,7 +71,7 @@ public class App {
     try {
       server.start();
     } catch (IOException e) {
-      logger.log(Level.SEVERE, "Failed to start server", e);
+      logger.error("Failed to start server", e);
       System.exit(1);
     }
 
@@ -82,7 +80,7 @@ public class App {
       try {
         server.close();
       } catch (IOException e) {
-        logger.log(Level.SEVERE, "Failed to close server", e);
+        logger.error("Failed to close server", e);
         System.exit(1);
       }
     }));

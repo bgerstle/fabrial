@@ -1,16 +1,19 @@
 package com.eighthlight.fabrial.server;
 
 import com.eighthlight.fabrial.http.*;
+import net.logstash.logback.argument.StructuredArguments;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Logger;
 
 public class HttpConnectionHandler implements ConnectionHandler {
-  private static final Logger logger = Logger.getLogger(HttpConnectionHandler.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(HttpConnectionHandler.class.getName());
 
   // ???: if this changes, probably need to also "match" the request version somehow?
   public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
@@ -38,11 +41,12 @@ public class HttpConnectionHandler implements ConnectionHandler {
       new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
       return;
     }
-
-    logger.info("Parsed request: " + request);
-    Response response = responseTo(request);
-    logger.info("Writing response " + response);
-    response.writeTo(os);
+    try (MDC.MDCCloseable reqctxt = MDC.putCloseable("request", request.toString())) {
+      logger.trace("Handling request");
+      Response response = responseTo(request);
+      logger.info("Writing response {}", StructuredArguments.kv("response", response));
+      response.writeTo(os);
+    }
   }
 
   public Response responseTo(Request request) {
@@ -58,13 +62,14 @@ public class HttpConnectionHandler implements ConnectionHandler {
                   .filter(r -> r.matches(request))
                   .findFirst();
 
-    return responder.map(r -> {
-      logger.finer("Found responder " + r);
-      return r.getResponse(request);
-    })
-                    .orElseGet(() -> {
-                      logger.finer("No responder found");
-                      return new Response(HttpVersion.ONE_ONE, 404, null);
-                    });
+    return responder
+        .map(r -> {
+          logger.trace("Found responder {}", StructuredArguments.kv("responder", r));
+          return r.getResponse(request);
+        })
+        .orElseGet(() -> {
+          logger.trace("No responder found");
+          return new Response(HttpVersion.ONE_ONE, 404, null);
+        });
   }
 }
