@@ -44,7 +44,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
     try (MDC.MDCCloseable reqctxt = MDC.putCloseable("request", request.toString())) {
       logger.trace("Handling request");
       Response response = responseTo(request);
-      logger.trace("Writing response {}", StructuredArguments.kv("response", response));
+      logger.info("Writing response {}", StructuredArguments.kv("response", response));
       response.writeTo(os);
     }
   }
