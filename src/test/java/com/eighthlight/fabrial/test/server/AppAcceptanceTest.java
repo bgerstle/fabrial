@@ -32,7 +32,11 @@ public class AppAcceptanceTest {
   void setUp() throws IOException {
     // hard-coded to SNAPSHOT version. might need to fix this eventually...
     appProcess =
-        new ProcessBuilder("java", "-jar", "./build/libs/fabrial-all-1.0-SNAPSHOT.jar")
+        new ProcessBuilder(
+            "java",
+            // disable logback error messages (no logstash here)
+            "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
+            "-jar", "./build/libs/fabrial-all-1.0-SNAPSHOT.jar")
             .inheritIO()
             .start();
   }

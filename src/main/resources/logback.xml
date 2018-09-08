@@ -1,7 +1,4 @@
 <configuration>
-  <!--disable logback status lines (causes noise in CI. should be enabled in "prod"-->
-  <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
-
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
     <destination>"${stashDest}"</destination>
     <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
