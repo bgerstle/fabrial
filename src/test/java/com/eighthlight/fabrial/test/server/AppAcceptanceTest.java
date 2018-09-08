@@ -46,7 +46,7 @@ public class AppAcceptanceTest {
   void clientConnectsToAppServer() throws IOException {
     try (TcpClientFixture clientFixture =
         new TcpClientFixture(ServerConfig.DEFAULT_PORT)) {
-      clientFixture.client.connect(1000, 3, 500);
+      clientFixture.client.connect(1000, 3, 1000);
     }
   }
 
@@ -56,7 +56,7 @@ public class AppAcceptanceTest {
         // TEMP: serve from current directory
         // TODO: set -d to tmp dir
         TempFileFixture tempFileFixture = new TempFileFixture(Paths.get("."))) {
-      clientFixture.client.connect(1000, 3, 500);
+      clientFixture.client.connect(1000, 3, 1000);
       new RequestWriter(clientFixture.client.getOutputStream())
           .writeRequest(new RequestBuilder()
                             .withUriString(tempFileFixture.tempFilePath.getFileName().toString())
