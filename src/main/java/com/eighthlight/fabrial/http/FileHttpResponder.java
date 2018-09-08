@@ -1,13 +1,9 @@
 package com.eighthlight.fabrial.http;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class FileHttpResponder implements HttpResponder {
-  private static final Logger logger = LoggerFactory.getLogger(FileHttpResponder.class);
   private final DataSource dataSource;
 
   public static interface DataSource {
