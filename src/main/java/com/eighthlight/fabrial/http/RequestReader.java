@@ -35,11 +35,16 @@ public class RequestReader {
   }
 
   public Request readRequest() throws RequestParsingException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-    Stream<String> lines = reader.lines();
-    Optional<String> firstLine = lines.findFirst();
-    if (!firstLine.isPresent()) {
-      throw new RequestParsingException("Request is empty");
+    Optional<String> firstLine;
+    try {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+      Stream<String> lines = reader.lines();
+      firstLine = lines.findFirst();
+      if (!firstLine.isPresent()) {
+        throw new RequestParsingException("Request is empty");
+      }
+    } catch (Exception e) {
+      throw new RequestParsingException(e);
     }
     try {
       return withRequestLine(firstLine.get()).build();
