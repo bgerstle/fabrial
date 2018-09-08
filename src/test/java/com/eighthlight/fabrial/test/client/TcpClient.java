@@ -2,6 +2,8 @@ package com.eighthlight.fabrial.test.client;
 
 import com.eighthlight.fabrial.utils.Result;
 import org.apache.commons.lang3.ObjectUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,7 +11,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 import static com.eighthlight.fabrial.utils.Result.attempt;
 import static java.lang.Thread.sleep;
@@ -18,7 +19,7 @@ public class TcpClient implements AutoCloseable {
   public final SocketAddress address;
   private Socket socket;
 
-  private static final Logger logger = Logger.getLogger(TcpClient.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(TcpClient.class);
 
   public TcpClient(SocketAddress address) {
     this.address = address;

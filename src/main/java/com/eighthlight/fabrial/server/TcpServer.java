@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpServer implements Closeable {
   // TODO: make logger instance-specific, prefixing logs w/ config & object info
-  private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(TcpServer.class);
 
   public final ServerConfig config;
 

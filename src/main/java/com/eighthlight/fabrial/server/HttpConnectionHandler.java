@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.server;
 
 import com.eighthlight.fabrial.http.*;
+import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -42,11 +43,9 @@ public class HttpConnectionHandler implements ConnectionHandler {
     }
     try (MDC.MDCCloseable reqctxt = MDC.putCloseable("request", request.toString())) {
       logger.trace("Handling request");
-      MDC.put("response", response.toString());
       Response response = responseTo(request);
-      logger.trace("Writing response");
+      logger.trace("Writing response {}", StructuredArguments.kv("response", response));
       response.writeTo(os);
-      MDC.remove("response");
     }
   }
 
@@ -63,13 +62,14 @@ public class HttpConnectionHandler implements ConnectionHandler {
                   .filter(r -> r.matches(request))
                   .findFirst();
 
-    return responder.map(r -> {
-      logger.finer("Found responder " + r);
-      return r.getResponse(request);
-    })
-                    .orElseGet(() -> {
-                      logger.finer("No responder found");
-                      return new Response(HttpVersion.ONE_ONE, 404, null);
-                    });
+    return responder
+        .map(r -> {
+          logger.trace("Found responder {}", StructuredArguments.kv("responder", r));
+          return r.getResponse(request);
+        })
+        .orElseGet(() -> {
+          logger.debug("No responder found");
+          return new Response(HttpVersion.ONE_ONE, 404, null);
+        });
   }
 }

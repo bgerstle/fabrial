@@ -62,8 +62,6 @@ public class App {
   }
 
   public static void main(String[] args) {
-    LogConfig.apply();
-
     Optional<ServerConfig> config = parseConfig(args);
     if (!config.isPresent()) {
       System.exit(1);
