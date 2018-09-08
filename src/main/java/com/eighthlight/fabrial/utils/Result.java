@@ -15,20 +15,24 @@ public class Result<V, E extends Throwable> {
     this.error = error;
   }
 
-  public Optional<V> getValue() {
-    return Optional.ofNullable(value);
-  }
-
-  public Optional<E> getError() {
-    return Optional.ofNullable(error);
-  }
-
   public static <V, E extends Throwable> Result<V, E> failure(E error) {;
     return new Result<>(null, Objects.requireNonNull(error));
   }
 
   public static <V, E extends Throwable> Result<V, E> success(V value) {
     return new Result<>(Objects.requireNonNull(value), null);
+  }
+
+  public Object getEither() {
+    return value != null ? value : error;
+  }
+
+  public Optional<V> getValue() {
+    return Optional.ofNullable(value);
+  }
+
+  public Optional<E> getError() {
+    return Optional.ofNullable(error);
   }
 
   public static <E extends Throwable>
@@ -41,11 +45,19 @@ public class Result<V, E extends Throwable> {
 
   public static <V, E extends Throwable>
   Result<V, E> attempt(CheckedProvider<? extends V, ? extends E> p) {
+
     try {
       return Result.success(p.get());
     } catch (Throwable e) {
       return Result.failure((E)e);
     }
+  }
+
+  public static <V, E extends Throwable> Result<V, E> of(Object o) {
+    if (o instanceof Throwable) {
+      return Result.failure((E)o);
+    }
+    return Result.success((V)o);
   }
 
   public <T> Result<T, E> map(Function<? super V, ? extends T> mapper) {
