@@ -23,14 +23,7 @@ public class HttpStatusLineSerializationTests {
           Response resp = new Response(version,
                                        status,
                                        optReason.orElse(null));
-          ByteArrayOutputStream os = new ByteArrayOutputStream();
-          Object line;
-          try {
-            resp.writeTo(os);
-            line = new String(os.toByteArray(), StandardCharsets.UTF_8);
-          } catch (IOException e) {
-            line = e;
-          }
+          String line = serializeResponse(resp);
           assertThat(line,
                      equalTo("HTTP/" + version + " "
                              + Integer.toString(status) + " "
@@ -38,6 +31,17 @@ public class HttpStatusLineSerializationTests {
                              + "\r\n"));
         });
   }
+
+  private String serializeResponse(Response resp) throws RuntimeException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    try {
+      resp.writeTo(os);
+      return new String(os.toByteArray(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Test
   void successfulResponse() throws Exception {
     ByteArrayOutputStream os = new ByteArrayOutputStream();

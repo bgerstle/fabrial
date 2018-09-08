@@ -15,22 +15,10 @@ public class HttpConnectionHandler implements ConnectionHandler {
   // ???: if this changes, probably need to also "match" the request version somehow?
   public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
-  // TEMP
   public HttpConnectionHandler() {
-    this.responders = Set.of(new HttpResponder() {
-      @Override
-      public boolean matches(Request request) {
-        return request.uri.getPath().equals("/test");
-      }
-
-      @Override
-      public Response getResponse(Request request) {
-        if (!request.method.equals(Method.HEAD)) {
-          return new Response(HttpVersion.ONE_ONE, 501, null);
-        }
-        return new Response(HttpVersion.ONE_ONE, 200, null);
-      }
-    });
+    this.responders = Set.of(
+        new FileHttpResponder(
+            new FileResponderDataSourceImpl(null)));
   }
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
@@ -45,14 +33,15 @@ public class HttpConnectionHandler implements ConnectionHandler {
     // TODO: handle multiple requests on one connection
     Request request;
     try {
-      request = Request.builder().buildWithStream(is);
+      request = new RequestReader(is).readRequest();
     } catch (RequestParsingException e) {
       new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
       return;
     }
+
     logger.info("Parsed request: " + request);
     Response response = responseTo(request);
-    logger.fine("Writing response " + response);
+    logger.info("Writing response " + response);
     response.writeTo(os);
   }
 
@@ -68,8 +57,11 @@ public class HttpConnectionHandler implements ConnectionHandler {
         responders.stream()
                   .filter(r -> r.matches(request))
                   .findFirst();
-    logger.finer("Found responder " + responder);
-    return responder.map(r -> r.getResponse(request))
+
+    return responder.map(r -> {
+      logger.finer("Found responder " + r);
+      return r.getResponse(request);
+    })
                     .orElseGet(() -> {
                       logger.finer("No responder found");
                       return new Response(HttpVersion.ONE_ONE, 404, null);

@@ -1,18 +1,23 @@
 package com.eighthlight.fabrial.test.server;
 
+import com.eighthlight.fabrial.http.HttpVersion;
+import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.RequestBuilder;
 import com.eighthlight.fabrial.server.ServerConfig;
-import com.eighthlight.fabrial.test.client.TcpClient;
+import com.eighthlight.fabrial.test.http.RequestWriter;
+import com.eighthlight.fabrial.test.http.TcpClientFixture;
+import com.eighthlight.fabrial.test.http.TempFileFixture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 
-import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
-import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -37,20 +42,30 @@ public class AppAcceptanceTest {
   }
 
   @Test
-  void clientConnectsToAppServer() {
-    assertThat(() -> {
-      try (TcpClient client = new TcpClient(new InetSocketAddress(ServerConfig.DEFAULT_PORT))) {
-        client.connect(1000);
-        return true;
-      } catch (IOException e) {
-        logger.info("Failed to connect (" + e.getMessage() + "). Retrying in 1s...");
-        try {
-          sleep(1000);
-        } catch (InterruptedException inte) {
-          Thread.currentThread().interrupt();
-        }
-        return false;
-      }
-    }, eventuallyEval(is(true)));
+  void clientConnectsToAppServer() throws IOException {
+    try (TcpClientFixture clientFixture =
+        new TcpClientFixture(ServerConfig.DEFAULT_PORT)) {
+      clientFixture.client.connect(1000, 3, 500);
+    }
+  }
+
+  @Test
+  void sendHEADRequest() throws IOException {
+    try (TcpClientFixture clientFixture = new TcpClientFixture(ServerConfig.DEFAULT_PORT);
+        // TEMP: serve from current directory
+        // TODO: set -d to tmp dir
+        TempFileFixture tempFileFixture = new TempFileFixture(Paths.get("."))) {
+      clientFixture.client.connect(1000, 3, 500);
+      new RequestWriter(clientFixture.client.getOutputStream())
+          .writeRequest(new RequestBuilder()
+                            .withUriString(tempFileFixture.tempFilePath.getFileName().toString())
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withMethod(Method.HEAD)
+                            .build());
+      String response =
+          new BufferedReader(new InputStreamReader((clientFixture.client.getInputStream())))
+              .readLine();
+      assertThat(response, is("HTTP/1.1 200 "));
+    }
   }
 }

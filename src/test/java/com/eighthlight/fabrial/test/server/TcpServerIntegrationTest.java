@@ -15,10 +15,14 @@ public class TcpServerIntegrationTest {
   TcpClient client;
   TcpServer server;
 
+  public TcpServer createServer() {
+    return new TcpServer(new ServerConfig(8080, 50, ServerConfig.DEFAULT_DIRECTORY_PATH));
+  }
+
   @BeforeEach
   void setUp() {
     // shorten read timeout for testing connection closures due to the socket being idle
-    server = new TcpServer(new ServerConfig(8080, 50, ServerConfig.DEFAULT_DIRECTORY_PATH));
+    server = createServer();
     client = new TcpClient(new InetSocketAddress(server.config.port));
   }
 

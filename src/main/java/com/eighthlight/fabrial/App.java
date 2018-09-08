@@ -19,7 +19,7 @@ public class App {
   static final Logger logger = Logger.getLogger(App.class.getName());
 
   public static Optional<ServerConfig> parseConfig(String[] args) {
-    // TODO get project name
+    // TODO run project name
     ArgumentParser parser = ArgumentParsers.newFor("fabrial").build()
         .description("Minimal HTTP file server.");
 
