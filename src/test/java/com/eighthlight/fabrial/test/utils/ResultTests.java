@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ResultTests {
   @Test
@@ -31,11 +32,42 @@ public class ResultTests {
   @Test
   void wrapsSubtypeExceptions() {
     assertThrows(RuntimeException.class, () ->
-        Result
-            .<ObjectUtils.Null, Exception>attempt(() -> {
+        Result.<ObjectUtils.Null, Exception>attempt(() -> {
               throw new RuntimeException();
             })
             .orElseThrow()
+    );
+  }
+
+  @Test
+  void flatmapsNewValue() {
+    assertThat(
+        Result.attempt(() -> "foo")
+              .flatMap((f) -> Result.success(f + "bar"))
+              .orElseAssert(),
+        is("foobar")
+    );
+  }
+
+  @Test
+  void flatmapsNewError() {
+    assertThrows(StringIndexOutOfBoundsException.class, () ->
+        Result.success("foo")
+              .flatMapAttempt((f) -> f.charAt(f.length()))
+              .orElseThrow()
+    );
+  }
+
+  @Test
+  void errorsSuppressSubsequentMaps() {
+    assertThrows(StringIndexOutOfBoundsException.class, () ->
+        Result.success("foo")
+              .flatMapAttempt((f) -> f.charAt(f.length()))
+              .map((c) -> {
+                fail();
+                return Character.toUpperCase(c);
+              })
+              .orElseThrow()
     );
   }
 }

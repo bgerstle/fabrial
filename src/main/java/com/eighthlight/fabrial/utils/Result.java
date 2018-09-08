@@ -23,14 +23,24 @@ public class Result<V, E extends Throwable> {
     return Optional.ofNullable(error);
   }
 
-  public static <E extends Throwable> Result<ObjectUtils.Null, E> attempt(CheckedRunnable<? extends E> r) {
+  public static <V, E extends Throwable> Result<V, E> failure(E error) {;
+    return new Result<>(null, Objects.requireNonNull(error));
+  }
+
+  public static <V, E extends Throwable> Result<V, E> success(V value) {
+    return new Result<>(Objects.requireNonNull(value), null);
+  }
+
+  public static <E extends Throwable>
+  Result<ObjectUtils.Null, E> attempt(CheckedRunnable<? extends E> r) {
     return attempt(() -> {
       r.run();
       return ObjectUtils.NULL;
     });
   }
 
-  public static <V, E extends Throwable> Result<V, E> attempt(CheckedProvider<? extends V, ? extends E> p) {
+  public static <V, E extends Throwable>
+  Result<V, E> attempt(CheckedProvider<? extends V, ? extends E> p) {
     try {
       return Result.success(p.get());
     } catch (Throwable e) {
@@ -38,27 +48,28 @@ public class Result<V, E extends Throwable> {
     }
   }
 
-  public static <V, E extends Throwable> Result<V, E> failure(E error) {
-    Objects.requireNonNull(error);
-    return new Result<>(null, error);
-  }
-
-  public static <V, E extends Throwable> Result<V, E> success(V value) {
-    Objects.requireNonNull(value);
-    return new Result<>(value, null);
-  }
-
   public <T> Result<T, E> map(Function<? super V, ? extends T> mapper) {
     return Optional.ofNullable(error)
+                   // Result.failure type must be specified,
+                   // or type of fallback below can't be determined
                    .map(e -> Result.<T, E>failure(e))
                    .orElseGet(() -> Result.success(mapper.apply(value)));
   }
 
-  public <T> Result<T, E> flatMap(Function<? super V, ? extends Result<? extends T, ? extends E>> mapper) {
-    return (Result<T, E>) getValue()
-        .map(mapper::apply)
-        .map((t) -> Result.success(t))
-        .orElse(Result.failure(error));
+  public <T> Result<T, E> flatMapAttempt(CheckedFunction<? super V, ? extends T, ? super E> cf) {
+    return getValue()
+        .map((v) -> (Result<T, E>)attempt(() -> cf.apply(v)))
+        .orElseGet(() -> Result.failure(Objects.requireNonNull(error)));
+  }
+
+  public <T> Result<T, E> flatMap(Function<? super V, ? extends Result<? extends T, ? super E>> mapper) {
+    return getValue()
+        .map((v) ->
+          Objects.requireNonNull((Result<T, E>) mapper.apply(v))
+        )
+        .orElseGet(() ->
+                       Result.failure(Objects.requireNonNull(error))
+        );
   }
 
   public V orElseThrow() throws E {
