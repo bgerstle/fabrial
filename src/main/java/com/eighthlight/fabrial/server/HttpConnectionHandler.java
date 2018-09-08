@@ -68,7 +68,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
           return r.getResponse(request);
         })
         .orElseGet(() -> {
-          logger.debug("No responder found");
+          logger.trace("No responder found");
           return new Response(HttpVersion.ONE_ONE, 404, null);
         });
   }
