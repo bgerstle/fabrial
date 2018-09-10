@@ -2,9 +2,6 @@
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
     <destination>"${stashDest}"</destination>
     <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>${stashLevel:-OFF}</level>
-    </filter>
   </appender>
 
 
@@ -12,9 +9,6 @@
     <encoder>
       <pattern>%-4relative [%thread] %highlight(%-5level) %logger{35} - %msg %ex %mdc %n</pattern>
     </encoder>
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>${consoleLevel:-DEBUG}</level>
-    </filter>
   </appender>
 
   <root level="ALL">

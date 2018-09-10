@@ -3,12 +3,9 @@
     <encoder>
       <pattern>%-4relative [%thread] %highlight(%-5level) %logger{35} - %msg %ex %mdc %n</pattern>
     </encoder>
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>${consoleLevel:-DEBUG}</level>
-    </filter>
   </appender>
 
-  <root level="ALL">
+  <root level="${rootLevel:-DEBUG}">
     <appender-ref ref="console"/>
   </root>
 </configuration>
