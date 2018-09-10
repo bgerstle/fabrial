@@ -61,7 +61,6 @@ public class AppAcceptanceTest {
   }
 
   private static String responseToHeadForFileInDir(Path dir, Path path, int port) {
-    logger.trace("Requesting " + path + " in " + dir);
     String relPathStr =
         Paths.get("/",
                   dir.relativize(path)
