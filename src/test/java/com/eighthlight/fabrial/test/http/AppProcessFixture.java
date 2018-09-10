@@ -14,9 +14,8 @@ public class AppProcessFixture implements AutoCloseable {
                            new ProcessBuilder(
                                "java",
                                // propagate log level to app process
-                               Optional.ofNullable(System.getProperty("rootLevel"))
-                                       .map((lvl) -> "-DrootLevel=" + lvl)
-                                       .orElse(""),
+                               "-DrootLevel="
+                               + Optional.ofNullable(System.getProperty("rootLevel")).orElse("debug"),
                                // suppress logback errors
                                "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
                                "-jar",
