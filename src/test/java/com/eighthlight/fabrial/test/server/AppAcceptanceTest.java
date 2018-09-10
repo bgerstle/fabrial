@@ -42,8 +42,15 @@ public class AppAcceptanceTest {
                 testDirDepth + 1,
                 (p, attrs) -> true)
           .forEach((path) -> {
-            assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath, path, testPort),
+            assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath,
+                                                  path,
+                                                  testPort),
                        is("HTTP/1.1 200 "));
+
+            assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath,
+                                                  Paths.get(path.toString(), "doesntexist"),
+                                                  testPort),
+                       is("HTTP/1.1 404 "));
           });
     }
   }
