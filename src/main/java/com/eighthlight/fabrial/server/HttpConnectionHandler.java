@@ -4,7 +4,6 @@ import com.eighthlight.fabrial.http.*;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -41,12 +40,10 @@ public class HttpConnectionHandler implements ConnectionHandler {
       new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
       return;
     }
-    try (MDC.MDCCloseable reqctxt = MDC.putCloseable("request", request.toString())) {
-      logger.trace("Handling request");
-      Response response = responseTo(request);
-      logger.info("Writing response {}", StructuredArguments.kv("response", response));
-      response.writeTo(os);
-    }
+    logger.trace("Handling request {}", StructuredArguments.kv("request", request));
+    Response response = responseTo(request);
+    logger.info("Writing response {}", StructuredArguments.kv("response", response));
+    response.writeTo(os);
   }
 
   public Response responseTo(Request request) {
