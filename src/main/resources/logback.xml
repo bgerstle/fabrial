@@ -1,6 +1,6 @@
 <configuration>
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-    <destination>"${stashDest}"</destination>
+    <destination>${stashDest}</destination>
     <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
   </appender>
 
