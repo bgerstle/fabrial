@@ -11,7 +11,7 @@
     </encoder>
   </appender>
 
-  <root level="ALL">
+  <root level="${rootLevel:-DEBUG}">
     <appender-ref ref="stash"/>
     <appender-ref ref="console"/>
   </root>
