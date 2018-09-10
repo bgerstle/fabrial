@@ -11,6 +11,8 @@ import com.eighthlight.fabrial.test.http.TcpClientFixture;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -22,6 +24,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @Tag("acceptance")
 public class AppAcceptanceTest {
+  private static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class);
+
   @Test
   void clientConnectsToAppServer() throws IOException {
     int testPort = 8081;
@@ -41,6 +45,7 @@ public class AppAcceptanceTest {
           .find(tempDirectoryFixture.tempDirPath,
                 testDirDepth + 1,
                 (p, attrs) -> true)
+          .parallel()
           .forEach((path) -> {
             assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath,
                                                   path,
@@ -56,30 +61,29 @@ public class AppAcceptanceTest {
   }
 
   private static String responseToHeadForFileInDir(Path dir, Path path, int port) {
-    {
-      String relPathStr =
-          Paths.get("/",
-                    dir.relativize(path)
-                         .toString())
-               .toString();
-      return Result.attempt(() -> {
-        // TEMP: need to recreate client for each file until multiple requests per conn is supported
-        try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
-          clientFixture.client.connect(1000, 3, 1000);
-          OutputStream os = clientFixture.client.getOutputStream();
-          InputStream is = clientFixture.client.getInputStream();
-          new RequestWriter(os)
-              .writeRequest(new RequestBuilder()
-                                .withUriString(relPathStr)
-                                .withVersion(HttpVersion.ONE_ONE)
-                                .withMethod(Method.HEAD)
-                                .build());
-          return new BufferedReader(new InputStreamReader((is)))
-              .lines()
-              .filter((s) -> s != null && !s.isEmpty()).findFirst()
-              .get();
-        }
-      }).orElseAssert();
-    }
+    logger.trace("Requesting " + path + " in " + dir);
+    String relPathStr =
+        Paths.get("/",
+                  dir.relativize(path)
+                     .toString())
+             .toString();
+    return Result.attempt(() -> {
+      // TEMP: need to recreate client for each file until multiple requests per conn is supported
+      try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
+        clientFixture.client.connect(1000, 3, 1000);
+        OutputStream os = clientFixture.client.getOutputStream();
+        InputStream is = clientFixture.client.getInputStream();
+        new RequestWriter(os)
+            .writeRequest(new RequestBuilder()
+                              .withUriString(relPathStr)
+                              .withVersion(HttpVersion.ONE_ONE)
+                              .withMethod(Method.HEAD)
+                              .build());
+        return new BufferedReader(new InputStreamReader((is)))
+            .lines()
+            .filter((s) -> s != null && !s.isEmpty()).findFirst()
+            .get();
+      }
+    }).orElseAssert();
   }
 }
