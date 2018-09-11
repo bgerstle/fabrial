@@ -25,7 +25,7 @@ import java.util.Map;
  *  "^" / "_" / "‘" / "|" / "~" / DIGIT / ALPHA
  *      OWS = *( SP / HTAB )
  *
- *  and "VCHAR" is any ASCII character.
+ *  and "VCHAR" is any visible ASCII character. Field values also can't contain delimiters (e.g. ":").
  *
  *  This implementation will defer on obsolete folding (since it's obsolete)...
  */
