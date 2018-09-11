@@ -15,13 +15,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
   private static final Logger logger = LoggerFactory.getLogger(HttpConnectionHandler.class.getName());
 
   // ???: if this changes, probably need to also "match" the request version somehow?
-  public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
-
-  public HttpConnectionHandler() {
-    this.responders = Set.of(
-        new FileHttpResponder(
-            new FileResponderDataSourceImpl(null)));
-  }
+  private static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
     assert !responders.isEmpty();

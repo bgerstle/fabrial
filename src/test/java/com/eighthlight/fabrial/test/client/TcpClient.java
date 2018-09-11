@@ -27,11 +27,7 @@ public class TcpClient implements AutoCloseable {
   }
 
   public void connect() throws IOException {
-    connect(100, 0, 0);
-  }
-
-  public void connect(int timeout) throws IOException {
-    connect(timeout, 0, 0);
+    connect(1000, 3, 1000);
   }
 
   public void connect(int timeout, int retries, int delay) throws IOException {

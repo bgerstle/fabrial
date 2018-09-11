@@ -4,60 +4,46 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.RequestBuilder;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
+import com.eighthlight.fabrial.test.client.TcpClient;
+import com.eighthlight.fabrial.test.file.TempFileFixture;
 import com.eighthlight.fabrial.test.http.RequestWriter;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.eighthlight.fabrial.test.http.TcpClientFixture;
+import com.eighthlight.fabrial.test.http.TcpServerFixture;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static com.eighthlight.fabrial.http.HttpVersion.ONE_ONE;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class HttpHeadIntegrationTest extends TcpServerIntegrationTest {
-  Path tempFilePath;
-
-  @Override
-  public TcpServer createServer() {
-    try {
-      Path tempDir = Files.createTempDirectory("test");
-      tempFilePath = Files.createTempFile(tempDir,"test",null);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return new TcpServer(new ServerConfig(8080, 50, tempFilePath.getParent()));
-  }
-
-  @AfterEach
-  void deleteTempFile() {
-    try {
-      Files.deleteIfExists(tempFilePath.getParent());
-    } catch (IOException e) {}
-  }
-
-  @BeforeEach
-  void startAndConnect() throws IOException {
-    server.start();
-    client.connect();
-  }
-
+public class HttpHeadIntegrationTest {
   @Test
   void simpleHEADRequest() throws Throwable {
-    new RequestWriter(client.getOutputStream())
-        .writeRequest(
-            new RequestBuilder()
-                   .withVersion(ONE_ONE)
-                   .withMethod(Method.HEAD)
-                   .withUriString(tempFilePath.getFileName().toString())
-                   .build());
-    String response =
-        new BufferedReader(new InputStreamReader((client.getInputStream())))
-            .readLine();
-    assertThat(response, containsString("200"));
+    try (TempFileFixture tempFileFixture = new TempFileFixture(Paths.get("/tmp"));
+        TcpServerFixture serverFixture =
+        new TcpServerFixture(new ServerConfig(ServerConfig.DEFAULT_PORT,
+                                              ServerConfig.DEFAULT_READ_TIMEOUT,
+                                              Paths.get("/tmp")));
+        TcpClientFixture clientFixture =
+            new TcpClientFixture(serverFixture.server.config.port)) {
+      TcpServer server = serverFixture.server;
+      TcpClient client = clientFixture.client;
+      server.start();
+      client.connect();
+      new RequestWriter(client.getOutputStream())
+          .writeRequest(
+              new RequestBuilder()
+                  .withVersion(ONE_ONE)
+                  .withMethod(Method.HEAD)
+                  .withUriString(tempFileFixture.tempFilePath.getFileName().toString())
+                  .build());
+      String response =
+          new BufferedReader(new InputStreamReader((client.getInputStream())))
+              .readLine();
+      assertThat(response, containsString("200"));
+    }
   }
 }
