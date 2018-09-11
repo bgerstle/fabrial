@@ -127,6 +127,8 @@ public class FileHttpResponderTest {
                        allOf(
                            containsInAnyOrder("GET", "HEAD", "OPTIONS", "PUT", "DELETE"),
                            not(contains("POST"))));
+            assertThat(resp.headers.get("Content-Length"),
+                       is("0"));
           });
         });
   }

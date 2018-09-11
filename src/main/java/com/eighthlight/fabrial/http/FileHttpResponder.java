@@ -44,7 +44,9 @@ public class FileHttpResponder implements HttpResponder {
                                        .stream()
                                        .map(Method::name)
                                        .reduce((m, s) -> s + ", " + m)
-                                       .get()));
+                                       .get(),
+                                   "Content-Length",
+                                   "0"));
       default:
         return new Response(HttpVersion.ONE_ONE, 501, null);
     }
