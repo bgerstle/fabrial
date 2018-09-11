@@ -18,4 +18,13 @@ public class HttpHeaderWriterSerializationTests {
       assertThat(os.toString(), is("Allow: GET"));
     }
   }
+
+  @Test
+  void allowMultipleMethods() throws IOException {
+    try (var os = new ByteArrayOutputStream()) {
+      var writer = new HttpHeaderWriter(os);
+      writer.writeField("Allow", "GET,HEAD,OPTIONS");
+      assertThat(os.toString(), is("Allow: GET,HEAD,OPTIONS"));
+    }
+  }
 }
