@@ -25,7 +25,7 @@ public class FileHttpResponder implements HttpResponder {
   @Override
   public Response getResponse(Request request) {
     boolean fileExists = dataSource.fileExistsAtPath(Paths.get(request.uri.getPath()));
-    if (!fileExists) {
+    if (!fileExists && request.method != Method.OPTIONS) {
       return new Response(HttpVersion.ONE_ONE, 404, null);
     }
     switch (request.method) {
@@ -36,10 +36,14 @@ public class FileHttpResponder implements HttpResponder {
                             200,
                             null,
                             Map.of("Allow",
-                                   List.of(Method.HEAD, Method.OPTIONS)
+                                   List.of(Method.GET,
+                                           Method.HEAD,
+                                           Method.OPTIONS,
+                                           Method.PUT,
+                                           Method.DELETE)
                                        .stream()
                                        .map(Method::name)
-                                       .reduce((m, s) -> s + "," + m)
+                                       .reduce((m, s) -> s + ", " + m)
                                        .get()));
       default:
         return new Response(HttpVersion.ONE_ONE, 501, null);

@@ -22,7 +22,7 @@ public class HttpResponseHeaderSerializationTest {
     try (var os = new ByteArrayOutputStream()) {
       response.writeTo(os);
       var responseStr = os.toString();
-      assertThat(responseStr , is("HTTP/1.1 200 Allow: HEAD,OPTIONS\r\n\r\n"));
+      assertThat(responseStr , is("HTTP/1.1 200 \r\nAllow: HEAD,OPTIONS \r\n\r\n"));
     }
   }
 }

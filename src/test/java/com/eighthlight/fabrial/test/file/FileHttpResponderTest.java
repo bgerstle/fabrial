@@ -12,8 +12,9 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.paths;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.core.AllOf.allOf;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
 
@@ -104,22 +105,28 @@ public class FileHttpResponderTest {
   }
 
   @Test
-  void responds200WithAllowToOptionsOnExistingFiles() {
+  void responds200WithAllowToOptionsOnAnyPath() {
     forAllListsOfExistingAndNonExistingFiles()
         .checkAssert((files) -> {
           Set<Path> existingFilePaths = files.get(0);
+          Set<Path> nonExistingFilePaths = files.get(1);
           FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
-          existingFilePaths.forEach(p -> {
+          ArrayList<Path> allFilePaths = new ArrayList<>();
+          allFilePaths.addAll(existingFilePaths);
+          allFilePaths.addAll(nonExistingFilePaths);
+          allFilePaths.forEach(p -> {
             Request req =
                 new Request(HttpVersion.ONE_ONE,
                             Method.OPTIONS,
                             Result.attempt(() -> new URI(p.toString())).orElseAssert());
-            assertThat(
-                responder.getResponse(req),
-                equalTo(new Response(HttpVersion.ONE_ONE,
-                                     200,
-                                     null,
-                                     Map.of("Allow", "HEAD,OPTIONS"))));
+            var resp = responder.getResponse(req);
+            assertThat(resp.version, equalTo(HttpVersion.ONE_ONE));
+            assertThat(resp.statusCode, equalTo(200));
+            assertThat(resp.reason, nullValue());
+            assertThat(Arrays.asList(resp.headers.get("Allow").split(", ")),
+                       allOf(
+                           containsInAnyOrder("GET", "HEAD", "OPTIONS", "PUT", "DELETE"),
+                           not(contains("POST"))));
           });
         });
   }

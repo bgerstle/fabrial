@@ -75,9 +75,12 @@ public class Response {
      */
 
     writer.write(getStatusLine());
-    writer.flush();
-    new HttpHeaderWriter(os).writeFields(headers);
     writer.write(LINE_SEPARATOR);
+    writer.flush();
+    if (!headers.isEmpty()) {
+      new HttpHeaderWriter(os).writeFields(headers);
+      writer.write(LINE_SEPARATOR);
+    }
     writer.flush();
   }
 
@@ -90,12 +93,13 @@ public class Response {
     Response response = (Response) o;
     return statusCode == response.statusCode &&
            Objects.equals(version, response.version) &&
-           Objects.equals(reason, response.reason);
+           Objects.equals(reason, response.reason) &&
+           Objects.equals(headers, response.headers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(version, statusCode, reason);
+    return Objects.hash(version, statusCode, reason, headers);
   }
 
   @Override
@@ -103,7 +107,8 @@ public class Response {
     return "Response{" +
            "version='" + version + '\'' +
            ", statusCode=" + statusCode +
-           ", reason=" + reason +
+           ", reason='" + reason + '\'' +
+           ", headers=" + headers +
            '}';
   }
 }

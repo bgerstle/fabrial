@@ -38,9 +38,15 @@ public class HttpHeaderWriter {
 
 
   private void writeField(String name, String value) throws IOException {
+    // field-name
     os.write(name);
+    // delimiter + OWS
     os.write(": ");
+    // field-value
     os.write(value);
+    // OWS
+    os.write(" ");
+    // CRLF (part of HTTP message)
     os.write("\r\n");
     os.flush();
   }
