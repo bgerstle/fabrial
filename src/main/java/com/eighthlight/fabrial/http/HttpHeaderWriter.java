@@ -38,9 +38,9 @@ public class HttpHeaderWriter {
 
 
   public void writeField(String name, String value) throws IOException {
-    os.write("Allow");
+    os.write(name);
     os.write(": ");
-    os.write("GET");
+    os.write(value);
     os.flush();
   }
 
