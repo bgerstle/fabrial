@@ -1,10 +1,13 @@
 package com.eighthlight.fabrial.http;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -13,12 +16,18 @@ public class Response {
 
   public final String version;
   public final int statusCode;
-  public final Optional<String> reason;
+  public final @Nullable String reason;
+  public final Map<String, String> headers;
 
   public Response(String version, int statusCode, String reason) {
-    this.version = version;
+    this(version, statusCode, reason, null);
+  }
+
+  public Response(String version, int statusCode, String reason, Map<String, String> headers) {
+    this.version = Objects.requireNonNull(version);
     this.statusCode = statusCode;
-    this.reason = Optional.ofNullable(reason).filter(s -> !s.isEmpty());
+    this.reason = reason;
+    this.headers = Optional.ofNullable(headers).map(Map::copyOf).orElse(Map.of());
 
     if (!HttpVersion.allVersions.contains(this.version)) {
       throw new IllegalArgumentException(
@@ -29,8 +38,9 @@ public class Response {
           statusCode + " is not a valid status code [100, 999]."
       );
     }
-    if (this.reason.isPresent()
-        && !this.reason.get().chars().allMatch(c -> StandardCharsets.US_ASCII.newEncoder().canEncode((char)c))) {
+    if (reason != null
+        && reason.chars()
+                 .allMatch(c -> StandardCharsets.US_ASCII.newEncoder().canEncode((char)c))) {
       // TODO: allow HTAB and opaque octets
       throw new IllegalArgumentException(
           reason + " contains illegal characters (must be ASCII)."
@@ -52,10 +62,7 @@ public class Response {
     builder.append(" ");
     builder.append(statusCode);
     builder.append(" ");
-    if (reason.isPresent()) {
-      builder.append(reason.get());
-      // no space after reason (though reason could contain a space)
-    }
+    Optional.ofNullable(reason).ifPresent(builder::append);
     return builder.toString();
   }
 
