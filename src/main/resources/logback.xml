@@ -1,8 +1,8 @@
 <configuration>
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-    <destination>${stashDest}</destination>
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-  </appender>
+  <!--<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
+    <!--<destination>${stashDest}</destination>-->
+    <!--<encoder class="net.logstash.logback.encoder.LogstashEncoder" />-->
+  <!--</appender>-->
 
 
   <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
