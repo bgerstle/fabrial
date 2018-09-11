@@ -9,10 +9,7 @@ import org.quicktheories.core.Gen;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.paths;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -102,6 +99,28 @@ public class FileHttpResponderTest {
             assertThat(
                 responder.getResponse(req),
                 equalTo(new Response(HttpVersion.ONE_ONE, 404, null)));
+          });
+        });
+  }
+
+  @Test
+  void responds200WithAllowToOptionsOnExistingFiles() {
+    forAllListsOfExistingAndNonExistingFiles()
+        .checkAssert((files) -> {
+          Set<Path> existingFilePaths = files.get(0);
+          Set<Path> nonExistingFilePaths = files.get(1);
+          FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
+          nonExistingFilePaths.forEach(p -> {
+            Request req =
+                new Request(HttpVersion.ONE_ONE,
+                            Method.OPTIONS,
+                            Result.attempt(() -> new URI(p.toString())).orElseAssert());
+            assertThat(
+                responder.getResponse(req),
+                equalTo(new Response(HttpVersion.ONE_ONE,
+                                     200,
+                                     null,
+                                     Map.of("Allow", "HEAD,OPTIONS"))));
           });
         });
   }
