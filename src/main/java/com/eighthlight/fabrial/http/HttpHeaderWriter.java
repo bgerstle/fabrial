@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.http;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.Map;
@@ -36,8 +37,11 @@ public class HttpHeaderWriter {
   }
 
 
-  public void writeField(String name, String value) {
-
+  public void writeField(String name, String value) throws IOException {
+    os.write("Allow");
+    os.write(": ");
+    os.write("GET");
+    os.flush();
   }
 
   public void writeFields(Map<String, String> fields) {
