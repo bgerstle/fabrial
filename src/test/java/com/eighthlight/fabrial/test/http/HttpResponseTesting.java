@@ -14,7 +14,6 @@ import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.Generate.oneOf;
 import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.integers;
-import static org.quicktheories.generators.SourceDSL.strings;
 
 public class HttpResponseTesting {
   static Gen<Integer> invalidStatuses() {
@@ -32,10 +31,11 @@ public class HttpResponseTesting {
   void constructsWithValidInput() {
     qt().forAll(httpVersions(), statusCodes(), responseReasons(32).toOptionals(30))
         .checkAssert((v, s, r) -> {
-          Response resp = new Response(v, s, r.orElse(null));
+          var nullableReason = r.orElse(null);
+          Response resp = new Response(v, s, nullableReason);
           assertThat(resp.version, equalTo(v));
           assertThat(resp.statusCode, equalTo(s));
-          assertThat(resp.reason, equalTo(r));
+          assertThat(resp.reason, equalTo(nullableReason));
         });
   }
 

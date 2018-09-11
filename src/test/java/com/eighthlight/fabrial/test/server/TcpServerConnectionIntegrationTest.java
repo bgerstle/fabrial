@@ -46,7 +46,7 @@ public class TcpServerConnectionIntegrationTest {
       serverFixture.server.close();
       assertThat(() -> serverFixture.server.getConnectionCount(),
                  eventuallyEval(is(0),
-                                Duration.ofSeconds(10)));
+                                Duration.ofSeconds(30)));
     }
   }
 

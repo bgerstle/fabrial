@@ -1,7 +1,5 @@
 package com.eighthlight.fabrial.http;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,7 +14,7 @@ public class Response {
 
   public final String version;
   public final int statusCode;
-  public final @Nullable String reason;
+  public final String reason;
   public final Map<String, String> headers;
 
   public Response(String version, int statusCode, String reason) {
@@ -39,7 +37,7 @@ public class Response {
       );
     }
     if (reason != null
-        && reason.chars()
+        && !reason.chars()
                  .allMatch(c -> StandardCharsets.US_ASCII.newEncoder().canEncode((char)c))) {
       // TODO: allow HTAB and opaque octets
       throw new IllegalArgumentException(

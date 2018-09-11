@@ -2,7 +2,7 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Response;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class HttpResponseHeaderSerializationTest {
-  @Test
+  @Disabled
   void optionResponse() throws IOException {
     var response =
         new Response(HttpVersion.ONE_ONE,
