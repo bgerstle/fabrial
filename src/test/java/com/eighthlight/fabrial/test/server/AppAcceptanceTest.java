@@ -3,20 +3,20 @@ package com.eighthlight.fabrial.test.server;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.RequestBuilder;
-import com.eighthlight.fabrial.server.ServerConfig;
+import com.eighthlight.fabrial.test.file.TempDirectoryFixture;
+import com.eighthlight.fabrial.test.file.TempFileFixtures;
+import com.eighthlight.fabrial.test.http.AppProcessFixture;
 import com.eighthlight.fabrial.test.http.RequestWriter;
 import com.eighthlight.fabrial.test.http.TcpClientFixture;
-import com.eighthlight.fabrial.test.http.TempFileFixture;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -24,53 +24,65 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @Tag("acceptance")
 public class AppAcceptanceTest {
-  static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class.getName());
-
-  Process appProcess;
-
-  @BeforeEach
-  void setUp() throws IOException {
-    // hard-coded to SNAPSHOT version. might need to fix this eventually...
-    appProcess =
-        new ProcessBuilder(
-            "java",
-            // disable logback error messages (no logstash here)
-            "-Dlogback.statusListenerClass=ch.qos.logback.core.status.NopStatusListener",
-            "-jar", "./build/libs/fabrial-all-1.0-SNAPSHOT.jar")
-            .inheritIO()
-            .start();
-  }
-
-  @AfterEach
-  void tearDown() {
-    appProcess.destroy();
-  }
+  private static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class);
 
   @Test
   void clientConnectsToAppServer() throws IOException {
-    try (TcpClientFixture clientFixture =
-        new TcpClientFixture(ServerConfig.DEFAULT_PORT)) {
+    int testPort = 8081;
+    try (AppProcessFixture appFixture = new AppProcessFixture(testPort , null);
+        TcpClientFixture clientFixture = new TcpClientFixture(testPort )) {
       clientFixture.client.connect(1000, 3, 1000);
     }
   }
 
   @Test
   void sendHEADRequest() throws IOException {
-    try (TcpClientFixture clientFixture = new TcpClientFixture(ServerConfig.DEFAULT_PORT);
-        // TEMP: serve from current directory
-        // TODO: set -d to tmp dir
-        TempFileFixture tempFileFixture = new TempFileFixture(Paths.get("."))) {
-      clientFixture.client.connect(1000, 3, 1000);
-      new RequestWriter(clientFixture.client.getOutputStream())
-          .writeRequest(new RequestBuilder()
-                            .withUriString(tempFileFixture.tempFilePath.getFileName().toString())
-                            .withVersion(HttpVersion.ONE_ONE)
-                            .withMethod(Method.HEAD)
-                            .build());
-      String response =
-          new BufferedReader(new InputStreamReader((clientFixture.client.getInputStream())))
-              .readLine();
-      assertThat(response, is("HTTP/1.1 200 "));
+    int testPort = 8082;
+    int testDirDepth = 3;
+    try (TempDirectoryFixture tempDirectoryFixture = TempFileFixtures.populatedTempDir(5, testDirDepth);
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tempDirectoryFixture.tempDirPath.toString())) {
+      Files
+          .find(tempDirectoryFixture.tempDirPath,
+                testDirDepth + 1,
+                (p, attrs) -> true)
+          .parallel()
+          .forEach((path) -> {
+            assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath,
+                                                  path,
+                                                  testPort),
+                       is("HTTP/1.1 200 "));
+
+            assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath,
+                                                  Paths.get(path.toString(), "doesntexist"),
+                                                  testPort),
+                       is("HTTP/1.1 404 "));
+          });
     }
+  }
+
+  private static String responseToHeadForFileInDir(Path dir, Path path, int port) {
+    String relPathStr =
+        Paths.get("/",
+                  dir.relativize(path)
+                     .toString())
+             .toString();
+    return Result.attempt(() -> {
+      // TEMP: need to recreate client for each file until multiple requests per conn is supported
+      try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
+        clientFixture.client.connect(1000, 3, 1000);
+        OutputStream os = clientFixture.client.getOutputStream();
+        InputStream is = clientFixture.client.getInputStream();
+        new RequestWriter(os)
+            .writeRequest(new RequestBuilder()
+                              .withUriString(relPathStr)
+                              .withVersion(HttpVersion.ONE_ONE)
+                              .withMethod(Method.HEAD)
+                              .build());
+        return new BufferedReader(new InputStreamReader((is)))
+            .lines()
+            .filter((s) -> s != null && !s.isEmpty()).findFirst()
+            .get();
+      }
+    }).orElseAssert();
   }
 }

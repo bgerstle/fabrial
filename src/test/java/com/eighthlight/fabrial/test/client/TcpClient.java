@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.test.client;
 
 import com.eighthlight.fabrial.utils.Result;
+import net.logstash.logback.argument.StructuredArguments;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +27,7 @@ public class TcpClient implements AutoCloseable {
   }
 
   public void connect() throws IOException {
-    connect(100, 0, 0);
-  }
-
-  public void connect(int timeout) throws IOException {
-    connect(timeout, 0, 0);
+    connect(1000, 3, 1000);
   }
 
   public void connect(int timeout, int retries, int delay) throws IOException {
@@ -48,7 +45,10 @@ public class TcpClient implements AutoCloseable {
       throw ioe.get();
     }
 
-    logger.info("Failed to connect (" + ioe.get().getMessage() + "). Retrying in " + delay + "ms");
+    logger.info("Retrying... {} (ms) {}",
+                StructuredArguments.kv("delay", delay),
+                StructuredArguments.kv("retries", remainingTries),
+                ioe);
     try {
       sleep(delay);
     } catch (InterruptedException e) {

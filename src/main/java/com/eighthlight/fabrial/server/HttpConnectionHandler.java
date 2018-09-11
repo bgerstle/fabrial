@@ -4,7 +4,6 @@ import com.eighthlight.fabrial.http.*;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,13 +15,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
   private static final Logger logger = LoggerFactory.getLogger(HttpConnectionHandler.class.getName());
 
   // ???: if this changes, probably need to also "match" the request version somehow?
-  public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
-
-  public HttpConnectionHandler() {
-    this.responders = Set.of(
-        new FileHttpResponder(
-            new FileResponderDataSourceImpl(null)));
-  }
+  private static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
   public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
     assert !responders.isEmpty();
@@ -41,12 +34,10 @@ public class HttpConnectionHandler implements ConnectionHandler {
       new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
       return;
     }
-    try (MDC.MDCCloseable reqctxt = MDC.putCloseable("request", request.toString())) {
-      logger.trace("Handling request");
-      Response response = responseTo(request);
-      logger.info("Writing response {}", StructuredArguments.kv("response", response));
-      response.writeTo(os);
-    }
+    logger.trace("Handling request {}", StructuredArguments.kv("request", request));
+    Response response = responseTo(request);
+    logger.info("Writing response {}", StructuredArguments.kv("response", response));
+    response.writeTo(os);
   }
 
   public Response responseTo(Request request) {

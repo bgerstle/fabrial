@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test.http;
+package com.eighthlight.fabrial.test.file;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
