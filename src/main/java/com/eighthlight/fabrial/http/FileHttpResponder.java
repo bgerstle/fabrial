@@ -22,12 +22,13 @@ public class FileHttpResponder implements HttpResponder {
 
   @Override
   public Response getResponse(Request request) {
-    // FIXME: should be 501 for unsupported methods on existing files
+    boolean fileExists = dataSource.fileExistsAtPath(Paths.get(request.uri.getPath()));
+    if (!fileExists) {
+      return new Response(HttpVersion.ONE_ONE, 404, null);
+    }
     if (!request.method.equals(Method.HEAD)) {
       return new Response(HttpVersion.ONE_ONE, 501, null);
     }
-    boolean fileExists = dataSource.fileExistsAtPath(Paths.get(request.uri.getPath()));
-    int statusCode = fileExists ? 200 : 404;
-    return new Response(HttpVersion.ONE_ONE, statusCode, null);
+    return new Response(HttpVersion.ONE_ONE, 200, null);
   }
 }
