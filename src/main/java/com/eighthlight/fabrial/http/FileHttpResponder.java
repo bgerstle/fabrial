@@ -16,7 +16,7 @@ public class FileHttpResponder implements HttpResponder {
 
   @Override
   public boolean matches(Request request) {
-    // ideally this would have its own namespace, like `/static/*`
+    // ideally this would have its own namespace, like `/static/*` or `/files/*`
     return true;
   }
 
