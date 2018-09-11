@@ -75,6 +75,8 @@ public class Response {
      */
 
     writer.write(getStatusLine());
+    writer.flush();
+    new HttpHeaderWriter(os).writeFields(headers);
     writer.write(LINE_SEPARATOR);
     writer.flush();
   }

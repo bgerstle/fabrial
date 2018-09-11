@@ -37,17 +37,17 @@ public class HttpHeaderWriter {
   }
 
 
-  public void writeField(String name, String value) throws IOException {
+  private void writeField(String name, String value) throws IOException {
     os.write(name);
     os.write(": ");
     os.write(value);
+    os.write("\r\n");
     os.flush();
   }
 
   public void writeFields(Map<String, String> fields) throws IOException {
     for (Map.Entry<String, String> entry: fields.entrySet()) {
       writeField(entry.getKey(), entry.getValue());
-      os.write(" ");
     }
   }
 }
