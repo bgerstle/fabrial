@@ -44,7 +44,10 @@ public class HttpHeaderWriter {
     os.flush();
   }
 
-  public void writeFields(Map<String, String> fields) {
-
+  public void writeFields(Map<String, String> fields) throws IOException {
+    for (Map.Entry<String, String> entry: fields.entrySet()) {
+      writeField(entry.getKey(), entry.getValue());
+      os.write(" ");
+    }
   }
 }
