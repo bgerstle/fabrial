@@ -108,9 +108,8 @@ public class FileHttpResponderTest {
     forAllListsOfExistingAndNonExistingFiles()
         .checkAssert((files) -> {
           Set<Path> existingFilePaths = files.get(0);
-          Set<Path> nonExistingFilePaths = files.get(1);
           FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
-          nonExistingFilePaths.forEach(p -> {
+          existingFilePaths.forEach(p -> {
             Request req =
                 new Request(HttpVersion.ONE_ONE,
                             Method.OPTIONS,
