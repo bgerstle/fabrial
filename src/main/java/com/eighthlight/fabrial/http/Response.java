@@ -9,6 +9,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class Response {
+  private static final String LINE_SEPARATOR = "\r\n";
+
   public final String version;
   public final int statusCode;
   public final Optional<String> reason;
@@ -36,22 +38,39 @@ public class Response {
     }
   }
 
-  public void writeTo(OutputStream os) throws IOException {
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
-
-    // write the status line according to sect 3.1.2 which specifies ABNF:
-    //
-    //    status-line = HTTP-version SP status-code SP reason-phrase CRLF
-    //
-    writer.write("HTTP/" + version);
-    writer.write(" ");
-    writer.write(Integer.toString(statusCode));
-    writer.write(" ");
+  /**
+   * Write the status line according to sect 3.1.2 which specifies ABNF:
+   *
+   *    status-line = HTTP-version SP status-code SP reason-phrase CRLF
+   *
+   * @throws IOException
+   */
+  private String getStatusLine() throws IOException {
+    var builder = new StringBuilder();
+    builder.append("HTTP/");
+    builder.append(version);
+    builder.append(" ");
+    builder.append(statusCode);
+    builder.append(" ");
     if (reason.isPresent()) {
-      writer.write(reason.get());
+      builder.append(reason.get());
       // no space after reason (though reason could contain a space)
     }
-    writer.write("\r\n");
+    return builder.toString();
+  }
+
+  public void writeTo(OutputStream os) throws IOException {
+    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
+    /*
+      write the response according to RFC7230 section 3
+      HTTP-message   = start-line
+                      *( header-field CRLF )
+                      CRLF
+                      [ message-body ]
+     */
+
+    writer.write(getStatusLine());
+    writer.write(LINE_SEPARATOR);
     writer.flush();
   }
 
