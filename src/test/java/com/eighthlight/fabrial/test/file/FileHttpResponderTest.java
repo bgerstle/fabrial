@@ -84,11 +84,27 @@ public class FileHttpResponderTest {
           Set<Path> existingFilePaths = files.get(0);
           Set<Path> nonExistingFilePaths = files.get(1);
           FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
-          nonExistingFilePaths.forEach(p -> {
+          existingFilePaths.forEach(p -> {
             Request req = new Request(HttpVersion.ONE_ONE, Method.DELETE, makeURI(p));
             assertThat(
                 responder.getResponse(req),
                 equalTo(new Response(HttpVersion.ONE_ONE, 501, null)));
+          });
+        });
+  }
+
+  @Test
+  void responds404ToUnsupportedMethodsOnNonExistingFiles() {
+    forAllListsOfExistingAndNonExistingFiles()
+        .checkAssert((files) -> {
+          Set<Path> existingFilePaths = files.get(0);
+          Set<Path> nonExistingFilePaths = files.get(1);
+          FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
+          nonExistingFilePaths.forEach(p -> {
+            Request req = new Request(HttpVersion.ONE_ONE, Method.DELETE, makeURI(p));
+            assertThat(
+                responder.getResponse(req),
+                equalTo(new Response(HttpVersion.ONE_ONE, 404, null)));
           });
         });
   }
