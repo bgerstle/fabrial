@@ -17,10 +17,6 @@ public class Response {
   public final String reason;
   public final Map<String, String> headers;
 
-  public Response(String version, int statusCode, String reason) {
-    this(version, statusCode, reason, null);
-  }
-
   /**
    * Initialize a response object.
    * @param version     Version of the HTTP protocol (@see HttpVersion).

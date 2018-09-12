@@ -61,7 +61,10 @@ public class FileHttpResponderTest {
             int expectedStatus = existingFilePaths.contains(p) ? 200 : 404;
             assertThat(
                 responder.getResponse(req),
-                equalTo(new Response(HttpVersion.ONE_ONE, expectedStatus, null)));
+                equalTo(new ResponseBuilder()
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withStatusCode(expectedStatus)
+                            .build()));
           });
         });
   }
@@ -80,7 +83,10 @@ public class FileHttpResponderTest {
                             Result.attempt(() -> new URI(p.toString())).orElseAssert());
             assertThat(
                 responder.getResponse(req),
-                equalTo(new Response(HttpVersion.ONE_ONE, 501, null)));
+                equalTo(new ResponseBuilder()
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withStatusCode(501)
+                            .build()));
           });
         });
   }
@@ -99,7 +105,9 @@ public class FileHttpResponderTest {
                             Result.attempt(() -> new URI(p.toString())).orElseAssert());
             assertThat(
                 responder.getResponse(req),
-                equalTo(new Response(HttpVersion.ONE_ONE, 404, null)));
+                equalTo(new ResponseBuilder()
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withStatusCode(404)));
           });
         });
   }

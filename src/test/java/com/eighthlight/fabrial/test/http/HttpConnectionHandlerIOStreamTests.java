@@ -26,9 +26,9 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   @Override
   public Response getResponse(Request request) {
     if (!request.method.equals(Method.HEAD)) {
-      return new Response(HttpVersion.ONE_ONE, 501, null);
+      return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(501).build();
     }
-    return new Response(HttpVersion.ONE_ONE, 200, null);
+    return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(200).build();
   }
 
   HttpConnectionHandler handler = new HttpConnectionHandler(Set.of(this));

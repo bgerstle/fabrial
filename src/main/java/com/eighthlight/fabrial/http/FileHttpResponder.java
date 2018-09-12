@@ -25,30 +25,30 @@ public class FileHttpResponder implements HttpResponder {
   @Override
   public Response getResponse(Request request) {
     boolean fileExists = dataSource.fileExistsAtPath(Paths.get(request.uri.getPath()));
+    final var builder = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE);
     if (!fileExists && request.method != Method.OPTIONS) {
-      return new Response(HttpVersion.ONE_ONE, 404, null);
+      return builder.withStatusCode(404).build();
     }
     switch (request.method) {
       case HEAD:
-        return new Response(HttpVersion.ONE_ONE, 200, null);
+        return builder.withStatusCode(200).build();
       case OPTIONS:
-        return new Response(HttpVersion.ONE_ONE,
-                            200,
-                            null,
-                            Map.of("Allow",
-                                   List.of(Method.GET,
-                                           Method.HEAD,
-                                           Method.OPTIONS,
-                                           Method.PUT,
-                                           Method.DELETE)
-                                       .stream()
-                                       .map(Method::name)
-                                       .reduce((m, s) -> s + ", " + m)
-                                       .get(),
-                                   "Content-Length",
-                                   "0"));
+        String allowedMethods =
+            List.of(Method.GET,
+                    Method.HEAD,
+                    Method.OPTIONS,
+                    Method.PUT,
+                    Method.DELETE)
+                .stream()
+                .map(Method::name)
+                .reduce((m, s) -> s + ", " + m)
+                .get();
+        return builder.withStatusCode(200)
+                      .withHeaders(Map.of("Allow", allowedMethods,
+                                          "Content-Length","0"))
+                      .build();
       default:
-        return new Response(HttpVersion.ONE_ONE, 501, null);
+        return builder.withStatusCode(501).build();
     }
   }
 }
