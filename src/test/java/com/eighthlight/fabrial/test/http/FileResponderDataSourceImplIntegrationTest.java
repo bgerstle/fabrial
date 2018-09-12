@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -35,7 +36,7 @@ public class FileResponderDataSourceImplIntegrationTest {
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent().toAbsolutePath());
 
       assertThat(dataSource.getDirectoryContents(tmpFileFixture.tempFilePath.getFileName()),
-                 equalTo(nullValue()));
+                 is(nullValue()));
     }
   }
 }

@@ -30,12 +30,15 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
 
   @Override
   public List<Path> getDirectoryContents(Path path) {
-    return Arrays.asList(
-        Arrays.asList(absolutePathInBaseDir(path).toFile().listFiles())
-              .stream()
-              .map(File::getPath)
-              .map(Paths::get)
-              .map(baseDirPath::relativize)
-              .toArray(Path[]::new));
+    return Optional
+        .ofNullable(absolutePathInBaseDir(path).toFile().listFiles())
+        .map(Arrays::asList)
+        .map(List::stream)
+        .map(s -> s.map(File::getPath)
+                   .map(Paths::get)
+                   .map(baseDirPath::relativize)
+                   .toArray(Path[]::new))
+        .map(Arrays::asList)
+        .orElse(null);
   }
 }
