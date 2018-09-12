@@ -20,7 +20,7 @@ public class FileHttpResponder implements HttpResponder {
 
     public boolean isDirectory(Path path);
 
-    public List<String> getDirectoryContents(Path path);
+    public List<Path> getDirectoryContents(Path path);
   }
 
   public FileHttpResponder(DataSource dataSource) {

@@ -53,7 +53,7 @@ public class FileHttpResponderTest {
       }
 
       @Override
-      public List<String> getDirectoryContents(Path path) {
+      public List<Path> getDirectoryContents(Path path) {
         return List.of();
       }
     });

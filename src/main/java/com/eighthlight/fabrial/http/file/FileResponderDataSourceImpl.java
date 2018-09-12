@@ -25,7 +25,6 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
   }
 
   @Override
-  public List<String> getDirectoryContents(Path path) {
-    return null;
+  public List<Path> getDirectoryContents(Path path) {
   }
 }
