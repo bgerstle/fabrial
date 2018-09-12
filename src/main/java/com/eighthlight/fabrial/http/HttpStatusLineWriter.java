@@ -21,7 +21,12 @@ public class HttpStatusLineWriter {
   /**
    * Write the status line according to sect 3.1.2 which specifies ABNF:
    *
-   *    status-line = HTTP-version SP status-code SP reason-phrase CRLF
+   *    status-line    = HTTP-version SP status-code SP reason-phrase CRLF
+   *
+   * Where:
+   *
+   *    status-code    = 3DIGIT
+   *    reason-phrase  = *( HTAB / SP / VCHAR / obs-text )
    *
    * @throws IOException
    */
