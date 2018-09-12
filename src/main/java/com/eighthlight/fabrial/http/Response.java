@@ -21,6 +21,13 @@ public class Response {
     this(version, statusCode, reason, null);
   }
 
+  /**
+   * Initialize a response object.
+   * @param version     Version of the HTTP protocol (@see HttpVersion).
+   * @param statusCode  Status code [100-999].
+   * @param reason      Reason explaining the response (can be @code null).
+   * @param headers     Map of response headers (can be @code null).
+   */
   public Response(String version, int statusCode, String reason, Map<String, String> headers) {
     this.version = Objects.requireNonNull(version);
     this.statusCode = statusCode;
