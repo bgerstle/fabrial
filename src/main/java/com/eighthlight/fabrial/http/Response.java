@@ -46,24 +46,6 @@ public class Response {
     }
   }
 
-  /**
-   * Write the status line according to sect 3.1.2 which specifies ABNF:
-   *
-   *    status-line = HTTP-version SP status-code SP reason-phrase CRLF
-   *
-   * @throws IOException
-   */
-  private String getStatusLine() throws IOException {
-    var builder = new StringBuilder();
-    builder.append("HTTP/");
-    builder.append(version);
-    builder.append(" ");
-    builder.append(statusCode);
-    builder.append(" ");
-    Optional.ofNullable(reason).ifPresent(builder::append);
-    builder.append(CRLF);
-    return builder.toString();
-  }
 
   public void writeTo(OutputStream os) throws IOException {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
@@ -74,9 +56,7 @@ public class Response {
                       CRLF
                       [ message-body ]
      */
-    writer.write(getStatusLine());
-    // ???: not sure why, but writer needs to be flushed in between components
-    writer.flush();
+    new HttpStatusLineWriter(os).writeStatusLine(version, statusCode, reason);
     if (!headers.isEmpty()) {
       new HttpHeaderWriter(os).writeFields(headers);
       writer.write(CRLF);

@@ -1,5 +1,6 @@
 package com.eighthlight.fabrial.test.http;
 
+import com.eighthlight.fabrial.http.HttpStatusLineWriter;
 import com.eighthlight.fabrial.http.Response;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.quicktheories.QuickTheory.qt;
 
 public class HttpStatusLineSerializationTests {
+  private static String getStatusLineForResponse(Response resp) throws RuntimeException {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    try {
+      new HttpStatusLineWriter(os).writeStatusLine(resp.version, resp.statusCode, resp.reason);
+      return new String(os.toByteArray(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Test
   void responseWithoutHeadersOrBody() {
     qt()
@@ -21,26 +32,16 @@ public class HttpStatusLineSerializationTests {
                 statusCodes(),
                 responseReasons(32).toOptionals(30))
         .checkAssert((version, status, optReason) -> {
-          Response resp = new Response(version,
-                                       status,
-                                       optReason.orElse(null));
-          String line = serializeResponse(resp);
+          String line = getStatusLineForResponse(
+              new Response(version,
+                           status,
+                           optReason.orElse(null)));
           assertThat(line,
                      equalTo("HTTP/" + version + " "
                              + Integer.toString(status) + " "
                              + optReason.orElse("")
                              + CRLF));
         });
-  }
-
-  private String serializeResponse(Response resp) throws RuntimeException {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    try {
-      resp.writeTo(os);
-      return new String(os.toByteArray(), StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Test
