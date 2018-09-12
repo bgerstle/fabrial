@@ -18,9 +18,12 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.AllOf.allOf;
 
 @Tag("acceptance")
 public class AppAcceptanceTest {
@@ -36,7 +39,7 @@ public class AppAcceptanceTest {
   }
 
   @Test
-  void sendHEADRequest() throws IOException {
+  void headRequestForExistingFiles() throws IOException {
     int testPort = 8082;
     int testDirDepth = 3;
     try (TempDirectoryFixture tempDirectoryFixture = TempFileFixtures.populatedTempDir(5, testDirDepth);
@@ -47,20 +50,52 @@ public class AppAcceptanceTest {
                 (p, attrs) -> true)
           .parallel()
           .forEach((path) -> {
-            assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath,
-                                                  path,
-                                                  testPort),
+            assertThat(responseToRequestForFileInDir(Method.HEAD,
+                                                     tempDirectoryFixture.tempDirPath,
+                                                     path,
+                                                     testPort).get(0),
                        is("HTTP/1.1 200 "));
 
-            assertThat(responseToHeadForFileInDir(tempDirectoryFixture.tempDirPath,
-                                                  Paths.get(path.toString(), "doesntexist"),
-                                                  testPort),
+            assertThat(responseToRequestForFileInDir(Method.HEAD,
+                                                     tempDirectoryFixture.tempDirPath,
+                                                     Paths.get(path.toString(), "doesntexist"),
+                                                     testPort).get(0),
                        is("HTTP/1.1 404 "));
           });
     }
   }
 
-  private static String responseToHeadForFileInDir(Path dir, Path path, int port) {
+  @Test
+  void optionsToPath() throws IOException {
+    int testPort = 8082;
+    int testDirDepth = 3;
+    try (TempDirectoryFixture tempDirectoryFixture = TempFileFixtures.populatedTempDir(5, testDirDepth);
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tempDirectoryFixture.tempDirPath.toString())) {
+      Files
+          .find(tempDirectoryFixture.tempDirPath,
+                testDirDepth + 1,
+                (p, attrs) -> true)
+          .parallel()
+          .forEach((path) -> {
+            var response = responseToRequestForFileInDir(Method.OPTIONS,
+                                                         tempDirectoryFixture.tempDirPath,
+                                                         path,
+                                                         testPort);
+            assertThat(response.get(0),
+                       startsWith("HTTP/1.1 200 "));
+            var options = response.get(1);
+            assertThat(options, allOf(
+                startsWith("Allow: "),
+                containsString("GET"),
+                containsString("DELETE"),
+                containsString("PUT"),
+                containsString("HEAD"),
+                not(containsString("POST"))));
+          });
+    }
+  }
+
+  private static List<String> responseToRequestForFileInDir(Method method, Path dir, Path path, int port) {
     String relPathStr =
         Paths.get("/",
                   dir.relativize(path)
@@ -76,12 +111,9 @@ public class AppAcceptanceTest {
             .writeRequest(new RequestBuilder()
                               .withUriString(relPathStr)
                               .withVersion(HttpVersion.ONE_ONE)
-                              .withMethod(Method.HEAD)
+                              .withMethod(method)
                               .build());
-        return new BufferedReader(new InputStreamReader((is)))
-            .lines()
-            .filter((s) -> s != null && !s.isEmpty()).findFirst()
-            .get();
+        return Arrays.asList(new BufferedReader(new InputStreamReader((is))).lines().toArray(String[]::new));
       }
     }).orElseAssert();
   }
