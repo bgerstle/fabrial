@@ -52,9 +52,9 @@ public class FileResponderDataSourceImplIntegrationTest {
           new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath);
 
       assertThat(dataSource.getDirectoryContents(Paths.get("/")),
-                 containsInAnyOrder(List.of(
+                 containsInAnyOrder(
                      tmpFileFixture1.tempFilePath.getFileName(),
-                     tmpFileFixture2.tempFilePath.getFileName())));
+                     tmpFileFixture2.tempFilePath.getFileName()));
     }
   }
 }
