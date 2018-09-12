@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.Map;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
+
 /**
  * Serialize map of header fields associated with an HTTP message.
  *
@@ -47,7 +49,7 @@ public class HttpHeaderWriter {
     // OWS
     os.write(" ");
     // CRLF (part of HTTP message)
-    os.write("\r\n");
+    os.write(CRLF);
     os.flush();
   }
 

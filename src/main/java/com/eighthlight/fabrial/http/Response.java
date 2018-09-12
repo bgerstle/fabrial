@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public class Response {
-  private static final String LINE_SEPARATOR = "\r\n";
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 
+public class Response {
   public final String version;
   public final int statusCode;
   public final String reason;
@@ -61,6 +61,7 @@ public class Response {
     builder.append(statusCode);
     builder.append(" ");
     Optional.ofNullable(reason).ifPresent(builder::append);
+    builder.append(CRLF);
     return builder.toString();
   }
 
@@ -73,13 +74,12 @@ public class Response {
                       CRLF
                       [ message-body ]
      */
-
     writer.write(getStatusLine());
-    writer.write(LINE_SEPARATOR);
+    // ???: not sure why, but writer needs to be flushed in between components
     writer.flush();
     if (!headers.isEmpty()) {
       new HttpHeaderWriter(os).writeFields(headers);
-      writer.write(LINE_SEPARATOR);
+      writer.write(CRLF);
     }
     writer.flush();
   }

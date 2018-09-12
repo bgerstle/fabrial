@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.gen.ArbitraryStrings.alphanumeric;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -31,7 +32,9 @@ public class HttpResponseHeaderSerializationTest {
     try (var os = new ByteArrayOutputStream()) {
       response.writeTo(os);
       var responseStr = os.toString();
-      assertThat(responseStr , is("HTTP/1.1 200 \r\nAllow: HEAD,OPTIONS \r\n\r\n"));
+      assertThat(responseStr , is("HTTP/1.1 200 "  + CRLF
+                                  + "Allow: HEAD,OPTIONS " + CRLF
+                                  + CRLF));
     }
   }
 
@@ -46,7 +49,7 @@ public class HttpResponseHeaderSerializationTest {
                          "Content-Length", "0"));
     try (var os = new ByteArrayOutputStream()) {
       response.writeTo(os);
-      var responseLines = os.toString().split("\r\n");
+      var responseLines = os.toString().split(CRLF);
       assertThat(responseLines[0], is("HTTP/1.1 200 "));
       assertThat(List.of(responseLines[1], responseLines[2]),
                  containsInAnyOrder("Allow: HEAD,OPTIONS ", "Content-Length: 0 "));
@@ -67,7 +70,7 @@ public class HttpResponseHeaderSerializationTest {
                                       headerFields);
           try (var os = new ByteArrayOutputStream()) {
             Result.attempt(() -> response.writeTo(os)).orElseAssert();
-            var responseLines = os.toString().split("\r\n");
+            var responseLines = os.toString().split(CRLF);
             assertThat(responseLines[0],
                        is("HTTP/"
                           + version

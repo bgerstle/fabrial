@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,7 +29,7 @@ public class HttpStatusLineSerializationTests {
                      equalTo("HTTP/" + version + " "
                              + Integer.toString(status) + " "
                              + optReason.orElse("")
-                             + "\r\n"));
+                             + CRLF));
         });
   }
 
@@ -48,6 +49,6 @@ public class HttpStatusLineSerializationTests {
     new Response("1.1", 200, null).writeTo(os);
     String line = new String(os.toByteArray(), StandardCharsets.UTF_8);
     assertThat(line,
-               equalTo("HTTP/1.1 200 \r\n"));
+               equalTo("HTTP/1.1 200 " + CRLF));
   }
 }
