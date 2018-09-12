@@ -4,6 +4,7 @@ import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.test.file.TempDirectoryFixture;
+import com.eighthlight.fabrial.test.file.TempFileFixture;
 import com.eighthlight.fabrial.test.file.TempFileFixtures;
 import com.eighthlight.fabrial.test.http.AppProcessFixture;
 import com.eighthlight.fabrial.test.http.RequestWriter;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,6 +25,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.AllOf.allOf;
 
 @Tag("acceptance")
@@ -48,7 +51,6 @@ public class AppAcceptanceTest {
           .find(tempDirectoryFixture.tempDirPath,
                 testDirDepth + 1,
                 (p, attrs) -> true)
-          .parallel()
           .forEach((path) -> {
             assertThat(responseToRequestForFileInDir(Method.HEAD,
                                                      tempDirectoryFixture.tempDirPath,
@@ -75,7 +77,6 @@ public class AppAcceptanceTest {
           .find(tempDirectoryFixture.tempDirPath,
                 testDirDepth + 1,
                 (p, attrs) -> true)
-          .parallel()
           .forEach((path) -> {
             var response = responseToRequestForFileInDir(Method.OPTIONS,
                                                          tempDirectoryFixture.tempDirPath,
@@ -91,6 +92,41 @@ public class AppAcceptanceTest {
                 containsString("PUT"),
                 containsString("HEAD"),
                 not(containsString("POST"))));
+          });
+    }
+  }
+
+  @Test
+  void getDirContents() throws IOException {
+    int testPort = 8082;
+    try (var tempDirectoryFixture = new TempDirectoryFixture();
+        var tmpFileFixture1 = new TempFileFixture(tempDirectoryFixture.tempDirPath);
+        var tmpFileFixture2 = new TempFileFixture(tempDirectoryFixture.tempDirPath);
+        var appFixture = new AppProcessFixture(testPort, tempDirectoryFixture.tempDirPath.toString())) {
+      Files
+          .find(tempDirectoryFixture.tempDirPath,
+                1,
+                (p, attrs) -> true)
+          .forEach((path) -> {
+            var response = responseToRequestForFileInDir(Method.GET,
+                                                         tempDirectoryFixture.tempDirPath,
+                                                         path,
+                                                         testPort);
+            assertThat(response.get(0),
+                       startsWith("HTTP/1.1 200 "));
+            var headers = response.subList(1,3);
+            var expectedBody =
+                String.join(",", List.of(
+                    tmpFileFixture1.tempFilePath.getFileName().toString(),
+                    tmpFileFixture2.tempFilePath.getFileName().toString()));
+            var expectedLength = expectedBody.getBytes(StandardCharsets.UTF_8).length;
+            assertThat(headers,
+                       containsInAnyOrder(List.of(
+                           allOf(
+                               equalTo("Content-Length: " + expectedLength),
+                               equalTo("Content-Type: text/plain; charset=utf-8")))));
+            var body = response.get(3);
+            assertThat(body, equalTo(expectedBody));
           });
     }
   }
