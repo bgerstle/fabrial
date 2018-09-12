@@ -35,12 +35,13 @@ public class HttpHeaderWriterSerializationTests {
   @Test
   void writeMultipleFields() throws IOException {
     try (var os = new ByteArrayOutputStream()) {
-      var writer = new HttpHeaderWriter(os);
+      var writer  new HttpHeaderWriter(os);
       writer.writeFields(Map.of(
           "Allow", "GET,HEAD,OPTIONS",
           "Content-Length", "0"));
       var expectedAllow = "Allow: GET,HEAD,OPTIONS ";
-      var expectedContentLength = "Content-Length: 0 ";
+      var expectedAllow = "Allow: GET,HEAD,OPTIONS";
+      var expectedContentLength = "Content-Length: 0";
       var headerLines = Arrays.asList(os.toString().split(CRLF));
       assertThat(headerLines, containsInAnyOrder(expectedAllow, expectedContentLength));
     }

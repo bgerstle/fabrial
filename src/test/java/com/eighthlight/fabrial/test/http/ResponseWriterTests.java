@@ -130,14 +130,22 @@ public class ResponseWriterTests {
 
         List<String> bodyLines = otherLines.subList(response.headers.size(), otherLines.size());
 
-        assertThat(bodyLines.isEmpty(), equalTo(response.body == null));
-        if (response.body != null) {
-          response.body.reset();
-          var bodyAOS = new ByteArrayOutputStream();
-          response.body.transferTo(bodyAOS);
-          var expectedBody = bodyAOS.toString(StandardCharsets.UTF_8);
-          var actualBody = bodyLines.stream().reduce(String::concat);
-          assertThat(actualBody, equalTo(expectedBody));
+        Optional<String> expectedBody =
+            Optional.ofNullable(response.body)
+                    .map(is -> Result
+                        .attempt(() -> {
+                          is.reset();
+                          var bodyAOS = new ByteArrayOutputStream();
+                          is.transferTo(bodyAOS);
+                          return bodyAOS.toString(StandardCharsets.UTF_8);
+                        })
+                        .orElseAssert()
+                    );
+
+        if (!expectedBody.isPresent() || expectedBody.get().length() == 0) {
+          assertThat(bodyLines, hasSize(0));
+        } else {
+          assertThat(bodyLines.stream().reduce(String::concat), equalTo(expectedBody));
         }
 
       } catch (IOException e) {
