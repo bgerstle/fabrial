@@ -100,6 +100,34 @@ public class ResponseWriterTests {
   }
 
   @Test
+  void responseWithHeadersAndBody() throws IOException {
+    var os = new ByteArrayOutputStream();
+    var response = new ResponseBuilder()
+        .withStatusCode(200)
+        .withVersion(HttpVersion.ONE_ONE)
+        .withHeader("Content-Length", "3")
+        .withBodyFromString("foo")
+        .build();
+    new ResponseWriter(os).writeResponse(response);
+    var responseLines = os.toString().split(CRLF);
+    assertThat(responseLines.length, is(4));
+    assertThat(responseLines[0],
+               is("HTTP/"
+                  + response.version
+                  + " "
+                  + response.statusCode
+                  + " "
+                  + Optional.ofNullable(response.reason).orElse("")));
+    assertThat(responseLines[1],
+               is("Content-Length: 3"));
+    // must have an extra empty line between headers & body
+    assertThat(responseLines[2], is(""));
+    assertThat(responseLines[3],
+               is("foo"));
+    os.close();
+  }
+
+  @Test
   void arbitraryResponseSerialization() {
     qt().forAll(responses()).checkAssert((response) -> {
       try (var os = new ByteArrayOutputStream()) {
