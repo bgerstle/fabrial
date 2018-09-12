@@ -46,8 +46,19 @@ public class FileHttpResponderTest {
       public boolean fileExistsAtPath(Path path) {
         return files.contains(path);
       }
+
+      @Override
+      public boolean isDirectory(Path path) {
+        return false;
+      }
+
+      @Override
+      public List<String> getDirectoryContents(Path path) {
+        return List.of();
+      }
     });
   }
+
 
   @Test
   void responds200ToHeadForExistingFiles() {

@@ -17,6 +17,10 @@ public class FileHttpResponder implements HttpResponder {
 
   public static interface DataSource {
     public boolean fileExistsAtPath(Path path);
+
+    public boolean isDirectory(Path path);
+
+    public List<String> getDirectoryContents(Path path);
   }
 
   public FileHttpResponder(DataSource dataSource) {
