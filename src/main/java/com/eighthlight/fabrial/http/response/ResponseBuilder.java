@@ -1,5 +1,7 @@
 package com.eighthlight.fabrial.http.response;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +14,7 @@ public class ResponseBuilder {
   private int statusCode;
   private String reason;
   private HashMap<String, String> headers;
+  private InputStream body;
 
   public ResponseBuilder() {
     headers = new HashMap<String, String>();
@@ -42,7 +45,17 @@ public class ResponseBuilder {
     return this;
   }
 
+  public ResponseBuilder withBodyFromString(String bodyStr) {
+    this.body = new ByteArrayInputStream(bodyStr.getBytes());
+    return this;
+  }
+
+  public ResponseBuilder withBody(InputStream os) {
+    this.body = os;
+    return this;
+  }
+
   public Response build() {
-    return new Response(version, statusCode, reason, headers);
+    return new Response(version, statusCode, reason, headers, body);
   }
 }

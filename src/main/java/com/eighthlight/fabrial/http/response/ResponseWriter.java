@@ -31,5 +31,9 @@ public class ResponseWriter {
       writer.write(CRLF);
     }
     writer.flush();
+    if (response.body != null) {
+      response.body.transferTo(os);
+      os.flush();
+    }
   }
 }

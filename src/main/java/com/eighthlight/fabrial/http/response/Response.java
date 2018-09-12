@@ -2,6 +2,7 @@ package com.eighthlight.fabrial.http.response;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +13,7 @@ public class Response {
   public final int statusCode;
   public final String reason;
   public final Map<String, String> headers;
+  public final InputStream body;
 
   /**
    * Initialize a response object.
@@ -19,12 +21,18 @@ public class Response {
    * @param statusCode  Status code [100-999].
    * @param reason      Reason explaining the response (can be @code null).
    * @param headers     Map of response headers (can be @code null).
+   * @param body        Stream of bytes to be sent as the body of the message (can be @code null).
    */
-  public Response(String version, int statusCode, String reason, Map<String, String> headers) {
+  public Response(String version,
+                  int statusCode,
+                  String reason,
+                  Map<String, String> headers,
+                  InputStream body) {
     this.version = Objects.requireNonNull(version);
     this.statusCode = statusCode;
     this.reason = reason;
     this.headers = Optional.ofNullable(headers).map(Map::copyOf).orElse(Map.of());
+    this.body = body;
 
     if (!HttpVersion.allVersions.contains(this.version)) {
       throw new IllegalArgumentException(
@@ -55,12 +63,13 @@ public class Response {
     return statusCode == response.statusCode &&
            Objects.equals(version, response.version) &&
            Objects.equals(reason, response.reason) &&
-           Objects.equals(headers, response.headers);
+           Objects.equals(headers, response.headers) &&
+           Objects.equals(body, response.body);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(version, statusCode, reason, headers);
+    return Objects.hash(version, statusCode, reason, headers, body);
   }
 
   @Override
@@ -70,6 +79,7 @@ public class Response {
            ", statusCode=" + statusCode +
            ", reason='" + reason + '\'' +
            ", headers=" + headers +
+           ", body=" + body +
            '}';
   }
 }

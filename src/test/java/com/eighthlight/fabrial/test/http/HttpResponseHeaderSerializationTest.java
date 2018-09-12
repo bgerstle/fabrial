@@ -29,7 +29,7 @@ public class HttpResponseHeaderSerializationTest {
   @Test
   void serializesOneHeader() throws IOException {
     var responseStr = serializeHeaders(Map.of("Allow", "HEAD,OPTIONS"));
-    assertThat(responseStr , is("Allow: HEAD,OPTIONS " + CRLF));
+    assertThat(responseStr , is("Allow: HEAD,OPTIONS" + CRLF));
   }
 
   @Test
@@ -40,7 +40,7 @@ public class HttpResponseHeaderSerializationTest {
                                     "Content-Length", "0"))
                 .split(CRLF));
     assertThat(headerLines,
-               containsInAnyOrder("Allow: HEAD,OPTIONS ", "Content-Length: 0 "));
+               containsInAnyOrder("Allow: HEAD,OPTIONS", "Content-Length: 0"));
   }
 
   @Test
@@ -53,7 +53,7 @@ public class HttpResponseHeaderSerializationTest {
                                   .orElseAssert();;
           headers.entrySet()
                  .stream()
-                 .map(e -> e.getKey() + ": " + e.getValue() + " ")
+                 .map(e -> e.getKey() + ": " + e.getValue())
                  .forEach(s -> assertThat(headerLines, hasItem(s)));
         });
   }
