@@ -1,6 +1,8 @@
 package com.eighthlight.fabrial.test.http;
 
+import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.response.Response;
+import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.http.response.ResponseWriter;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
@@ -29,7 +31,7 @@ public class ResponseWriterTests {
   private static Gen<ByteArrayInputStream> bodyStreams(int length) {
     return strings()
         .allPossible()
-        .ofLengthBetween(1, length)
+        .ofLengthBetween(0, length)
         .map(s -> {
           return Result.attempt(() ->
                                     new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8))
@@ -52,6 +54,50 @@ public class ResponseWriterTests {
                                    body.orElse(null));
              });
   }
+
+  @Test
+  void responseWithoutHeadersOrBody() throws IOException {
+    var os = new ByteArrayOutputStream();
+    var response = new ResponseBuilder()
+        .withStatusCode(200)
+        .withVersion(HttpVersion.ONE_ONE)
+        .build();
+    new ResponseWriter(os).writeResponse(response);
+    var responseLines = os.toString().split(CRLF);
+    assertThat(responseLines.length, is(1));
+    assertThat(responseLines[0],
+               is("HTTP/"
+                  + response.version
+                  + " "
+                  + response.statusCode
+                  + " "
+                  + Optional.ofNullable(response.reason).orElse("")));
+    os.close();
+  }
+
+  @Test
+  void responseWithHeadersWithoutBody() throws IOException {
+    var os = new ByteArrayOutputStream();
+    var response = new ResponseBuilder()
+        .withStatusCode(200)
+        .withVersion(HttpVersion.ONE_ONE)
+        .withHeader("Content-Length", "0")
+        .build();
+    new ResponseWriter(os).writeResponse(response);
+    var responseLines = os.toString().split(CRLF);
+    assertThat(responseLines.length, is(2));
+    assertThat(responseLines[0],
+               is("HTTP/"
+                  + response.version
+                  + " "
+                  + response.statusCode
+                  + " "
+                  + Optional.ofNullable(response.reason).orElse("")));
+    assertThat(responseLines[1],
+               is("Content-Length: 0"));
+    os.close();
+  }
+
   @Test
   void arbitraryResponseSerialization() {
     qt().forAll(responses()).checkAssert((response) -> {
@@ -81,6 +127,19 @@ public class ResponseWriterTests {
                         .stream()
                         .map(e -> e.getKey() + ": " + e.getValue() + " ")
                         .forEach(s -> assertThat(headerLines, hasItem(s)));
+
+        List<String> bodyLines = otherLines.subList(response.headers.size(), otherLines.size());
+
+        assertThat(bodyLines.isEmpty(), equalTo(response.body == null));
+        if (response.body != null) {
+          response.body.reset();
+          var bodyAOS = new ByteArrayOutputStream();
+          response.body.transferTo(bodyAOS);
+          var expectedBody = bodyAOS.toString(StandardCharsets.UTF_8);
+          var actualBody = bodyLines.stream().reduce(String::concat);
+          assertThat(actualBody, equalTo(expectedBody));
+        }
+
       } catch (IOException e) {
         throw new AssertionError(e);
       }
