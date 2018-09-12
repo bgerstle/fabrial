@@ -12,6 +12,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 
 public class FileResponderDataSourceImplIntegrationTest {
   @Test
@@ -39,6 +40,21 @@ public class FileResponderDataSourceImplIntegrationTest {
                  is(false));
       assertThat(dataSource.getDirectoryContents(tmpFileFixture.tempFilePath.getFileName()),
                  is(nullValue()));
+    }
+  }
+
+  @Test
+  void returnsAllFilesInDirWithMultipleFiles() {
+    try (var tmpDirFixture = new TempDirectoryFixture();
+        var tmpFileFixture1 = new TempFileFixture(tmpDirFixture.tempDirPath);
+        var tmpFileFixture2 = new TempFileFixture(tmpDirFixture.tempDirPath)) {
+      var dataSource =
+          new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath);
+
+      assertThat(dataSource.getDirectoryContents(Paths.get("/")),
+                 containsInAnyOrder(List.of(
+                     tmpFileFixture1.tempFilePath.getFileName(),
+                     tmpFileFixture2.tempFilePath.getFileName())));
     }
   }
 }
