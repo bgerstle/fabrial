@@ -43,6 +43,6 @@ public class ResponseBuilder {
   }
 
   public Response build() {
-    return new Response(version, statusCode, reason, headers);
+    return new Response(version, statusCode, reason, headers, null);
   }
 }
