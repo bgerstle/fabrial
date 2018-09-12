@@ -107,7 +107,8 @@ public class FileHttpResponderTest {
                 responder.getResponse(req),
                 equalTo(new ResponseBuilder()
                             .withVersion(HttpVersion.ONE_ONE)
-                            .withStatusCode(404)));
+                            .withStatusCode(404)
+                            .build()));
           });
         });
   }
