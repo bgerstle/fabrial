@@ -35,7 +35,7 @@ public class ArbitraryHttp {
 
   // !!!: all of these "length" args are rough approximations. proper DSL necessary
   public static Gen<String> responseReasons(int length) {
-    return strings().ascii().ofLengthBetween(1, length).mix(htab());
+    return alphanumeric(length).mix(htab());
   }
 
   public static Gen<String> nonAsciiStrings() {

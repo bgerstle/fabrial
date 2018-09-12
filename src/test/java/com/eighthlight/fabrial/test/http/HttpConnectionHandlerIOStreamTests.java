@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
@@ -25,9 +26,9 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   @Override
   public Response getResponse(Request request) {
     if (!request.method.equals(Method.HEAD)) {
-      return new Response(HttpVersion.ONE_ONE, 501, null);
+      return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(501).build();
     }
-    return new Response(HttpVersion.ONE_ONE, 200, null);
+    return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(200).build();
   }
 
   HttpConnectionHandler handler = new HttpConnectionHandler(Set.of(this));
@@ -66,7 +67,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
                            .withVersion (version)
                            .withMethod(Method.HEAD)
                            .withUriString("/test").build()),
-        equalTo("HTTP/" + version + " 200 \r\n"));
+        equalTo("HTTP/" + version + " 200 " + CRLF));
   }
 
   @Test
@@ -80,7 +81,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
                            .build()),
         allOf(
             startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
-            endsWith("\r\n")
+            endsWith(CRLF)
         ));
   }
 
@@ -93,7 +94,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
                            .withMethod(Method.HEAD)
                            .withUriString("/foobarbuz")
                            .build()),
-        equalTo("HTTP/" + version + " 404 \r\n"));
+        equalTo("HTTP/" + version + " 404 " + CRLF));
   }
 
   @Test
@@ -107,7 +108,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
                            .build()),
         allOf(
             startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
-            endsWith("\r\n")
+            endsWith(CRLF)
         ));
   }
 
@@ -117,7 +118,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
         sendRequest("FOO"),
         allOf(
             startsWith("HTTP/" + HttpVersion.ONE_ONE + " 400 "),
-            endsWith("\r\n")
+            endsWith(CRLF)
         ));
   }
 }

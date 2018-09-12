@@ -10,6 +10,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,7 +40,7 @@ public class HttpRequestLineParsingTests {
     String requestLine = method + " "
                          + uri + " "
                          + "HTTP/" + version
-                         + "\r\n";
+                         + CRLF;
     return new ByteArrayInputStream(requestLine.getBytes(StandardCharsets.UTF_8));
   }
 
@@ -106,7 +107,7 @@ public class HttpRequestLineParsingTests {
     String version = HttpVersion.ONE_ONE;
 
     InputStream is = new ByteArrayInputStream(
-          ("GET " + uri.toString() + " HTTP/" + version + " \r\n"
+          ("GET " + uri.toString() + " HTTP/" + version + " " + CRLF
         ).getBytes(StandardCharsets.UTF_8));
 
     assertThat(new RequestReader(is).readRequest(),
@@ -116,7 +117,7 @@ public class HttpRequestLineParsingTests {
 
   @Test
   void leadingWhitespaceCausesError() throws Exception{
-    InputStream is = new ByteArrayInputStream(" GET / HTTP/1.1\r\n".getBytes(StandardCharsets.UTF_8));
+    InputStream is = new ByteArrayInputStream((" GET / HTTP/1.1" + CRLF).getBytes(StandardCharsets.UTF_8));
     assertThrows(RequestParsingException.class, () -> {
       new RequestReader(is).readRequest();
     });

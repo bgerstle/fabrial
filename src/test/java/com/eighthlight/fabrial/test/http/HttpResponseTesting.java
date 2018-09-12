@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.Response;
+import com.eighthlight.fabrial.http.ResponseBuilder;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 
@@ -14,7 +15,6 @@ import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.Generate.oneOf;
 import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.integers;
-import static org.quicktheories.generators.SourceDSL.strings;
 
 public class HttpResponseTesting {
   static Gen<Integer> invalidStatuses() {
@@ -32,21 +32,27 @@ public class HttpResponseTesting {
   void constructsWithValidInput() {
     qt().forAll(httpVersions(), statusCodes(), responseReasons(32).toOptionals(30))
         .checkAssert((v, s, r) -> {
-          Response resp = new Response(v, s, r.orElse(null));
+          var builder = new ResponseBuilder().withVersion(v).withStatusCode(s);
+          builder = r.map(builder::withReason).orElse(builder);
+          Response resp = builder.build();
           assertThat(resp.version, equalTo(v));
           assertThat(resp.statusCode, equalTo(s));
-          assertThat(resp.reason, equalTo(r));
+          assertThat(resp.reason, equalTo(r.orElse(null)));
         });
   }
 
   @Test
   void throwsWhenGivenInvalidVersion() {
-    qt().forAll(pick(List.of("0.8", "2.6", "0.0")), invalidStatuses(), responseReasons(32).toOptionals(30))
+    qt().forAll(pick(List.of("0.8", "2.6", "0.0")),
+                invalidStatuses(),
+                responseReasons(32).toOptionals(30))
         .checkAssert((v, s, r) ->
                          assertThrows(IllegalArgumentException.class, () ->
-                             new Response(v, s,r.orElse(null))
-                         )
-        );
+                             new ResponseBuilder()
+                                 .withVersion(v)
+                                 .withStatusCode(s)
+                                 .withReason(r.orElse(null))
+                                 .build()));
   }
 
   @Test
@@ -54,9 +60,7 @@ public class HttpResponseTesting {
     qt().forAll(httpVersions(), invalidStatuses(), responseReasons(32).toOptionals(30))
         .checkAssert((v, s, r) ->
                          assertThrows(IllegalArgumentException.class, () ->
-                             new Response(v, s,null)
-                         )
-        );
+                             new ResponseBuilder().withVersion(v).withStatusCode(s).build()));
   }
 
   @Test
@@ -64,8 +68,10 @@ public class HttpResponseTesting {
     qt().forAll(httpVersions(), statusCodes(), invalidReasons())
         .checkAssert((v, s, r) ->
                          assertThrows(IllegalArgumentException.class, () ->
-                             new Response(v, s, r)
-                         )
-        );
+                             new ResponseBuilder()
+                                 .withVersion(v)
+                                 .withStatusCode(s)
+                                 .withReason(r)
+                                 .build()));
   }
 }

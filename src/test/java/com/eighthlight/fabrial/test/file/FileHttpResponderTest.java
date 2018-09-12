@@ -1,22 +1,20 @@
 package com.eighthlight.fabrial.test.file;
 
 import com.eighthlight.fabrial.http.*;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Subject1;
 import org.quicktheories.core.Gen;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.paths;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.core.AllOf.allOf;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
 
@@ -59,22 +57,16 @@ public class FileHttpResponderTest {
           allFilePaths.addAll(existingFilePaths);
           allFilePaths.addAll(nonExistingFilePaths);
           allFilePaths.forEach(p -> {
-            Request req = new Request(HttpVersion.ONE_ONE, Method.HEAD, makeURI(p));
+            Request req = new Request(HttpVersion.ONE_ONE, Method.HEAD, Result.attempt(() -> new URI(p.toString())).orElseAssert());
             int expectedStatus = existingFilePaths.contains(p) ? 200 : 404;
             assertThat(
                 responder.getResponse(req),
-                equalTo(new Response(HttpVersion.ONE_ONE, expectedStatus, null)));
+                equalTo(new ResponseBuilder()
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withStatusCode(expectedStatus)
+                            .build()));
           });
         });
-  }
-
-  private URI makeURI(Path p) {
-    URI pathURI;
-    try {
-      return new URI(p.toString());
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Test
@@ -85,10 +77,16 @@ public class FileHttpResponderTest {
           Set<Path> nonExistingFilePaths = files.get(1);
           FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
           existingFilePaths.forEach(p -> {
-            Request req = new Request(HttpVersion.ONE_ONE, Method.DELETE, makeURI(p));
+            Request req =
+                new Request(HttpVersion.ONE_ONE,
+                            Method.DELETE,
+                            Result.attempt(() -> new URI(p.toString())).orElseAssert());
             assertThat(
                 responder.getResponse(req),
-                equalTo(new Response(HttpVersion.ONE_ONE, 501, null)));
+                equalTo(new ResponseBuilder()
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withStatusCode(501)
+                            .build()));
           });
         });
   }
@@ -101,10 +99,45 @@ public class FileHttpResponderTest {
           Set<Path> nonExistingFilePaths = files.get(1);
           FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
           nonExistingFilePaths.forEach(p -> {
-            Request req = new Request(HttpVersion.ONE_ONE, Method.DELETE, makeURI(p));
+            Request req =
+                new Request(HttpVersion.ONE_ONE,
+                            Method.DELETE,
+                            Result.attempt(() -> new URI(p.toString())).orElseAssert());
             assertThat(
                 responder.getResponse(req),
-                equalTo(new Response(HttpVersion.ONE_ONE, 404, null)));
+                equalTo(new ResponseBuilder()
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withStatusCode(404)
+                            .build()));
+          });
+        });
+  }
+
+  @Test
+  void responds200WithAllowToOptionsOnAnyPath() {
+    forAllListsOfExistingAndNonExistingFiles()
+        .checkAssert((files) -> {
+          Set<Path> existingFilePaths = files.get(0);
+          Set<Path> nonExistingFilePaths = files.get(1);
+          FileHttpResponder responder = responderForListOfExistingFiles(existingFilePaths);
+          ArrayList<Path> allFilePaths = new ArrayList<>();
+          allFilePaths.addAll(existingFilePaths);
+          allFilePaths.addAll(nonExistingFilePaths);
+          allFilePaths.forEach(p -> {
+            Request req =
+                new Request(HttpVersion.ONE_ONE,
+                            Method.OPTIONS,
+                            Result.attempt(() -> new URI(p.toString())).orElseAssert());
+            var resp = responder.getResponse(req);
+            assertThat(resp.version, equalTo(HttpVersion.ONE_ONE));
+            assertThat(resp.statusCode, equalTo(200));
+            assertThat(resp.reason, nullValue());
+            assertThat(Arrays.asList(resp.headers.get("Allow").split(", ")),
+                       allOf(
+                           containsInAnyOrder("GET", "HEAD", "OPTIONS", "PUT", "DELETE"),
+                           not(contains("POST"))));
+            assertThat(resp.headers.get("Content-Length"),
+                       is("0"));
           });
         });
   }

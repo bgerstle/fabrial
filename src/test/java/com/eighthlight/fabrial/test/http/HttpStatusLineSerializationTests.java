@@ -1,18 +1,35 @@
 package com.eighthlight.fabrial.test.http;
 
+import com.eighthlight.fabrial.http.HttpStatusLineWriter;
+import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Response;
+import com.eighthlight.fabrial.http.ResponseBuilder;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.quicktheories.QuickTheory.qt;
 
 public class HttpStatusLineSerializationTests {
+  private static String getStatusLineForResponse(Response resp) {
+    return Result.attempt(() -> {
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      try {
+        new HttpStatusLineWriter(os).writeStatusLine(resp.version, resp.statusCode, resp.reason);
+        return new String(os.toByteArray(), StandardCharsets.UTF_8);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }).orElseAssert();
+  }
+
   @Test
   void responseWithoutHeadersOrBody() {
     qt()
@@ -20,34 +37,27 @@ public class HttpStatusLineSerializationTests {
                 statusCodes(),
                 responseReasons(32).toOptionals(30))
         .checkAssert((version, status, optReason) -> {
-          Response resp = new Response(version,
-                                       status,
-                                       optReason.orElse(null));
-          String line = serializeResponse(resp);
+          String line = getStatusLineForResponse(
+              new ResponseBuilder()
+                  .withVersion(version)
+                  .withStatusCode(status)
+                  .withReason(optReason.orElse(null))
+                  .build());
           assertThat(line,
                      equalTo("HTTP/" + version + " "
                              + Integer.toString(status) + " "
                              + optReason.orElse("")
-                             + "\r\n"));
+                             + CRLF));
         });
   }
 
-  private String serializeResponse(Response resp) throws RuntimeException {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    try {
-      resp.writeTo(os);
-      return new String(os.toByteArray(), StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   @Test
-  void successfulResponse() throws Exception {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    new Response("1.1", 200, null).writeTo(os);
-    String line = new String(os.toByteArray(), StandardCharsets.UTF_8);
+  void successfulResponse() {
+    String line = getStatusLineForResponse(new ResponseBuilder()
+                                               .withVersion(HttpVersion.ONE_ONE)
+                                               .withStatusCode(200)
+                                               .build());
     assertThat(line,
-               equalTo("HTTP/1.1 200 \r\n"));
+               equalTo("HTTP/1.1 200 " + CRLF));
   }
 }

@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
+
 public class RequestWriter {
   private final OutputStream os;
 
@@ -21,7 +23,7 @@ public class RequestWriter {
                                                  request.uri.toString(),
                                                  "HTTP/" + request.version);
     String line = String.join(" ", requestLineComponents)
-                  + "\r\n";
+                  + CRLF;
     writer.write(line);
     writer.flush();
   }

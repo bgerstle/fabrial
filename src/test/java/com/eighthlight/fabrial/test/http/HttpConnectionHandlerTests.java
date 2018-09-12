@@ -2,12 +2,10 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.*;
 import com.eighthlight.fabrial.server.HttpConnectionHandler;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -15,7 +13,6 @@ import java.util.Set;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.AllOf.allOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
@@ -74,7 +71,8 @@ public class HttpConnectionHandlerTests {
     return methods().zip(requestTargets(), statusCodes(), (method, uri, statusCode) ->
         new MockResponder(uri,
                           method,
-                          new Response(HttpVersion.ONE_ONE, statusCode, null))
+                          new ResponseBuilder().withVersion(HttpVersion.ONE_ONE)
+                                               .withStatusCode(statusCode).build())
     );
   }
 
@@ -89,10 +87,10 @@ public class HttpConnectionHandlerTests {
         .checkAssert(rs -> {
           HttpConnectionHandler handler = new HttpConnectionHandler(rs);
           rs.forEach(r ->
-           assertThat(
-               handler.responseTo(new Request(HttpVersion.ONE_ONE, r.targetMethod, r.targetURI)),
-               equalTo(r.response)
-          ));
+                         assertThat(
+                             handler.responseTo(new Request(HttpVersion.ONE_ONE, r.targetMethod, r.targetURI)),
+                             equalTo(r.response)
+                         ));
         });
   }
 
@@ -100,12 +98,12 @@ public class HttpConnectionHandlerTests {
   void responds404WhenNoResponderFound() {
     qt().forAll(mockResponderLists().map(Set::copyOf), http11Requests())
         .assuming((responders, req) ->
-          responders.stream().noneMatch(r -> r.matches(req))
+                      responders.stream().noneMatch(r -> r.matches(req))
         )
         .checkAssert((rs, req) -> {
           HttpConnectionHandler handler = new HttpConnectionHandler(rs);
           assertThat(handler.responseTo(req),
-                     equalTo(new Response(HttpVersion.ONE_ONE, 404, null)));
+                     equalTo(new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(404).build()));
         });
   }
 

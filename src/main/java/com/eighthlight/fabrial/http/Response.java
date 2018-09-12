@@ -1,22 +1,28 @@
 package com.eighthlight.fabrial.http;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public class Response {
   public final String version;
   public final int statusCode;
-  public final Optional<String> reason;
+  public final String reason;
+  public final Map<String, String> headers;
 
-  public Response(String version, int statusCode, String reason) {
-    this.version = version;
+  /**
+   * Initialize a response object.
+   * @param version     Version of the HTTP protocol (@see HttpVersion).
+   * @param statusCode  Status code [100-999].
+   * @param reason      Reason explaining the response (can be @code null).
+   * @param headers     Map of response headers (can be @code null).
+   */
+  public Response(String version, int statusCode, String reason, Map<String, String> headers) {
+    this.version = Objects.requireNonNull(version);
     this.statusCode = statusCode;
-    this.reason = Optional.ofNullable(reason).filter(s -> !s.isEmpty());
+    this.reason = reason;
+    this.headers = Optional.ofNullable(headers).map(Map::copyOf).orElse(Map.of());
 
     if (!HttpVersion.allVersions.contains(this.version)) {
       throw new IllegalArgumentException(
@@ -27,32 +33,14 @@ public class Response {
           statusCode + " is not a valid status code [100, 999]."
       );
     }
-    if (this.reason.isPresent()
-        && !this.reason.get().chars().allMatch(c -> StandardCharsets.US_ASCII.newEncoder().canEncode((char)c))) {
+    if (reason != null
+        && !reason.chars()
+                 .allMatch(c -> StandardCharsets.US_ASCII.newEncoder().canEncode((char)c))) {
       // TODO: allow HTAB and opaque octets
       throw new IllegalArgumentException(
           reason + " contains illegal characters (must be ASCII)."
       );
     }
-  }
-
-  public void writeTo(OutputStream os) throws IOException {
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
-
-    // write the status line according to sect 3.1.2 which specifies ABNF:
-    //
-    //    status-line = HTTP-version SP status-code SP reason-phrase CRLF
-    //
-    writer.write("HTTP/" + version);
-    writer.write(" ");
-    writer.write(Integer.toString(statusCode));
-    writer.write(" ");
-    if (reason.isPresent()) {
-      writer.write(reason.get());
-      // no space after reason (though reason could contain a space)
-    }
-    writer.write("\r\n");
-    writer.flush();
   }
 
   @Override
@@ -64,12 +52,13 @@ public class Response {
     Response response = (Response) o;
     return statusCode == response.statusCode &&
            Objects.equals(version, response.version) &&
-           Objects.equals(reason, response.reason);
+           Objects.equals(reason, response.reason) &&
+           Objects.equals(headers, response.headers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(version, statusCode, reason);
+    return Objects.hash(version, statusCode, reason, headers);
   }
 
   @Override
@@ -77,7 +66,8 @@ public class Response {
     return "Response{" +
            "version='" + version + '\'' +
            ", statusCode=" + statusCode +
-           ", reason=" + reason +
+           ", reason='" + reason + '\'' +
+           ", headers=" + headers +
            '}';
   }
 }

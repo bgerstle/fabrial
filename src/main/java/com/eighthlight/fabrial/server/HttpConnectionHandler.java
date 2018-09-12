@@ -31,21 +31,29 @@ public class HttpConnectionHandler implements ConnectionHandler {
     try {
       request = new RequestReader(is).readRequest();
     } catch (RequestParsingException e) {
-      new Response(HttpVersion.ONE_ONE, 400, null).writeTo(os);
+      new ResponseWriter(os)
+          .writeResponse(
+              new ResponseBuilder()
+                  .withVersion(HttpVersion.ONE_ONE)
+                  .withStatusCode(400)
+                  .build()
+          );
       return;
     }
     logger.trace("Handling request {}", StructuredArguments.kv("request", request));
     Response response = responseTo(request);
     logger.info("Writing response {}", StructuredArguments.kv("response", response));
-    response.writeTo(os);
+    new ResponseWriter(os).writeResponse(response);
   }
 
   public Response responseTo(Request request) {
     if (!SUPPORTED_HTTP_VERSIONS.contains(request.version)) {
-      return new Response(HttpVersion.ONE_ONE,
-                          501,
-                          "Requests must use one of the supported HTTP versions: "
-                          + SUPPORTED_HTTP_VERSIONS);
+      return new ResponseBuilder()
+          .withVersion(HttpVersion.ONE_ONE)
+          .withStatusCode(501)
+          .withReason("Requests must use one of the supported HTTP versions: "
+                      + SUPPORTED_HTTP_VERSIONS)
+          .build();
     }
 
     Optional<? extends HttpResponder> responder =
@@ -60,7 +68,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
         })
         .orElseGet(() -> {
           logger.trace("No responder found");
-          return new Response(HttpVersion.ONE_ONE, 404, null);
+          return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(404).build();
         });
   }
 }
