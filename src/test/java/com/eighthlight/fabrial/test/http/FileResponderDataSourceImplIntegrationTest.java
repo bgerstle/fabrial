@@ -35,6 +35,8 @@ public class FileResponderDataSourceImplIntegrationTest {
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent().toAbsolutePath());
 
+      assertThat(dataSource.isDirectory(tmpFileFixture.tempFilePath.getFileName()),
+                 is(false));
       assertThat(dataSource.getDirectoryContents(tmpFileFixture.tempFilePath.getFileName()),
                  is(nullValue()));
     }
