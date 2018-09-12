@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http;
+package com.eighthlight.fabrial.http.request;
 
 public class RequestParsingException extends Exception {
   public RequestParsingException(Throwable t) {

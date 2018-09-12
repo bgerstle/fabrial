@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http;
+package com.eighthlight.fabrial.http.response;
 
 import java.util.HashMap;
 import java.util.Map;

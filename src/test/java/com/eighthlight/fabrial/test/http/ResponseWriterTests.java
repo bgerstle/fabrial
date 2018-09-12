@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.http;
 
-import com.eighthlight.fabrial.http.Response;
-import com.eighthlight.fabrial.http.ResponseWriter;
+import com.eighthlight.fabrial.http.response.Response;
+import com.eighthlight.fabrial.http.response.ResponseWriter;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 

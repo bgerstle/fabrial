@@ -1,4 +1,6 @@
-package com.eighthlight.fabrial.http;
+package com.eighthlight.fabrial.http.response;
+
+import com.eighthlight.fabrial.http.HttpVersion;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;

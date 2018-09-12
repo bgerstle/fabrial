@@ -2,7 +2,7 @@ package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.RequestBuilder;
+import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.test.file.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.file.TempFileFixtures;
 import com.eighthlight.fabrial.test.http.AppProcessFixture;

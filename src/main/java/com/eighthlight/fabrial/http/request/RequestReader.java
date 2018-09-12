@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http;
+package com.eighthlight.fabrial.http.request;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

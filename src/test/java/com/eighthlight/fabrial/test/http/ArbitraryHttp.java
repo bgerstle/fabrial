@@ -2,7 +2,7 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.Request;
+import com.eighthlight.fabrial.http.request.Request;
 import org.quicktheories.core.Gen;
 
 import java.net.URI;

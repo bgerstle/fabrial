@@ -1,4 +1,11 @@
-package com.eighthlight.fabrial.http;
+package com.eighthlight.fabrial.http.file;
+
+import com.eighthlight.fabrial.http.HttpResponder;
+import com.eighthlight.fabrial.http.HttpVersion;
+import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.request.Request;
+import com.eighthlight.fabrial.http.response.Response;
+import com.eighthlight.fabrial.http.response.ResponseBuilder;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
