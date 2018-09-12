@@ -22,6 +22,7 @@ import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.maps;
@@ -125,7 +126,7 @@ public class ResponseWriterTests {
         assertThat(headerLines.isEmpty(), equalTo(response.headers.isEmpty()));
         response.headers.entrySet()
                         .stream()
-                        .map(e -> e.getKey() + ": " + e.getValue() + " ")
+                        .map(e -> e.getKey() + ": " + e.getValue())
                         .forEach(s -> assertThat(headerLines, hasItem(s)));
 
         List<String> bodyLines = otherLines.subList(response.headers.size(), otherLines.size());

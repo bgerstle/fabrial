@@ -19,7 +19,7 @@ public class HttpHeaderWriterSerializationTests {
     try (var os = new ByteArrayOutputStream()) {
       var writer = new HttpHeaderWriter(os);
       writer.writeFields(Map.of("Allow", "GET"));
-      assertThat(os.toString(), is("Allow: GET " + CRLF));
+      assertThat(os.toString(), is("Allow: GET" + CRLF));
     }
   }
 
@@ -28,18 +28,17 @@ public class HttpHeaderWriterSerializationTests {
     try (var os = new ByteArrayOutputStream()) {
       var writer = new HttpHeaderWriter(os);
       writer.writeFields(Map.of("Allow", "GET,HEAD,OPTIONS"));
-      assertThat(os.toString(), is("Allow: GET,HEAD,OPTIONS " + CRLF));
+      assertThat(os.toString(), is("Allow: GET,HEAD,OPTIONS" + CRLF));
     }
   }
 
   @Test
   void writeMultipleFields() throws IOException {
     try (var os = new ByteArrayOutputStream()) {
-      var writer  new HttpHeaderWriter(os);
+      var writer = new HttpHeaderWriter(os);
       writer.writeFields(Map.of(
           "Allow", "GET,HEAD,OPTIONS",
           "Content-Length", "0"));
-      var expectedAllow = "Allow: GET,HEAD,OPTIONS ";
       var expectedAllow = "Allow: GET,HEAD,OPTIONS";
       var expectedContentLength = "Content-Length: 0";
       var headerLines = Arrays.asList(os.toString().split(CRLF));

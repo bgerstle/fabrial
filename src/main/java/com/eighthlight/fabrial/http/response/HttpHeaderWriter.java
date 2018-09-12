@@ -46,8 +46,6 @@ public class HttpHeaderWriter {
     os.write(": ");
     // field-value
     os.write(value);
-    // OWS
-    os.write(" ");
     // CRLF (part of HTTP message)
     os.write(CRLF);
     os.flush();
