@@ -31,17 +31,19 @@ public class HttpConnectionHandler implements ConnectionHandler {
     try {
       request = new RequestReader(is).readRequest();
     } catch (RequestParsingException e) {
-      new ResponseBuilder()
-          .withVersion(HttpVersion.ONE_ONE)
-          .withStatusCode(400)
-          .build()
-          .writeTo(os);
+      new ResponseWriter(os)
+          .writeResponse(
+              new ResponseBuilder()
+                  .withVersion(HttpVersion.ONE_ONE)
+                  .withStatusCode(400)
+                  .build()
+          );
       return;
     }
     logger.trace("Handling request {}", StructuredArguments.kv("request", request));
     Response response = responseTo(request);
     logger.info("Writing response {}", StructuredArguments.kv("response", response));
-    response.writeTo(os);
+    new ResponseWriter(os).writeResponse(response);
   }
 
   public Response responseTo(Request request) {

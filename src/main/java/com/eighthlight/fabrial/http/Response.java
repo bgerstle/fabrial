@@ -1,15 +1,9 @@
 package com.eighthlight.fabrial.http;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
-import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 
 public class Response {
   public final String version;
@@ -47,24 +41,6 @@ public class Response {
           reason + " contains illegal characters (must be ASCII)."
       );
     }
-  }
-
-
-  public void writeTo(OutputStream os) throws IOException {
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
-    /*
-      write the response according to RFC7230 section 3
-      HTTP-message   = start-line
-                      *( header-field CRLF )
-                      CRLF
-                      [ message-body ]
-     */
-    new HttpStatusLineWriter(os).writeStatusLine(version, statusCode, reason);
-    if (!headers.isEmpty()) {
-      new HttpHeaderWriter(os).writeFields(headers);
-      writer.write(CRLF);
-    }
-    writer.flush();
   }
 
   @Override
