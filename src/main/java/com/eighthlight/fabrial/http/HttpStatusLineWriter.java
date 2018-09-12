@@ -1,8 +1,5 @@
 package com.eighthlight.fabrial.http;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,9 +25,9 @@ public class HttpStatusLineWriter {
    *
    * @throws IOException
    */
-  public void writeStatusLine(@NotNull String version,
+  public void writeStatusLine(String version,
                               int statusCode,
-                              @Nullable String reason) throws IOException {
+                              String reason) throws IOException {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
     writer.write("HTTP/");
     writer.write(Objects.requireNonNull(version));
