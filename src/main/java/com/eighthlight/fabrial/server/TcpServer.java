@@ -1,7 +1,8 @@
 package com.eighthlight.fabrial.server;
 
-import com.eighthlight.fabrial.http.FileHttpResponder;
-import com.eighthlight.fabrial.http.FileResponderDataSourceImpl;
+import com.eighthlight.fabrial.http.file.FileHttpResponder;
+import com.eighthlight.fabrial.http.file.FileResponderDataSourceImpl;
+import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;

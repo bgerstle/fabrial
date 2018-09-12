@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.http;
 
-import com.eighthlight.fabrial.http.Response;
-import com.eighthlight.fabrial.http.ResponseBuilder;
+import com.eighthlight.fabrial.http.response.Response;
+import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 

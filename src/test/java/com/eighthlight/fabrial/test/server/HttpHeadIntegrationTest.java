@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.RequestBuilder;
+import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
 import com.eighthlight.fabrial.test.client.TcpClient;

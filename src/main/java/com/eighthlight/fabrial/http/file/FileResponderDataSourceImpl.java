@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http;
+package com.eighthlight.fabrial.http.file;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

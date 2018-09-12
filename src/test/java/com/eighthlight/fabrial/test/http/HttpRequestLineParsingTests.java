@@ -1,6 +1,9 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.*;
+import com.eighthlight.fabrial.http.request.RequestBuilder;
+import com.eighthlight.fabrial.http.request.RequestParsingException;
+import com.eighthlight.fabrial.http.request.RequestReader;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 

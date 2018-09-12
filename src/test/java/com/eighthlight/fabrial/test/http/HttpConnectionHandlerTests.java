@@ -1,7 +1,11 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.*;
-import com.eighthlight.fabrial.server.HttpConnectionHandler;
+import com.eighthlight.fabrial.http.request.Request;
+import com.eighthlight.fabrial.http.response.Response;
+import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.HttpConnectionHandler;
+import com.eighthlight.fabrial.http.HttpResponder;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 

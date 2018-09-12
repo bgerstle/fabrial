@@ -1,4 +1,7 @@
-package com.eighthlight.fabrial.http;
+package com.eighthlight.fabrial.http.request;
+
+import com.eighthlight.fabrial.http.HttpVersion;
+import com.eighthlight.fabrial.http.Method;
 
 import java.net.URI;
 import java.util.Objects;

@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.http;
 
-import com.eighthlight.fabrial.http.Request;
+import com.eighthlight.fabrial.http.request.Request;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

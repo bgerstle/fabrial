@@ -1,6 +1,12 @@
-package com.eighthlight.fabrial.server;
+package com.eighthlight.fabrial.http;
 
-import com.eighthlight.fabrial.http.*;
+import com.eighthlight.fabrial.http.request.Request;
+import com.eighthlight.fabrial.http.request.RequestParsingException;
+import com.eighthlight.fabrial.http.request.RequestReader;
+import com.eighthlight.fabrial.http.response.Response;
+import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.response.ResponseWriter;
+import com.eighthlight.fabrial.server.ConnectionHandler;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
