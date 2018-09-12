@@ -1,15 +1,21 @@
 package com.eighthlight.fabrial.test.file;
 
-import com.eighthlight.fabrial.http.*;
+import com.eighthlight.fabrial.http.HttpVersion;
+import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
+import com.eighthlight.fabrial.http.file.FileResponderDataSourceImpl;
 import com.eighthlight.fabrial.http.request.Request;
+import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Subject1;
 import org.quicktheories.core.Gen;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -17,6 +23,7 @@ import java.util.*;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.paths;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
@@ -154,5 +161,33 @@ public class FileHttpResponderTest {
                        is("0"));
           });
         });
+  }
+
+  @Test
+  void returnsAllFilesInDirWithMultipleFiles() throws IOException {
+    try (var tmpDirFixture = new TempDirectoryFixture();
+        var tmpFileFixture1 = new TempFileFixture(tmpDirFixture.tempDirPath);
+        var tmpFileFixture2 = new TempFileFixture(tmpDirFixture.tempDirPath)) {
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath));
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString("/")
+              .build());
+      assertThat(response.statusCode, is(200));
+      assertThat(response.headers, hasEntry("Content-Type", "text/plain; charset=utf-8"));
+      var baos = new ByteArrayOutputStream();
+      response.body.transferTo(baos);
+      var bodyString = baos.toString();
+      assertThat(bodyString,
+                 allOf(
+                     containsString(tmpFileFixture1.tempFilePath.getFileName().toString()),
+                     containsString(tmpFileFixture2.tempFilePath.getFileName().toString())));
+      assertThat(response.headers,
+                 hasEntry("Content-Length",
+                          Integer.toString(bodyString.getBytes(StandardCharsets.UTF_8).length)));
+    }
   }
 }

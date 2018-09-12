@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 
@@ -50,11 +48,9 @@ public class FileResponderDataSourceImplIntegrationTest {
         var tmpFileFixture2 = new TempFileFixture(tmpDirFixture.tempDirPath)) {
       var dataSource =
           new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath);
-
       assertThat(dataSource.getDirectoryContents(Paths.get("/")),
-                 containsInAnyOrder(
-                     tmpFileFixture1.tempFilePath.getFileName(),
-                     tmpFileFixture2.tempFilePath.getFileName()));
+                 containsInAnyOrder(tmpFileFixture1.tempFilePath.getFileName(),
+                                    tmpFileFixture2.tempFilePath.getFileName()));
     }
   }
 }

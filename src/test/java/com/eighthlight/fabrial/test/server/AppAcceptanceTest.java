@@ -84,14 +84,15 @@ public class AppAcceptanceTest {
                                                          testPort);
             assertThat(response.get(0),
                        startsWith("HTTP/1.1 200 "));
-            var options = response.get(1);
-            assertThat(options, allOf(
+            var headers = response.subList(1, 3);
+            assertThat(headers, hasItem(allOf(
                 startsWith("Allow: "),
                 containsString("GET"),
                 containsString("DELETE"),
                 containsString("PUT"),
                 containsString("HEAD"),
-                not(containsString("POST"))));
+                not(containsString("POST")))));
+            assertThat(headers, hasItem(equalTo("Content-Length: 0")));
           });
     }
   }
@@ -106,7 +107,7 @@ public class AppAcceptanceTest {
       Files
           .find(tempDirectoryFixture.tempDirPath,
                 1,
-                (p, attrs) -> true)
+                (p, attrs) -> attrs.isDirectory())
           .forEach((path) -> {
             var response = responseToRequestForFileInDir(Method.GET,
                                                          tempDirectoryFixture.tempDirPath,
@@ -116,16 +117,20 @@ public class AppAcceptanceTest {
                        startsWith("HTTP/1.1 200 "));
             var headers = response.subList(1,3);
             var expectedBody =
-                String.join(",", List.of(
-                    tmpFileFixture1.tempFilePath.getFileName().toString(),
-                    tmpFileFixture2.tempFilePath.getFileName().toString()));
+                List.of(tmpFileFixture1, tmpFileFixture2)
+                    .stream()
+                    .map(t -> t.tempFilePath)
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .sorted()
+                    .reduce((p1, p2) -> p1 + "," + p2)
+                    .get();
             var expectedLength = expectedBody.getBytes(StandardCharsets.UTF_8).length;
             assertThat(headers,
-                       containsInAnyOrder(List.of(
-                           allOf(
-                               equalTo("Content-Length: " + expectedLength),
-                               equalTo("Content-Type: text/plain; charset=utf-8")))));
-            var body = response.get(3);
+                       containsInAnyOrder(
+                           "Content-Length: " + expectedLength,
+                           "Content-Type: text/plain; charset=utf-8"));
+            var body = response.get(4);
             assertThat(body, equalTo(expectedBody));
           });
     }
