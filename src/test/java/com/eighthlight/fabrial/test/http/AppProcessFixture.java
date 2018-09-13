@@ -4,6 +4,10 @@ import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.utils.Result;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 
 public class AppProcessFixture implements AutoCloseable {
   public final Process appProcess;
@@ -33,5 +37,12 @@ public class AppProcessFixture implements AutoCloseable {
   @Override
   public void close() {
     appProcess.destroy();
+    var result = Result.attempt(() -> appProcess.waitFor(10, TimeUnit.SECONDS));
+    result.getError().ifPresent(inte -> Thread.currentThread().interrupt());
+    var exited = result.getValue().get();
+    var exitValue = appProcess.exitValue();
+    appProcess.destroyForcibly();
+    assertThat(exited, is(true));
+    assertThat(exitValue, is(143));
   }
 }
