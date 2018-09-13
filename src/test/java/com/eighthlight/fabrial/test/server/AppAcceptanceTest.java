@@ -62,7 +62,7 @@ public class AppAcceptanceTest {
   void clientConnectsToAppServer() throws IOException {
     int testPort = 8081;
     try (AppProcessFixture appFixture = new AppProcessFixture(testPort , null);
-        TcpClientFixture clientFixture = new TcpClientFixture(testPort )) {
+        TcpClientFixture clientFixture = new TcpClientFixture(testPort)) {
       clientFixture.client.connect(1000, 3, 1000);
     }
   }
