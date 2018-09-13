@@ -60,7 +60,7 @@ public class FileResponderDataSourceImplIntegrationTest {
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
 
-      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath), is(0));
+      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath), is(0L));
     }
   }
 }

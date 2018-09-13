@@ -39,7 +39,7 @@ public class FileHttpResponder implements HttpResponder {
 
     List<Path> getDirectoryContents(Path path);
 
-    Long getFileSize(Path path);
+    long getFileSize(Path path);
 
     InputStream getFileContents(Path path);
   }

@@ -66,13 +66,13 @@ public class FileHttpResponderTest {
       }
 
       @Override
-      public Long getFileSize(Path path) {
-        return null;
+      public long getFileSize(Path path) {
+        throw new IllegalCallerException();
       }
 
       @Override
       public InputStream getFileContents(Path path) {
-        return null;
+        throw new IllegalCallerException();
       }
     });
   }
