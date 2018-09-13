@@ -239,7 +239,7 @@ public class FileHttpResponderTest {
 
   @Test
   void getEmptyFileReturnsEmpty200() {
-    try (var tmpFileFixture = new TempFileFixture(null)) {
+    try (var tmpFileFixture = new TempFileFixture()) {
       var responder = new FileHttpResponder(
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent()));
       var response = responder.getResponse(

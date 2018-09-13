@@ -80,9 +80,10 @@ public class FileResponderDataSourceImplIntegrationTest {
       assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()),
                  is((long)testData.length));
 
-      var readBytes = Optional.ofNullable(
-          dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName()))
-          .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+      var contents = dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName());
+      var readBytes =
+          Optional.ofNullable(contents)
+                  .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
       assertThat(readBytes.orElse(null), is(testData));
     }
   }

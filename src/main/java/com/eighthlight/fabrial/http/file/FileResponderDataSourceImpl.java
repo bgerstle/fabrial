@@ -1,6 +1,8 @@
 package com.eighthlight.fabrial.http.file;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,7 +51,7 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
   }
 
   @Override
-  public InputStream getFileContents(Path path) {
-    return null;
+  public InputStream getFileContents(Path path) throws IOException {
+    return new FileInputStream(absolutePathInBaseDir(path).toFile());
   }
 }
