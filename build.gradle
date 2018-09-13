@@ -79,6 +79,7 @@ task testAcceptance(dependsOn: 'jar', type: Test) {
 
     useJUnitPlatform {
         includeTags 'acceptance'
+        includeEngines 'junit-jupiter'
     }
 }
 testAcceptance.dependsOn tasks.fatJar
