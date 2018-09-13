@@ -30,7 +30,7 @@ public class FileResponderDataSourceImplIntegrationTest {
 
   @Test
   void returnsNullWhenNotDirectory() {
-    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"))) {
+    try (var tmpFileFixture = new TempFileFixture()) {
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent().toAbsolutePath());
 
@@ -51,6 +51,16 @@ public class FileResponderDataSourceImplIntegrationTest {
       assertThat(dataSource.getDirectoryContents(Paths.get("/")),
                  containsInAnyOrder(tmpFileFixture1.tempFilePath.getFileName(),
                                     tmpFileFixture2.tempFilePath.getFileName()));
+    }
+  }
+
+  @Test
+  void returnsZeroForEmptyFile() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var dataSource =
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
+
+      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath), is(0));
     }
   }
 }

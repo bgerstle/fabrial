@@ -14,6 +14,7 @@ import org.quicktheories.core.Gen;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -62,6 +63,16 @@ public class FileHttpResponderTest {
       @Override
       public List<Path> getDirectoryContents(Path path) {
         return List.of();
+      }
+
+      @Override
+      public Long getFileSize(Path path) {
+        return null;
+      }
+
+      @Override
+      public InputStream getFileContents(Path path) {
+        return null;
       }
     });
   }

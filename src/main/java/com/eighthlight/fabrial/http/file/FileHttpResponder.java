@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +38,10 @@ public class FileHttpResponder implements HttpResponder {
     boolean isDirectory(Path path);
 
     List<Path> getDirectoryContents(Path path);
+
+    Long getFileSize(Path path);
+
+    InputStream getFileContents(Path path);
   }
 
   public FileHttpResponder(DataSource dataSource) {

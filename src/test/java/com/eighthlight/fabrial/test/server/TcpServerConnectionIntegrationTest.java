@@ -3,6 +3,7 @@ package com.eighthlight.fabrial.test.server;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.test.http.TcpClientFixture;
 import com.eighthlight.fabrial.test.http.TcpServerFixture;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ public class TcpServerConnectionIntegrationTest {
     }
   }
 
+  @Tag("slow")
   @Test
   void connectionCountDecrementedByServerStopping() throws IOException {
     try (TcpServerFixture serverFixture =
