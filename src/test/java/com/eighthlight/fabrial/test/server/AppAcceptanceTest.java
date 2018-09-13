@@ -162,30 +162,4 @@ public class AppAcceptanceTest {
           });
     }
   }
-
-  @Test
-  void getEmptyDirContents() throws IOException {
-    int testPort = 8082;
-    try (var tempDirectoryFixture = new TempDirectoryFixture();
-        var appFixture = new AppProcessFixture(testPort, tempDirectoryFixture.tempDirPath.toString())) {
-      Files
-          .find(tempDirectoryFixture.tempDirPath,
-                1,
-                (p, attrs) -> attrs.isDirectory())
-          .forEach((path) -> {
-            var response = responseToRequestForFileInDir(Method.GET,
-                                                         tempDirectoryFixture.tempDirPath,
-                                                         path,
-                                                         testPort);
-            assertThat(response.get(0),
-                       startsWith("HTTP/1.1 200 "));
-            var headers = response.subList(1,3);
-            assertThat(headers,
-                       containsInAnyOrder(
-                           "Content-Length: " + 0,
-                           "Content-Type: text/plain; charset=utf-8"));
-            assertThat(response, hasSize(4));
-          });
-    }
-  }
 }

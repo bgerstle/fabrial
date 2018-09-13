@@ -60,13 +60,18 @@ public class FileHttpResponder implements HttpResponder {
                         .map(p -> p.getFileName().toString())
                         .reduce((p1, p2) -> p1 + "," + p2)
                         .orElse("");
+          if (contents.isEmpty()) {
+            return builder.withHeader("Content-Length", "0")
+                          .withStatusCode(200)
+                          .build();
+          }
           var charset = StandardCharsets.UTF_8;
           var contentBytes = contents.getBytes(charset);
           return builder.withStatusCode(200)
-              .withHeader("Content-Type", "text/plain; charset=" + charset.name().toLowerCase())
-              .withHeader("Content-Length", Integer.toString(contentBytes.length))
-              .withBody(new ByteArrayInputStream(contentBytes))
-              .build();
+                        .withHeader("Content-Length", Integer.toString(contentBytes.length))
+                        .withHeader("Content-Type", "text/plain; charset=" + charset.name().toLowerCase())
+                        .withBody(new ByteArrayInputStream(contentBytes))
+                        .build();
         } else {
           return builder.withStatusCode(501).withReason("coming soon!").build();
         }

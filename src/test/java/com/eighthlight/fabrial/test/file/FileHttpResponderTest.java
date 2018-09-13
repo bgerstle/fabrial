@@ -190,4 +190,22 @@ public class FileHttpResponderTest {
                           Integer.toString(bodyString.getBytes(StandardCharsets.UTF_8).length)));
     }
   }
+
+  @Test
+  void getEmptyDirectoryResponseBodyIsEmpty() throws IOException {
+    try (var tmpDirFixture = new TempDirectoryFixture();) {
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath));
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString("/")
+              .build());
+      assertThat(response.statusCode, is(200));
+      assertThat(response.headers, not(hasKey("Content-Type")));
+      assertThat(response.headers, hasEntry("Content-Length", "0"));
+      assertThat(response.body, is(nullValue()));
+    }
+  }
 }
