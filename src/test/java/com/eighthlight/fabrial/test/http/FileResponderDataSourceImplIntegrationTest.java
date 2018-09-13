@@ -5,6 +5,8 @@ import com.eighthlight.fabrial.test.file.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.file.TempFileFixture;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -60,7 +62,25 @@ public class FileResponderDataSourceImplIntegrationTest {
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
 
-      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath), is(0L));
+      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()), is(0L));
+    }
+  }
+
+  @Test
+  void returnsCorrectSizeAndDataForNonEmptyFile() throws IOException {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var dataSource =
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
+
+      var testData = "foo".getBytes();
+      tmpFileFixture.write(new ByteArrayInputStream(testData));
+
+      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()),
+                 is((long)testData.length));
+
+      var readBytes =
+          dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName()).readAllBytes();
+      assertThat(readBytes, is(testData));
     }
   }
 }
