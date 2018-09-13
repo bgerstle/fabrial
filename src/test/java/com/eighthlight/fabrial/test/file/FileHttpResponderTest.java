@@ -192,8 +192,8 @@ public class FileHttpResponderTest {
   }
 
   @Test
-  void getEmptyDirectoryResponseBodyIsEmpty() throws IOException {
-    try (var tmpDirFixture = new TempDirectoryFixture();) {
+  void getEmptyDirectoryResponseBodyIsEmpty() {
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
       var responder = new FileHttpResponder(
           new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
@@ -206,6 +206,39 @@ public class FileHttpResponderTest {
       assertThat(response.headers, not(hasKey("Content-Type")));
       assertThat(response.headers, hasEntry("Content-Length", "0"));
       assertThat(response.body, is(nullValue()));
+    }
+  }
+
+  @Test
+  void getAbsentFileNotFound() {
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath));
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString("/foo")
+              .build());
+      assertThat(response.statusCode, is(404));
+      assertThat(response.headers, is(anEmptyMap()));
+      assertThat(response.body, is(nullValue()));
+    }
+  }
+
+  @Test
+  void getEmptyFileReturnsEmpty200() {
+    try (var tmpFileFixture = new TempFileFixture(null)) {
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent()));
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString(tmpFileFixture.tempFilePath.getFileName().toString())
+              .build());
+      assertThat(response.statusCode, is(200));
+      assertThat(response.headers, hasEntry("Content-Length", "0"));
     }
   }
 }
