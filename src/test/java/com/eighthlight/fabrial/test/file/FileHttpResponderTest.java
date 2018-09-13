@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Subject1;
 import org.quicktheories.core.Gen;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.paths;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
@@ -250,6 +252,31 @@ public class FileHttpResponderTest {
               .build());
       assertThat(response.statusCode, is(200));
       assertThat(response.headers, hasEntry("Content-Length", "0"));
+    }
+  }
+
+  @Test
+  void getFileReturnsContents() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var data = "foo".getBytes();
+      tmpFileFixture.write(new ByteArrayInputStream(data));
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent()));
+
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString(tmpFileFixture.tempFilePath.getFileName().toString())
+              .build());
+
+      assertThat(response.statusCode, is(200));
+      assertThat(response.headers, hasEntry("Content-Length", Long.toString(data.length)));
+
+      var bodyBytes =
+          Optional.ofNullable(response.body)
+                  .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+      assertThat(bodyBytes.orElse(null), is(data));
     }
   }
 }
