@@ -6,10 +6,12 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -107,7 +109,23 @@ public class FileHttpResponder implements HttpResponder {
                     .withHeader("Content-Length", Long.toString(size))
                     .build();
     }
-    return builder.build();
+    try {
+      return builder.withStatusCode(200)
+                    // TODO: add content-type
+                    .withBody(dataSource.getFileContents(Paths.get(request.uri.getPath())))
+                    .withHeader("Content-Length", Long.toString(size))
+                    .build();
+    } catch (FileNotFoundException e) {
+      logger.warn("Unexpected FileNotFoundException getting contents for {}",
+                  StructuredArguments.kv("request", request.uri.getPath()));
+      // in the off chance this happens between the time we checked in getResponse & now, return 404
+      return builder.withStatusCode(404).build();
+    } catch (IOException e) {
+      logger.error("Unexpected IOException getting contents of file for {}",
+                  StructuredArguments.kv("request", request));
+      // Some other exception, wrap in 500
+      return builder.withStatusCode(500).withReason(e.getMessage()).build();
+    }
   }
 
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
