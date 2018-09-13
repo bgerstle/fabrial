@@ -101,6 +101,12 @@ public class FileHttpResponder implements HttpResponder {
 
   private Response buildGetFileResponse(Request request, ResponseBuilder builder) {
     var size = dataSource.getFileSize(Paths.get(request.uri.getPath()));
+    if (size == 0L) {
+      // size can also be 0 for absent files. assuming caller has checked existence already
+      return builder.withStatusCode(200)
+                    .withHeader("Content-Length", Long.toString(size))
+                    .build();
+    }
     return builder.build();
   }
 
@@ -112,11 +118,13 @@ public class FileHttpResponder implements HttpResponder {
                   .map(p -> p.getFileName().toString())
                   .reduce((p1, p2) -> p1 + "," + p2)
                   .orElse("");
+
     if (contents.isEmpty()) {
       return builder.withHeader("Content-Length", "0")
                     .withStatusCode(200)
                     .build();
     }
+
     var charset = StandardCharsets.UTF_8;
     var contentBytes = contents.getBytes(charset);
     return builder.withStatusCode(200)
