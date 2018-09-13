@@ -32,6 +32,32 @@ import static org.hamcrest.core.AllOf.allOf;
 public class AppAcceptanceTest {
   private static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class);
 
+  private static List<String> responseToRequestForFileInDir(Method method,
+                                                            Path dir,
+                                                            Path path,
+                                                            int port) {
+    String relPathStr =
+        Paths.get("/",
+                  dir.relativize(path)
+                     .toString())
+             .toString();
+    return Result.attempt(() -> {
+      // TEMP: need to recreate client for each file until multiple requests per conn is supported
+      try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
+        clientFixture.client.connect(1000, 3, 1000);
+        OutputStream os = clientFixture.client.getOutputStream();
+        InputStream is = clientFixture.client.getInputStream();
+        new RequestWriter(os)
+            .writeRequest(new RequestBuilder()
+                              .withUriString(relPathStr)
+                              .withVersion(HttpVersion.ONE_ONE)
+                              .withMethod(method)
+                              .build());
+        return Arrays.asList(new BufferedReader(new InputStreamReader((is))).lines().toArray(String[]::new));
+      }
+    }).orElseAssert();
+  }
+
   @Test
   void clientConnectsToAppServer() throws IOException {
     int testPort = 8081;
@@ -134,28 +160,5 @@ public class AppAcceptanceTest {
             assertThat(body, equalTo(expectedBody));
           });
     }
-  }
-
-  private static List<String> responseToRequestForFileInDir(Method method, Path dir, Path path, int port) {
-    String relPathStr =
-        Paths.get("/",
-                  dir.relativize(path)
-                     .toString())
-             .toString();
-    return Result.attempt(() -> {
-      // TEMP: need to recreate client for each file until multiple requests per conn is supported
-      try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
-        clientFixture.client.connect(1000, 3, 1000);
-        OutputStream os = clientFixture.client.getOutputStream();
-        InputStream is = clientFixture.client.getInputStream();
-        new RequestWriter(os)
-            .writeRequest(new RequestBuilder()
-                              .withUriString(relPathStr)
-                              .withVersion(HttpVersion.ONE_ONE)
-                              .withMethod(method)
-                              .build());
-        return Arrays.asList(new BufferedReader(new InputStreamReader((is))).lines().toArray(String[]::new));
-      }
-    }).orElseAssert();
   }
 }
