@@ -14,19 +14,29 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 
 public class FileHttpResponder implements HttpResponder {
   private static final Logger logger = LoggerFactory.getLogger(FileHttpResponder.class);
 
+  private static final List<Method> allowedMethods  = List.of(Method.GET,
+                                                              Method.HEAD,
+                                                              Method.OPTIONS,
+                                                              Method.PUT,
+                                                              Method.DELETE);
+
+  private static final String allowedMethodsAsString = allowedMethods.stream()
+                                                                     .map(Method::name)
+                                                                     .reduce((m, s) -> s + ", " + m)
+                                                                     .get();
+
   private final DataSource dataSource;
 
-  public static interface DataSource {
-    public boolean fileExistsAtPath(Path path);
+  public interface DataSource {
+    boolean fileExistsAtPath(Path path);
 
-    public boolean isDirectory(Path path);
+    boolean isDirectory(Path path);
 
-    public List<Path> getDirectoryContents(Path path);
+    List<Path> getDirectoryContents(Path path);
   }
 
   public FileHttpResponder(DataSource dataSource) {
@@ -41,59 +51,67 @@ public class FileHttpResponder implements HttpResponder {
 
   @Override
   public Response getResponse(Request request) {
-    Path requestPath = Paths.get(request.uri.getPath());
-    boolean fileExists = dataSource.fileExistsAtPath(requestPath);
     final var builder = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE);
-    if (!fileExists && request.method != Method.OPTIONS) {
+    // bail early if file doesn't exist and this isn't an OPTIONS request
+    if (!dataSource.fileExistsAtPath(Paths.get(request.uri.getPath()))
+        && request.method != Method.OPTIONS) {
       return builder.withStatusCode(404).build();
     }
     switch (request.method) {
       case HEAD: {
-        return builder.withStatusCode(200).build();
+        return buildHeadResponse(request, builder);
       }
       case GET: {
-        if (dataSource.isDirectory(requestPath)) {
-          var contents =
-              dataSource.getDirectoryContents(requestPath)
-                        .stream()
-                        .sorted()
-                        .map(p -> p.getFileName().toString())
-                        .reduce((p1, p2) -> p1 + "," + p2)
-                        .orElse("");
-          if (contents.isEmpty()) {
-            return builder.withHeader("Content-Length", "0")
-                          .withStatusCode(200)
-                          .build();
-          }
-          var charset = StandardCharsets.UTF_8;
-          var contentBytes = contents.getBytes(charset);
-          return builder.withStatusCode(200)
-                        .withHeader("Content-Length", Integer.toString(contentBytes.length))
-                        .withHeader("Content-Type", "text/plain; charset=" + charset.name().toLowerCase())
-                        .withBody(new ByteArrayInputStream(contentBytes))
-                        .build();
-        } else {
-          return builder.withStatusCode(501).withReason("coming soon!").build();
-        }
+        return buildGetResponse(request, builder);
       }
       case OPTIONS: {
-        String allowedMethods =
-            List.of(Method.GET,
-                    Method.HEAD,
-                    Method.OPTIONS,
-                    Method.PUT,
-                    Method.DELETE)
-                .stream()
-                .map(Method::name)
-                .reduce((m, s) -> s + ", " + m)
-                .get();
-        return builder.withStatusCode(200)
-                      .withHeaders(Map.of("Allow", allowedMethods,
-                                          "Content-Length", "0"))
-                      .build();
+        return buildOptionsResponse(request, builder);
       }
       default:
         return builder.withStatusCode(501).build();
     }
+  }
+
+  private Response buildHeadResponse(Request request, ResponseBuilder builder) {
+    // TODO: add headers for based on file:
+    // Content-Length, Content-Type, Content-Range
+    return builder.withStatusCode(200).build();
+  }
+
+  private Response buildGetResponse(Request request, ResponseBuilder builder) {
+    if (dataSource.isDirectory(Paths.get(request.uri.getPath()))) {
+      return buildGetDirectoryResponse(request, builder);
+    } else {
+      return builder.withStatusCode(501).withReason("coming soon!").build();
+    }
+  }
+
+  private Response buildOptionsResponse(Request requet, ResponseBuilder builder) {
+    return builder.withStatusCode(200)
+                  .withHeader("Allow", allowedMethodsAsString)
+                  .withHeader("Content-Length", "0")
+                  .build();
+  }
+
+  private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
+    var contents =
+        dataSource.getDirectoryContents(Paths.get(request.uri.getPath()))
+                  .stream()
+                  .sorted()
+                  .map(p -> p.getFileName().toString())
+                  .reduce((p1, p2) -> p1 + "," + p2)
+                  .orElse("");
+    if (contents.isEmpty()) {
+      return builder.withHeader("Content-Length", "0")
+                    .withStatusCode(200)
+                    .build();
+    }
+    var charset = StandardCharsets.UTF_8;
+    var contentBytes = contents.getBytes(charset);
+    return builder.withStatusCode(200)
+                  .withHeader("Content-Length", Integer.toString(contentBytes.length))
+                  .withHeader("Content-Type", "text/plain; charset=" + charset.name().toLowerCase())
+                  .withBody(new ByteArrayInputStream(contentBytes))
+                  .build();
   }
 }
