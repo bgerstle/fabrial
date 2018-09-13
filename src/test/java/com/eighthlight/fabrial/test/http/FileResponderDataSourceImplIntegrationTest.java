@@ -3,12 +3,14 @@ package com.eighthlight.fabrial.test.http;
 import com.eighthlight.fabrial.http.file.FileResponderDataSourceImpl;
 import com.eighthlight.fabrial.test.file.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.file.TempFileFixture;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -78,9 +80,10 @@ public class FileResponderDataSourceImplIntegrationTest {
       assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()),
                  is((long)testData.length));
 
-      var readBytes =
-          dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName()).readAllBytes();
-      assertThat(readBytes, is(testData));
+      var readBytes = Optional.ofNullable(
+          dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName()))
+          .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+      assertThat(readBytes.orElse(null), is(testData));
     }
   }
 }

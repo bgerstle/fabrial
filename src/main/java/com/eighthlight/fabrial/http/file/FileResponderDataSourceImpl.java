@@ -45,7 +45,7 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
 
   @Override
   public long getFileSize(Path path) {
-    return path.toFile().length();
+    return absolutePathInBaseDir(path).toFile().length();
   }
 
   @Override

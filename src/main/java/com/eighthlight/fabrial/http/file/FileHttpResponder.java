@@ -87,7 +87,7 @@ public class FileHttpResponder implements HttpResponder {
     if (dataSource.isDirectory(Paths.get(request.uri.getPath()))) {
       return buildGetDirectoryResponse(request, builder);
     } else {
-      return builder.withStatusCode(501).withReason("coming soon!").build();
+      return buildGetFileResponse(request, builder);
     }
   }
 
@@ -96,6 +96,11 @@ public class FileHttpResponder implements HttpResponder {
                   .withHeader("Allow", allowedMethodsAsString)
                   .withHeader("Content-Length", "0")
                   .build();
+  }
+
+  private Response buildGetFileResponse(Request request, ResponseBuilder builder) {
+    var size = dataSource.getFileSize(Paths.get(request.uri.getPath()));
+    return builder.build();
   }
 
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
