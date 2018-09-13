@@ -12,4 +12,4 @@ jdk:
   - oraclejdk10
 script:
   - ./gradlew check -i
-  - ./gradlew testAcceptance -i
+  - ./gradlew clean testAcceptance -i
