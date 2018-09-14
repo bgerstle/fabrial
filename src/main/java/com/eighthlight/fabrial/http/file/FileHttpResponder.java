@@ -6,10 +6,14 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +41,10 @@ public class FileHttpResponder implements HttpResponder {
     boolean isDirectory(Path path);
 
     List<Path> getDirectoryContents(Path path);
+
+    long getFileSize(Path path);
+
+    InputStream getFileContents(Path path) throws IOException;
   }
 
   public FileHttpResponder(DataSource dataSource) {
@@ -82,7 +90,7 @@ public class FileHttpResponder implements HttpResponder {
     if (dataSource.isDirectory(Paths.get(request.uri.getPath()))) {
       return buildGetDirectoryResponse(request, builder);
     } else {
-      return builder.withStatusCode(501).withReason("coming soon!").build();
+      return buildGetFileResponse(request, builder);
     }
   }
 
@@ -93,6 +101,33 @@ public class FileHttpResponder implements HttpResponder {
                   .build();
   }
 
+  private Response buildGetFileResponse(Request request, ResponseBuilder builder) {
+    var size = dataSource.getFileSize(Paths.get(request.uri.getPath()));
+    if (size == 0L) {
+      // size can also be 0 for absent files. assuming caller has checked existence already
+      return builder.withStatusCode(200)
+                    .withHeader("Content-Length", Long.toString(size))
+                    .build();
+    }
+    try {
+      return builder.withStatusCode(200)
+                    // TODO: add content-type
+                    .withBody(dataSource.getFileContents(Paths.get(request.uri.getPath())))
+                    .withHeader("Content-Length", Long.toString(size))
+                    .build();
+    } catch (FileNotFoundException e) {
+      logger.warn("Unexpected FileNotFoundException getting contents for {}",
+                  StructuredArguments.kv("request", request.uri.getPath()));
+      // in the off chance this happens between the time we checked in getResponse & now, return 404
+      return builder.withStatusCode(404).build();
+    } catch (IOException e) {
+      logger.error("Unexpected IOException getting contents of file for {}",
+                  StructuredArguments.kv("request", request));
+      // Some other exception, wrap in 500
+      return builder.withStatusCode(500).withReason(e.getMessage()).build();
+    }
+  }
+
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
     var contents =
         dataSource.getDirectoryContents(Paths.get(request.uri.getPath()))
@@ -101,11 +136,13 @@ public class FileHttpResponder implements HttpResponder {
                   .map(p -> p.getFileName().toString())
                   .reduce((p1, p2) -> p1 + "," + p2)
                   .orElse("");
+
     if (contents.isEmpty()) {
       return builder.withHeader("Content-Length", "0")
                     .withStatusCode(200)
                     .build();
     }
+
     var charset = StandardCharsets.UTF_8;
     var contentBytes = contents.getBytes(charset);
     return builder.withStatusCode(200)

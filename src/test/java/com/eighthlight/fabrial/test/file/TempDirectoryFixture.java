@@ -13,7 +13,7 @@ import static com.eighthlight.fabrial.utils.Result.attempt;
 public class TempDirectoryFixture implements AutoCloseable {
   public final Path tempDirPath;
 
-  private static final Logger logger = LoggerFactory.getLogger(TempFileFixtures.class);
+  private static final Logger logger = LoggerFactory.getLogger(TempDirectoryFixture.class);
 
   public TempDirectoryFixture() {
     this(null);

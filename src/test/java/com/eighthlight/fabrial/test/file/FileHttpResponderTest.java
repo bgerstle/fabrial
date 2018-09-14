@@ -12,21 +12,26 @@ import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Subject1;
 import org.quicktheories.core.Gen;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.paths;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
+import static org.quicktheories.generators.SourceDSL.strings;
 
 public class FileHttpResponderTest {
   static final Gen<Path> filePaths() {
@@ -62,6 +67,16 @@ public class FileHttpResponderTest {
       @Override
       public List<Path> getDirectoryContents(Path path) {
         return List.of();
+      }
+
+      @Override
+      public long getFileSize(Path path) {
+        throw new IllegalCallerException();
+      }
+
+      @Override
+      public InputStream getFileContents(Path path) {
+        throw new IllegalCallerException();
       }
     });
   }
@@ -192,8 +207,8 @@ public class FileHttpResponderTest {
   }
 
   @Test
-  void getEmptyDirectoryResponseBodyIsEmpty() throws IOException {
-    try (var tmpDirFixture = new TempDirectoryFixture();) {
+  void getEmptyDirectoryResponseBodyIsEmpty() {
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
       var responder = new FileHttpResponder(
           new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
@@ -207,5 +222,106 @@ public class FileHttpResponderTest {
       assertThat(response.headers, hasEntry("Content-Length", "0"));
       assertThat(response.body, is(nullValue()));
     }
+  }
+
+  @Test
+  void getAbsentFileNotFound() {
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath));
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString("/foo")
+              .build());
+      assertThat(response.statusCode, is(404));
+      assertThat(response.headers, is(anEmptyMap()));
+      assertThat(response.body, is(nullValue()));
+    }
+  }
+
+  @Test
+  void getEmptyFileReturnsEmpty200() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent()));
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString(tmpFileFixture.tempFilePath.getFileName().toString())
+              .build());
+      assertThat(response.statusCode, is(200));
+      assertThat(response.headers, hasEntry("Content-Length", "0"));
+    }
+  }
+
+  @Test
+  void getFileReturnsContents() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var data = "foo".getBytes();
+      tmpFileFixture.write(new ByteArrayInputStream(data));
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent()));
+
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.GET)
+              .withUriString(tmpFileFixture.tempFilePath.getFileName().toString())
+              .build());
+
+      assertThat(response.statusCode, is(200));
+      assertThat(response.headers, hasEntry("Content-Length", Long.toString(data.length)));
+
+      var bodyBytes =
+          Optional.ofNullable(response.body)
+                  .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+      assertThat(bodyBytes.orElse(null), is(data));
+    }
+  }
+
+  @Test
+  void getArbitraryFileReturnsContents() {
+    qt().forAll(paths(32),
+                strings().allPossible().ofLengthBetween(1, 16).map(s -> s.getBytes()))
+        .checkAssert((relSubdirPath, data) -> {
+          // create temp directory
+          var baseDirFixture = new TempDirectoryFixture();
+          // setup folder inside arbitrary temp dir
+          var absSubdirPath = Paths.get(baseDirFixture.tempDirPath.toString(), relSubdirPath);
+          Result.attempt(() ->  Files.createDirectories(absSubdirPath))
+                .orElseAssert();
+          // create file in arbitrary temp dir subfolder
+          try (var tmpFileFixture = new TempFileFixture(absSubdirPath)) {
+            // write arbitrary data
+            tmpFileFixture.write(new ByteArrayInputStream(data));
+
+            var responder = new FileHttpResponder(
+                new FileResponderDataSourceImpl(baseDirFixture.tempDirPath));
+
+            var relFilePath =
+                baseDirFixture.tempDirPath.relativize(tmpFileFixture.tempFilePath).toString();
+
+            var response = responder.getResponse(
+                new RequestBuilder()
+                    .withVersion(HttpVersion.ONE_ONE)
+                    .withMethod(Method.GET)
+                    .withUriString(relFilePath)
+                    .build());
+
+            assertThat(response.statusCode, is(200));
+            assertThat(response.headers, hasEntry("Content-Length", Long.toString(data.length)));
+
+            var bodyBytes =
+                Optional.ofNullable(response.body)
+                        .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+            assertThat(bodyBytes.orElse(null), is(data));
+          } finally {
+            // close base temp directory
+            baseDirFixture.close();
+          }
+        });
   }
 }

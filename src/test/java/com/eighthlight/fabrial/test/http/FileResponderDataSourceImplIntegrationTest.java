@@ -3,10 +3,14 @@ package com.eighthlight.fabrial.test.http;
 import com.eighthlight.fabrial.http.file.FileResponderDataSourceImpl;
 import com.eighthlight.fabrial.test.file.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.file.TempFileFixture;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,7 +34,7 @@ public class FileResponderDataSourceImplIntegrationTest {
 
   @Test
   void returnsNullWhenNotDirectory() {
-    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"))) {
+    try (var tmpFileFixture = new TempFileFixture()) {
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent().toAbsolutePath());
 
@@ -51,6 +55,36 @@ public class FileResponderDataSourceImplIntegrationTest {
       assertThat(dataSource.getDirectoryContents(Paths.get("/")),
                  containsInAnyOrder(tmpFileFixture1.tempFilePath.getFileName(),
                                     tmpFileFixture2.tempFilePath.getFileName()));
+    }
+  }
+
+  @Test
+  void returnsZeroForEmptyFile() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var dataSource =
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
+
+      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()), is(0L));
+    }
+  }
+
+  @Test
+  void returnsCorrectSizeAndDataForNonEmptyFile() throws IOException {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var dataSource =
+          new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
+
+      var testData = "foo".getBytes();
+      tmpFileFixture.write(new ByteArrayInputStream(testData));
+
+      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()),
+                 is((long)testData.length));
+
+      var contents = dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName());
+      var readBytes =
+          Optional.ofNullable(contents)
+                  .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+      assertThat(readBytes.orElse(null), is(testData));
     }
   }
 }

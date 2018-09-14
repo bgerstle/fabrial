@@ -1,6 +1,9 @@
 package com.eighthlight.fabrial.http.file;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -40,5 +43,15 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
                    .toArray(Path[]::new))
         .map(Arrays::asList)
         .orElse(null);
+  }
+
+  @Override
+  public long getFileSize(Path path) {
+    return absolutePathInBaseDir(path).toFile().length();
+  }
+
+  @Override
+  public InputStream getFileContents(Path path) throws IOException {
+    return new FileInputStream(absolutePathInBaseDir(path).toFile());
   }
 }
