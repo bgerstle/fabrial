@@ -67,7 +67,7 @@ public class FileHttpResponder implements HttpResponder {
     }
     switch (request.method) {
       case HEAD: {
-        return buildHeadResponse(request, builder);
+        return buildReadFileResponse(request, builder);
       }
       case GET: {
         return buildGetResponse(request, builder);
@@ -83,24 +83,31 @@ public class FileHttpResponder implements HttpResponder {
     }
   }
 
-  private Response buildHeadResponse(Request request, ResponseBuilder builder) {
-    // TODO: add headers for based on file:
-    // Content-Range
+  // serve "read" requests (GET/HEAD) for files. returning body if GET request
+  private Response buildReadFileResponse(Request request, ResponseBuilder builder) {
     var size = dataSource.getFileSize(request.uri.getPath());
+    // exit early w/ "empty file" response
     if (size == 0L) {
       // size can also be 0 for absent files. assuming caller has checked existence already
       return builder.withStatusCode(200)
                     .withHeader("Content-Length", "0")
                     .build();
     }
+
     try {
+      builder.withStatusCode(200)
+             .withHeader("Content-Length",
+                         Long.toString(dataSource.getFileSize(request.uri.getPath())));
+
       var mimeType = dataSource.getFileMimeType(request.uri.getPath());
-      builder
-          .withStatusCode(200)
-          .withHeader("Content-Length", Long.toString(dataSource.getFileSize(request.uri.getPath())));
       if (mimeType != null) {
         builder.withHeader("Content-Type", mimeType);
       }
+
+      if (request.method.equals(Method.GET)) {
+        builder.withBody(dataSource.getFileContents(request.uri.getPath()));
+      }
+
       return builder.build();
     } catch (FileNotFoundException e) {
       logger.warn("Unexpected FileNotFoundException getting contents for {}",
@@ -119,7 +126,7 @@ public class FileHttpResponder implements HttpResponder {
     if (dataSource.isDirectory(request.uri.getPath())) {
       return buildGetDirectoryResponse(request, builder);
     } else {
-      return buildGetFileResponse(request, builder);
+      return buildReadFileResponse(request, builder);
     }
   }
 
@@ -128,37 +135,6 @@ public class FileHttpResponder implements HttpResponder {
                   .withHeader("Allow", allowedMethodsAsString)
                   .withHeader("Content-Length", "0")
                   .build();
-  }
-
-  private Response buildGetFileResponse(Request request, ResponseBuilder builder) {
-    var size = dataSource.getFileSize(request.uri.getPath());
-    if (size == 0L) {
-      // size can also be 0 for absent files. assuming caller has checked existence already
-      return builder.withStatusCode(200)
-                    .withHeader("Content-Length", "0")
-                    .build();
-    }
-    try {
-      var mimeType = dataSource.getFileMimeType(request.uri.getPath());
-      builder
-          .withStatusCode(200)
-          .withHeader("Content-Length", Long.toString(size))
-          .withBody(dataSource.getFileContents(request.uri.getPath()));
-      if (mimeType != null) {
-        builder.withHeader("Content-Type", mimeType);
-      }
-      return builder.build();
-    } catch (FileNotFoundException e) {
-      logger.warn("Unexpected FileNotFoundException getting contents for {}",
-                  StructuredArguments.kv("request", request.uri.getPath()));
-      // in the off chance this happens between the time we checked in getResponse & now, return 404
-      return builder.withStatusCode(404).build();
-    } catch (IOException e) {
-      logger.error("Unexpected IOException getting contents of file for {}",
-                  StructuredArguments.kv("request", request));
-      // Some other exception, wrap in 500
-      return builder.withStatusCode(500).withReason(e.getMessage()).build();
-    }
   }
 
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
