@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -54,5 +55,10 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
   @Override
   public InputStream getFileContents(String relPathStr) throws IOException {
     return new FileInputStream(absolutePathInBaseDir(relPathStr).toFile());
+  }
+
+  @Override
+  public String getFileMimeType(String relPathStr) throws IOException {
+    return Files.probeContentType(absolutePathInBaseDir(relPathStr));
   }
 }

@@ -37,6 +37,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
     try {
       request = new RequestReader(is).readRequest();
     } catch (RequestParsingException e) {
+      logger.info("Failed to parse request, responding with 400", e);
       new ResponseWriter(os)
           .writeResponse(
               new ResponseBuilder()
