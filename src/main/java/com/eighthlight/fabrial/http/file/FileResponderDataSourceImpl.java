@@ -17,41 +17,42 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
     this.baseDirPath = Optional.ofNullable(baseDirPath).orElse(Paths.get("."));
   }
 
-  private Path absolutePathInBaseDir(Path path) {
-    return Paths.get(baseDirPath.toAbsolutePath().toString(), path.toString());
+  private Path absolutePathInBaseDir(String relPathStr) {
+    return Paths.get(baseDirPath.toAbsolutePath().toString(), relPathStr.toString());
   }
 
   @Override
-  public boolean fileExistsAtPath(Path path) {
-    return absolutePathInBaseDir(path).toFile().exists();
+  public boolean fileExistsAtPath(String relPathStr) {
+    return absolutePathInBaseDir(relPathStr).toFile().exists();
   }
 
   @Override
-  public boolean isDirectory(Path path) {
-    return absolutePathInBaseDir(path).toFile().isDirectory();
+  public boolean isDirectory(String relPathStr) {
+    return absolutePathInBaseDir(relPathStr).toFile().isDirectory();
   }
 
   @Override
-  public List<Path> getDirectoryContents(Path path) {
+  public List<String> getDirectoryContents(String relPathStr) {
     return Optional
-        .ofNullable(absolutePathInBaseDir(path).toFile().listFiles())
+        .ofNullable(absolutePathInBaseDir(relPathStr).toFile().listFiles())
         .map(Arrays::asList)
         .map(List::stream)
         .map(s -> s.map(File::getPath)
                    .map(Paths::get)
                    .map(baseDirPath::relativize)
-                   .toArray(Path[]::new))
+                   .map(Path::toString)
+                   .toArray(String[]::new))
         .map(Arrays::asList)
         .orElse(null);
   }
 
   @Override
-  public long getFileSize(Path path) {
-    return absolutePathInBaseDir(path).toFile().length();
+  public long getFileSize(String relPathStr) {
+    return absolutePathInBaseDir(relPathStr).toFile().length();
   }
 
   @Override
-  public InputStream getFileContents(Path path) throws IOException {
-    return new FileInputStream(absolutePathInBaseDir(path).toFile());
+  public InputStream getFileContents(String relPathStr) throws IOException {
+    return new FileInputStream(absolutePathInBaseDir(relPathStr).toFile());
   }
 }

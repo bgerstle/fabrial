@@ -15,8 +15,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class FileHttpResponder implements HttpResponder {
@@ -36,15 +34,15 @@ public class FileHttpResponder implements HttpResponder {
   private final DataSource dataSource;
 
   public interface DataSource {
-    boolean fileExistsAtPath(Path path);
+    boolean fileExistsAtPath(String relPathStr);
 
-    boolean isDirectory(Path path);
+    boolean isDirectory(String relPathStr);
 
-    List<Path> getDirectoryContents(Path path);
+    List<String> getDirectoryContents(String relPathStr);
 
-    long getFileSize(Path path);
+    long getFileSize(String relPathStr);
 
-    InputStream getFileContents(Path path) throws IOException;
+    InputStream getFileContents(String relPathStr) throws IOException;
   }
 
   public FileHttpResponder(DataSource dataSource) {
@@ -61,7 +59,7 @@ public class FileHttpResponder implements HttpResponder {
   public Response getResponse(Request request) {
     final var builder = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE);
     // bail early if file doesn't exist and this isn't an OPTIONS request
-    if (!dataSource.fileExistsAtPath(Paths.get(request.uri.getPath()))
+    if (!dataSource.fileExistsAtPath(request.uri.getPath())
         && request.method != Method.OPTIONS) {
       return builder.withStatusCode(404).build();
     }
@@ -87,7 +85,7 @@ public class FileHttpResponder implements HttpResponder {
   }
 
   private Response buildGetResponse(Request request, ResponseBuilder builder) {
-    if (dataSource.isDirectory(Paths.get(request.uri.getPath()))) {
+    if (dataSource.isDirectory(request.uri.getPath())) {
       return buildGetDirectoryResponse(request, builder);
     } else {
       return buildGetFileResponse(request, builder);
@@ -102,7 +100,7 @@ public class FileHttpResponder implements HttpResponder {
   }
 
   private Response buildGetFileResponse(Request request, ResponseBuilder builder) {
-    var size = dataSource.getFileSize(Paths.get(request.uri.getPath()));
+    var size = dataSource.getFileSize(request.uri.getPath());
     if (size == 0L) {
       // size can also be 0 for absent files. assuming caller has checked existence already
       return builder.withStatusCode(200)
@@ -112,7 +110,7 @@ public class FileHttpResponder implements HttpResponder {
     try {
       return builder.withStatusCode(200)
                     // TODO: add content-type
-                    .withBody(dataSource.getFileContents(Paths.get(request.uri.getPath())))
+                    .withBody(dataSource.getFileContents(request.uri.getPath()))
                     .withHeader("Content-Length", Long.toString(size))
                     .build();
     } catch (FileNotFoundException e) {
@@ -130,10 +128,9 @@ public class FileHttpResponder implements HttpResponder {
 
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
     var contents =
-        dataSource.getDirectoryContents(Paths.get(request.uri.getPath()))
+        dataSource.getDirectoryContents(request.uri.getPath())
                   .stream()
                   .sorted()
-                  .map(p -> p.getFileName().toString())
                   .reduce((p1, p2) -> p1 + "," + p2)
                   .orElse("");
 

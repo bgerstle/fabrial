@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,12 +22,12 @@ public class FileResponderDataSourceImplIntegrationTest {
          var tmpFileFixture = new TempFileFixture(tmpDirFixture.tempDirPath)) {
       var dataSource = new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath);
 
-      assertThat(dataSource.fileExistsAtPath(Paths.get("/")), equalTo(true));
+      assertThat(dataSource.fileExistsAtPath("/"), equalTo(true));
 
-      assertThat(dataSource.isDirectory(Paths.get("/")), equalTo(true));
+      assertThat(dataSource.isDirectory("/"), equalTo(true));
 
-      assertThat(dataSource.getDirectoryContents(Paths.get("/")),
-                 equalTo(List.of(tmpFileFixture.tempFilePath.getFileName())));
+      assertThat(dataSource.getDirectoryContents("/"),
+                 equalTo(List.of(tmpFileFixture.tempFilePath.getFileName().toString())));
     }
   }
 
@@ -38,9 +37,9 @@ public class FileResponderDataSourceImplIntegrationTest {
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent().toAbsolutePath());
 
-      assertThat(dataSource.isDirectory(tmpFileFixture.tempFilePath.getFileName()),
+      assertThat(dataSource.isDirectory(tmpFileFixture.tempFilePath.getFileName().toString()),
                  is(false));
-      assertThat(dataSource.getDirectoryContents(tmpFileFixture.tempFilePath.getFileName()),
+      assertThat(dataSource.getDirectoryContents(tmpFileFixture.tempFilePath.getFileName().toString()),
                  is(nullValue()));
     }
   }
@@ -52,9 +51,9 @@ public class FileResponderDataSourceImplIntegrationTest {
         var tmpFileFixture2 = new TempFileFixture(tmpDirFixture.tempDirPath)) {
       var dataSource =
           new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath);
-      assertThat(dataSource.getDirectoryContents(Paths.get("/")),
-                 containsInAnyOrder(tmpFileFixture1.tempFilePath.getFileName(),
-                                    tmpFileFixture2.tempFilePath.getFileName()));
+      assertThat(dataSource.getDirectoryContents("/"),
+                 containsInAnyOrder(tmpFileFixture1.tempFilePath.getFileName().toString(),
+                                    tmpFileFixture2.tempFilePath.getFileName().toString()));
     }
   }
 
@@ -64,7 +63,8 @@ public class FileResponderDataSourceImplIntegrationTest {
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
 
-      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()), is(0L));
+      var actualSize = dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName().toString());
+      assertThat(actualSize, is(0L));
     }
   }
 
@@ -77,10 +77,10 @@ public class FileResponderDataSourceImplIntegrationTest {
       var testData = "foo".getBytes();
       tmpFileFixture.write(new ByteArrayInputStream(testData));
 
-      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName()),
+      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName().toString()),
                  is((long)testData.length));
 
-      var contents = dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName());
+      var contents = dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName().toString());
       var readBytes =
           Optional.ofNullable(contents)
                   .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
