@@ -13,7 +13,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -49,38 +48,9 @@ public class FileHttpResponderTest {
 
   @Test
   void headAbsentFileNotFound() {
-//    try (var tmpDirFixture = new TempDirectoryFixture()) {
-      var responder = new FileHttpResponder(new FileHttpResponder.DataSource() {
-        @Override
-        public boolean fileExistsAtPath(String relPathStr) {
-          return false;
-        }
-
-        @Override
-        public boolean isDirectory(String relPathStr) {
-          return false;
-        }
-
-        @Override
-        public List<String> getDirectoryContents(String relPathStr) {
-          return null;
-        }
-
-        @Override
-        public long getFileSize(String relPathStr) {
-          return 0;
-        }
-
-        @Override
-        public String getFileMimeType(String relPathStr) throws IOException {
-          return null;
-        }
-
-        @Override
-        public InputStream getFileContents(String relPathStr) throws IOException {
-          return null;
-        }
-      });
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
+      var responder = new FileHttpResponder(
+          new FileResponderDataSourceImpl(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -90,7 +60,7 @@ public class FileHttpResponderTest {
       assertThat(response.statusCode, is(404));
       assertThat(response.headers, is(anEmptyMap()));
       assertThat(response.body, is(nullValue()));
-//    }
+    }
   }
 
   @Test
