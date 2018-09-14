@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.quicktheories.QuickTheory.qt;
+import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.lists;
 import static org.quicktheories.generators.SourceDSL.strings;
 
@@ -284,9 +285,15 @@ public class FileHttpResponderTest {
 
   @Test
   void getArbitraryFileReturnsContents() {
+    final var extensionsToMimes = Map.of(
+      "txt", "text/plain",
+      "jpg", "image/jpeg",
+      "gif", "image/gif"
+    );
     qt().forAll(paths(32),
-                strings().allPossible().ofLengthBetween(1, 16).map(s -> s.getBytes()))
-        .checkAssert((relSubdirPath, data) -> {
+                strings().allPossible().ofLengthBetween(1, 16).map(s -> s.getBytes()),
+                pick(List.copyOf(extensionsToMimes.keySet())))
+        .checkAssert((relSubdirPath, data, ext) -> {
           // create temp directory
           var baseDirFixture = new TempDirectoryFixture();
           // setup folder inside arbitrary temp dir
@@ -294,7 +301,7 @@ public class FileHttpResponderTest {
           Result.attempt(() ->  Files.createDirectories(absSubdirPath))
                 .orElseAssert();
           // create file in arbitrary temp dir subfolder
-          try (var tmpFileFixture = new TempFileFixture(absSubdirPath)) {
+          try (var tmpFileFixture = new TempFileFixture(absSubdirPath, "." + ext)) {
             // write arbitrary data
             tmpFileFixture.write(new ByteArrayInputStream(data));
 
@@ -312,7 +319,10 @@ public class FileHttpResponderTest {
                     .build());
 
             assertThat(response.statusCode, is(200));
-            assertThat(response.headers, hasEntry("Content-Length", Long.toString(data.length)));
+            assertThat(response.headers, allOf(
+                hasEntry("Content-Length", Long.toString(data.length)),
+                hasEntry("Content-Type", extensionsToMimes.get(ext))
+            ));
 
             var bodyBytes =
                 Optional.ofNullable(response.body)
