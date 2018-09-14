@@ -75,8 +75,11 @@ public class FileHttpResponder implements HttpResponder {
       case OPTIONS: {
         return buildOptionsResponse(request, builder);
       }
+      case PUT: {
+        return builder.withStatusCode(501).withReason("coming soon!").build();
+      }
       default:
-        return builder.withStatusCode(501).build();
+        return builder.withStatusCode(405).build();
     }
   }
 
