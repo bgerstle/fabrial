@@ -110,11 +110,12 @@ public class FileHttpResponder implements HttpResponder {
                     .build();
     }
     try {
-      return builder.withStatusCode(200)
-                    // TODO: add content-type
-                    .withBody(dataSource.getFileContents(request.uri.getPath()))
-                    .withHeader("Content-Length", Long.toString(size))
-                    .build();
+      return builder
+          .withStatusCode(200)
+          .withHeader("Content-Type", dataSource.getFileMimeType(request.uri.getPath()))
+          .withHeader("Content-Length", Long.toString(size))
+          .withBody(dataSource.getFileContents(request.uri.getPath()))
+          .build();
     } catch (FileNotFoundException e) {
       logger.warn("Unexpected FileNotFoundException getting contents for {}",
                   StructuredArguments.kv("request", request.uri.getPath()));
