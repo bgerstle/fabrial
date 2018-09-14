@@ -42,6 +42,8 @@ public class FileHttpResponder implements HttpResponder {
 
     long getFileSize(String relPathStr);
 
+    String getFileMimeType(String relPathStr) throws IOException;
+
     InputStream getFileContents(String relPathStr) throws IOException;
   }
 

@@ -15,12 +15,16 @@ public class TempFileFixture implements AutoCloseable {
   public final Path tempFilePath;
 
   public TempFileFixture() {
-    this(Paths.get("/tmp"));
+    this(Paths.get("/tmp", null));
   }
 
   public TempFileFixture(Path dir) {
+    this(dir, null);
+  }
+
+  public TempFileFixture(Path dir, String suffix) {
     tempFilePath =
-        attempt(() -> Files.createTempFile(dir, "test", null))
+        attempt(() -> Files.createTempFile(dir, "test", suffix))
               .orElseAssert();
   }
 

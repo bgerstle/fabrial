@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,21 +71,25 @@ public class FileResponderDataSourceImplIntegrationTest {
 
   @Test
   void returnsCorrectSizeAndDataForNonEmptyFile() throws IOException {
-    try (var tmpFileFixture = new TempFileFixture()) {
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
+      String tmpFilename = tmpFileFixture.tempFilePath.getFileName().toString();
+
       var dataSource =
           new FileResponderDataSourceImpl(tmpFileFixture.tempFilePath.getParent());
 
       var testData = "foo".getBytes();
       tmpFileFixture.write(new ByteArrayInputStream(testData));
 
-      assertThat(dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName().toString()),
+      assertThat(dataSource.getFileSize(tmpFilename),
                  is((long)testData.length));
 
-      var contents = dataSource.getFileContents(tmpFileFixture.tempFilePath.getFileName().toString());
+      var contents = dataSource.getFileContents(tmpFilename);
       var readBytes =
           Optional.ofNullable(contents)
                   .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
       assertThat(readBytes.orElse(null), is(testData));
+
+      assertThat(dataSource.getFileMimeType(tmpFilename), startsWith("text/plain"));
     }
   }
 }

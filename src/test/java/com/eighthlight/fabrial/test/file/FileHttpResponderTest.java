@@ -70,6 +70,11 @@ public class FileHttpResponderTest {
       public InputStream getFileContents(String relPathStr) {
         throw new IllegalCallerException();
       }
+
+      @Override
+      public String getFileMimeType(String relPathStr) {
+        return null;
+      }
     });
   }
 
@@ -251,7 +256,7 @@ public class FileHttpResponderTest {
 
   @Test
   void getFileReturnsContents() {
-    try (var tmpFileFixture = new TempFileFixture()) {
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
       var data = "foo".getBytes();
       tmpFileFixture.write(new ByteArrayInputStream(data));
       var responder = new FileHttpResponder(
@@ -265,7 +270,10 @@ public class FileHttpResponderTest {
               .build());
 
       assertThat(response.statusCode, is(200));
-      assertThat(response.headers, hasEntry("Content-Length", Long.toString(data.length)));
+      assertThat(response.headers, allOf(
+          hasEntry("Content-Length", Long.toString(data.length)),
+          hasEntry("Content-Type", "text/plain")
+      ));
 
       var bodyBytes =
           Optional.ofNullable(response.body)
