@@ -1,6 +1,8 @@
 package com.eighthlight.fabrial.http.request;
 
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -38,9 +40,8 @@ public class HttpHeaderReader {
     this.scanner = new Scanner(is);
   }
 
-
   public String nextFieldName() {
-    if (scanner.hasNext(FIELD_NAME_PATTERN)) {
+    if (hasNext()) {
       scanner.findInLine(FIELD_NAME_PATTERN);
       return scanner.match().group(1);
     }
@@ -57,5 +58,18 @@ public class HttpHeaderReader {
 
   public void skipToNextLine() {
     scanner.skip(" *"+CRLF);
+  }
+
+  public boolean hasNext() {
+    return scanner.hasNext(FIELD_NAME_PATTERN);
+  }
+
+  public Map<String, String> readHeaders() {
+    var headers = new HashMap<String, String>();
+    while (hasNext()) {
+      headers.put(nextFieldName(), nextFieldValue());
+      skipToNextLine();
+    }
+    return headers;
   }
 }

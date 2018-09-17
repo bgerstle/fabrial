@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
+import java.util.Map;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,17 +25,20 @@ public class HttpHeaderReaderTest {
 
   @Test
   void multipleHeaders() {
-    var headerLines = String.join(CRLF, List.of(
-        "Content-Type: text/plain",
-        "Content-Length: 5"
-    ));
+    var headerLines =
+        String.join(CRLF, List.of(
+            "Content-Type: text/plain; charset=utf-8",
+            "Content-Length: 5"
+        ))
+        // add newline which would precede the request body
+        + CRLF;
 
     var headerReader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
-
-    assertThat(headerReader.nextFieldName(), is("Content-Type"));
-    assertThat(headerReader.nextFieldValue(), is("text/plain"));
-    headerReader.skipToNextLine();
-    assertThat(headerReader.nextFieldName(), is("Content-Length"));
-    assertThat(headerReader.nextFieldValue(), is("5"));
+    var headers = headerReader.readHeaders();
+    assertThat(headers,
+              is(Map.of(
+                  "Content-Type", "text/plain; charset=utf-8",
+                  "Content-Length", "5"
+              )));
   }
 }
