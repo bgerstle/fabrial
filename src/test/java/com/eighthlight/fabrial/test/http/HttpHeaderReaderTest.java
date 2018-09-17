@@ -54,6 +54,30 @@ public class HttpHeaderReaderTest {
   }
 
   @Test
+  void missingFieldName() {
+    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(
+        (": foo" + CRLF).getBytes()));
+    var headers = headerReader.readHeaders();
+    assertThat(headers, is(emptyMap()));
+  }
+
+  @Test
+  void missingFieldValue() {
+    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(
+        ("foo:" + CRLF).getBytes()));
+    var headers = headerReader.readHeaders();
+    assertThat(headers, is(emptyMap()));
+  }
+
+  @Test
+  void allWhitespace() {
+    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(
+        (" :   " + CRLF).getBytes()));
+    var headers = headerReader.readHeaders();
+    assertThat(headers, is(emptyMap()));
+  }
+
+  @Test
   void arbitraryHeaderLines() {
     qt().forAll(headers(), optionalWhitespace(), optionalWhitespace())
         .asWithPrecursor((headers, ows1, ows2) -> {

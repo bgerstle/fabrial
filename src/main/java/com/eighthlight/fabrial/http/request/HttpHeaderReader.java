@@ -62,7 +62,10 @@ public class HttpHeaderReader {
     var headers = new HashMap<String, String>();
     var fieldName = nextFieldName();
     while (fieldName != null) {
-      headers.put(fieldName, nextFieldValue());
+      var fieldValue = nextFieldValue();
+      if (fieldValue != null) {
+        headers.put(fieldName, fieldValue);
+      }
       skipToNextLine();
       fieldName = nextFieldName();
     }
