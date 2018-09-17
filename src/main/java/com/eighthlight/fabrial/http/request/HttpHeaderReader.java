@@ -4,6 +4,8 @@ import java.io.InputStream;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
+
 /**
  * Scans an input string for header fields and values.
  *
@@ -27,8 +29,8 @@ import java.util.regex.Pattern;
  *
  */
 public class HttpHeaderReader {
-  private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("^([!#$%&'*+-.\\^_'|~0-9a-zA-Z]+):");
-  private static final Pattern FIELD_VALUE_PATTERN = Pattern.compile(" *([^:]+) *$");
+  private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("([!#$%&'*+-.\\^_'|~0-9a-zA-Z]+):");
+  private static final Pattern FIELD_VALUE_PATTERN = Pattern.compile(" *([^:]+)");
 
   private final Scanner scanner;
 
@@ -37,7 +39,7 @@ public class HttpHeaderReader {
   }
 
 
-  public String getFieldName() {
+  public String nextFieldName() {
     if (scanner.hasNext(FIELD_NAME_PATTERN)) {
       scanner.findInLine(FIELD_NAME_PATTERN);
       return scanner.match().group(1);
@@ -45,11 +47,15 @@ public class HttpHeaderReader {
     return null;
   }
 
-  public String getFieldValue() {
+  public String nextFieldValue() {
     if (scanner.hasNext(FIELD_VALUE_PATTERN)) {
       scanner.findInLine(FIELD_VALUE_PATTERN);
-      return scanner.match().group(1);
+      return scanner.match().group(1).trim();
     }
     return null;
+  }
+
+  public void skipToNextLine() {
+    scanner.skip(" *"+CRLF);
   }
 }
