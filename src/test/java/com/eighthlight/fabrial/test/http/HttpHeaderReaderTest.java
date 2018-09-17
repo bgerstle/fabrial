@@ -48,19 +48,21 @@ public class HttpHeaderReaderTest {
   @Test
   void arbitraryHeaderLines() {
     qt().forAll(headers(), optionalWhitespace(), optionalWhitespace())
-        .checkAssert((headers, ows1, ows2) -> {
-      var lineBuilder = new StringBuilder();
-      for (var entry: headers.entrySet()) {
-        lineBuilder.append(entry.getKey());
-        lineBuilder.append(":");
-        lineBuilder.append(ows1);
-        lineBuilder.append(entry.getValue());
-        lineBuilder.append(ows2);
-        lineBuilder.append(CRLF);
-      }
-      var headerLines = lineBuilder.toString();
-      var reader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
-      assertThat(reader.readHeaders(), is(headers));
-    });
+        .asWithPrecursor((headers, ows1, ows2) -> {
+          var lineBuilder = new StringBuilder();
+          for (var entry : headers.entrySet()) {
+            lineBuilder.append(entry.getKey());
+            lineBuilder.append(":");
+            lineBuilder.append(ows1);
+            lineBuilder.append(entry.getValue());
+            lineBuilder.append(ows2);
+            lineBuilder.append(CRLF);
+          }
+          return lineBuilder.toString();
+        })
+        .checkAssert((headers, ows1, ows2, headerLines) -> {
+          var reader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
+          assertThat(reader.readHeaders(), is(headers));
+        });
   }
 }
