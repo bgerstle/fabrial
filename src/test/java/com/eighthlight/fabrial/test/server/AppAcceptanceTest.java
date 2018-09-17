@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.hamcrest.core.AllOf.allOf;
 
@@ -38,8 +39,7 @@ public class AppAcceptanceTest {
                                                             int port) {
     String relPathStr =
         Paths.get("/",
-                  dir.relativize(path)
-                     .toString())
+                  dir.toAbsolutePath().relativize(path).toString())
              .toString();
     return Result.attempt(() -> {
       // TEMP: need to recreate client for each file until multiple requests per conn is supported
@@ -90,6 +90,42 @@ public class AppAcceptanceTest {
                                                      testPort).get(0),
                        is("HTTP/1.1 404 "));
           });
+    }
+  }
+
+  @Test
+  void getExistingFile() {
+    int testPort = 8082;
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt");
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tmpFileFixture.tempFilePath.getParent().toString())) {
+      var data = "bar".getBytes();
+      tmpFileFixture.write(new ByteArrayInputStream(data));
+      var responseLines = responseToRequestForFileInDir(Method.GET,
+                                                        tmpFileFixture.tempFilePath.getParent(),
+                                                        tmpFileFixture.tempFilePath,
+                                                        testPort);
+      assertThat(responseLines, hasSize(5));
+      assertThat(responseLines.get(0),
+                 is("HTTP/1.1 200 "));
+      assertThat(responseLines.subList(1, 3),
+                 containsInAnyOrder("Content-Length: " + data.length,
+                                    "Content-Type: text/plain"));
+      assertThat(responseLines.get(4).getBytes(), is(data));
+    }
+  }
+
+  @Test
+  void getAbsentFile() {
+    int testPort = 8082;
+    try (var tmpDirectoryFixture = new TempDirectoryFixture();
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tmpDirectoryFixture.tempDirPath.toString())) {
+      var responseLines = responseToRequestForFileInDir(Method.GET,
+                                                        tmpDirectoryFixture.tempDirPath,
+                                                        Paths.get(tmpDirectoryFixture.tempDirPath.toString(), "/foo"),
+                                                        testPort);
+      assertThat(responseLines, hasSize(1));
+      assertThat(responseLines.get(0),
+                 is("HTTP/1.1 404 "));
     }
   }
 
