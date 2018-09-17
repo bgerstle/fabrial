@@ -10,6 +10,7 @@ import java.util.Map;
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.headers;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.optionalWhitespace;
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.quicktheories.QuickTheory.qt;
@@ -39,10 +40,17 @@ public class HttpHeaderReaderTest {
     var headerReader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
     var headers = headerReader.readHeaders();
     assertThat(headers,
-              is(Map.of(
-                  "Content-Type", "text/plain; charset=utf-8",
-                  "Content-Length", "5"
-              )));
+               is(Map.of(
+                   "Content-Type", "text/plain; charset=utf-8",
+                   "Content-Length", "5"
+               )));
+  }
+
+  @Test
+  void noHeaders() {
+    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(CRLF.getBytes()));
+    var headers = headerReader.readHeaders();
+    assertThat(headers, is(emptyMap()));
   }
 
   @Test
