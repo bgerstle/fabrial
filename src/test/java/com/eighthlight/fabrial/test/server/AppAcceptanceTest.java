@@ -38,9 +38,9 @@ public class AppAcceptanceTest {
                                                             Path path,
                                                             int port) {
     String relPathStr =
-        dir.toAbsolutePath()
-           .relativize(path)
-           .toString();
+        Paths.get("/",
+                  dir.toAbsolutePath().relativize(path).toString())
+             .toString();
     return Result.attempt(() -> {
       // TEMP: need to recreate client for each file until multiple requests per conn is supported
       try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
@@ -111,6 +111,21 @@ public class AppAcceptanceTest {
                  containsInAnyOrder("Content-Length: " + data.length,
                                     "Content-Type: text/plain"));
       assertThat(responseLines.get(4).getBytes(), is(data));
+    }
+  }
+
+  @Test
+  void getAbsentFile() {
+    int testPort = 8082;
+    try (var tmpDirectoryFixture = new TempDirectoryFixture();
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tmpDirectoryFixture.tempDirPath.toString())) {
+      var responseLines = responseToRequestForFileInDir(Method.GET,
+                                                        tmpDirectoryFixture.tempDirPath,
+                                                        Paths.get(tmpDirectoryFixture.tempDirPath.toString(), "/foo"),
+                                                        testPort);
+      assertThat(responseLines, hasSize(1));
+      assertThat(responseLines.get(0),
+                 is("HTTP/1.1 404 "));
     }
   }
 
