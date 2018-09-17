@@ -16,6 +16,21 @@ import static org.hamcrest.core.Is.is;
 import static org.quicktheories.QuickTheory.qt;
 
 public class HttpHeaderReaderTest {
+  public static String headerLineFromComponents(Map<String, String> headers,
+                                                String ows1,
+                                                String ows2) {
+    var lineBuilder = new StringBuilder();
+    for (var entry : headers.entrySet()) {
+      lineBuilder.append(entry.getKey());
+      lineBuilder.append(":");
+      lineBuilder.append(ows1);
+      lineBuilder.append(entry.getValue());
+      lineBuilder.append(ows2);
+      lineBuilder.append(CRLF);
+    }
+    return lineBuilder.toString();
+  }
+
   @Test
   void parsesNameAndValueOfHeaderLine() {
     var headerLines =
@@ -80,18 +95,7 @@ public class HttpHeaderReaderTest {
   @Test
   void arbitraryHeaderLines() {
     qt().forAll(headers(), optionalWhitespace(), optionalWhitespace())
-        .asWithPrecursor((headers, ows1, ows2) -> {
-          var lineBuilder = new StringBuilder();
-          for (var entry : headers.entrySet()) {
-            lineBuilder.append(entry.getKey());
-            lineBuilder.append(":");
-            lineBuilder.append(ows1);
-            lineBuilder.append(entry.getValue());
-            lineBuilder.append(ows2);
-            lineBuilder.append(CRLF);
-          }
-          return lineBuilder.toString();
-        })
+        .asWithPrecursor(HttpHeaderReaderTest::headerLineFromComponents)
         .checkAssert((headers, ows1, ows2, headerLines) -> {
           var reader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
           assertThat(reader.readHeaders(), is(headers));
