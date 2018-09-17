@@ -28,8 +28,10 @@ public class ArbitraryHttp {
     return requests(methods(), requestTargets(), constant(HttpVersion.ONE_ONE));
   }
 
-  public static Gen<Request> requests(Gen<Method> methods, Gen<URI> uris, Gen<String> versions) {
-    return versions.zip(methods, uris, (v, m, u) -> new Request(v, m, u, null));
+  public static Gen<Request> requests(Gen<Method> methods,
+                                      Gen<URI> uris,
+                                      Gen<String> versions) {
+    return versions.zip(methods, uris, (v, m, u) -> new Request(v, m, u));
   }
 
   // !!!: all of these "length" args are rough approximations. proper DSL necessary

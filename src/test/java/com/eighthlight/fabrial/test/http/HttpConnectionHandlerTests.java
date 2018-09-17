@@ -94,8 +94,7 @@ public class HttpConnectionHandlerTests {
                          assertThat(
                              handler.responseTo(new Request(HttpVersion.ONE_ONE,
                                                             r.targetMethod,
-                                                            r.targetURI,
-                                                            null)),
+                                                            r.targetURI)),
                              equalTo(r.response)
                          ));
         });

@@ -5,14 +5,15 @@ import com.eighthlight.fabrial.http.Method;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 public class RequestBuilder {
   private String version;
   private Method method;
   private URI uri;
   private InputStream body;
+  private Map<String, String> headers;
 
   public RequestBuilder() {}
 
@@ -55,6 +56,11 @@ public class RequestBuilder {
     return this;
   }
 
+  public RequestBuilder withHeaders(Map<String, String> headers) {
+    this.headers = Map.copyOf(headers);
+    return this;
+  }
+
   public RequestBuilder withBody(InputStream body) {
     this.body = body;
     return this;
@@ -62,10 +68,7 @@ public class RequestBuilder {
 
   public Request build() {
     try {
-      return new Request(Optional.ofNullable(version).orElseThrow(),
-                         Optional.ofNullable(method).orElseThrow(),
-                         Optional.ofNullable(uri).orElseThrow(),
-                         body);
+      return new Request(version, method, uri, headers, body);
     } catch (NoSuchElementException e) {
       throw new IllegalArgumentException(e);
     }
