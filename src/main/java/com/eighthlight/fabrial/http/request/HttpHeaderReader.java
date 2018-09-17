@@ -41,16 +41,14 @@ public class HttpHeaderReader {
   }
 
   public String nextFieldName() {
-    if (hasNext()) {
-      scanner.findInLine(FIELD_NAME_PATTERN);
+    if (scanner.findInLine(FIELD_NAME_PATTERN) != null) {
       return scanner.match().group(1);
     }
     return null;
   }
 
   public String nextFieldValue() {
-    if (scanner.hasNext(FIELD_VALUE_PATTERN)) {
-      scanner.findInLine(FIELD_VALUE_PATTERN);
+    if (scanner.findInLine(FIELD_VALUE_PATTERN) != null) {
       return scanner.match().group(1).trim();
     }
     return null;
@@ -60,15 +58,13 @@ public class HttpHeaderReader {
     scanner.skip(" *"+CRLF);
   }
 
-  public boolean hasNext() {
-    return scanner.hasNext(FIELD_NAME_PATTERN);
-  }
-
   public Map<String, String> readHeaders() {
     var headers = new HashMap<String, String>();
-    while (hasNext()) {
-      headers.put(nextFieldName(), nextFieldValue());
+    var fieldName = nextFieldName();
+    while (fieldName != null) {
+      headers.put(fieldName, nextFieldValue());
       skipToNextLine();
+      fieldName = nextFieldName();
     }
     return headers;
   }

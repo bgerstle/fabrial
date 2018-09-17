@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Map;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
+import static com.eighthlight.fabrial.test.http.ArbitraryHttp.headers;
+import static com.eighthlight.fabrial.test.http.ArbitraryHttp.optionalWhitespace;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.quicktheories.QuickTheory.qt;
 
 public class HttpHeaderReaderTest {
   @Test
@@ -40,5 +43,24 @@ public class HttpHeaderReaderTest {
                   "Content-Type", "text/plain; charset=utf-8",
                   "Content-Length", "5"
               )));
+  }
+
+  @Test
+  void arbitraryHeaderLines() {
+    qt().forAll(headers(), optionalWhitespace(), optionalWhitespace())
+        .checkAssert((headers, ows1, ows2) -> {
+      var lineBuilder = new StringBuilder();
+      for (var entry: headers.entrySet()) {
+        lineBuilder.append(entry.getKey());
+        lineBuilder.append(":");
+        lineBuilder.append(ows1);
+        lineBuilder.append(entry.getValue());
+        lineBuilder.append(ows2);
+        lineBuilder.append(CRLF);
+      }
+      var headerLines = lineBuilder.toString();
+      var reader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
+      assertThat(reader.readHeaders(), is(headers));
+    });
   }
 }
