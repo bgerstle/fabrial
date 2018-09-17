@@ -11,12 +11,13 @@ import static org.hamcrest.core.Is.is;
 
 public class HttpHeaderReaderTest {
   @Test
-  void parsesKeyOfHeaderLine() {
+  void parsesNameAndValueOfHeaderLine() {
     var headerLines =
         new ByteArrayInputStream(("Content-Type: text/plain" + CRLF).getBytes());
 
     var headerReader = new HttpHeaderReader(headerLines);
 
-    assertThat(headerReader.getKey(), is("Content-Type"));
+    assertThat(headerReader.getFieldName(), is("Content-Type"));
+    assertThat(headerReader.getFieldValue(), is("text/plain"));
   }
 }
