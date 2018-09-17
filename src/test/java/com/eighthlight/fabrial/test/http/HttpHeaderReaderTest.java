@@ -4,7 +4,9 @@ import com.eighthlight.fabrial.http.request.HttpHeaderReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.CharBuffer;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +15,7 @@ import static com.eighthlight.fabrial.test.http.ArbitraryHttp.headers;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.optionalWhitespace;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 import static org.quicktheories.QuickTheory.qt;
 
@@ -91,6 +94,21 @@ public class HttpHeaderReaderTest {
     var headerReader = new HttpHeaderReader(sourceFromString(" :   " + CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(emptyMap()));
+  }
+
+  @Test
+  void doesNotConsumeEntireStream() throws IOException {
+    var headerLines = String.join(CRLF, List.of(
+        "Accept: */*"
+    ))
+    // add newline and body
+    + CRLF + "body";
+    var source = sourceFromString(headerLines);
+    var headerReader = new HttpHeaderReader(source);
+    var headers = headerReader.readHeaders();
+    assertThat(headers, is(Map.of("Accept", "*/*")));
+    var cb = CharBuffer.allocate(0);
+    assertThat(source.read(cb), greaterThanOrEqualTo(1));
   }
 
   @Test
