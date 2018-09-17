@@ -1,12 +1,13 @@
 package com.eighthlight.fabrial.http.request;
 
+import com.eighthlight.fabrial.utils.Result;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.stream.Stream;
 
 public class RequestReader {
   private final InputStream is;
@@ -35,19 +36,24 @@ public class RequestReader {
   }
 
   public Request readRequest() throws RequestParsingException {
-    Optional<String> firstLine;
     try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-      Stream<String> lines = reader.lines();
-      firstLine = lines.findFirst();
-      if (!firstLine.isPresent()) {
-        throw new RequestParsingException("Request is empty");
-      }
-    } catch (Exception e) {
-      throw new RequestParsingException(e);
-    }
-    try {
-      return withRequestLine(firstLine.get()).build();
+      // must pass the reader through each step, otherwise the first reader
+      // will consume the entire stream
+      var reader = new BufferedReader(new InputStreamReader(is));
+      return Result
+          .attempt(() -> {
+
+            var firstLine = reader.readLine();
+            return Optional.ofNullable(firstLine)
+                           .orElseThrow(() -> new RequestParsingException("Request is empty"));
+          })
+          .flatMapAttempt(RequestReader::withRequestLine)
+          .map(b -> {
+            var headerReader = new HttpHeaderReader(reader);
+            var headers = headerReader.readHeaders();
+            return b.withHeaders(headers).build();
+          })
+          .orElseThrow();
     } catch (Exception e) {
       throw new RequestParsingException(e);
     }

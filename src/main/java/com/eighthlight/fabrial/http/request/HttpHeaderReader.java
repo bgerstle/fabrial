@@ -1,6 +1,5 @@
 package com.eighthlight.fabrial.http.request;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +36,7 @@ public class HttpHeaderReader {
 
   private final Scanner scanner;
 
-  public HttpHeaderReader(InputStream is) {
+  public HttpHeaderReader(Readable is) {
     this.scanner = new Scanner(is);
   }
 

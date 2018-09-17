@@ -4,6 +4,7 @@ import com.eighthlight.fabrial.http.request.HttpHeaderReader;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
@@ -31,10 +32,13 @@ public class HttpHeaderReaderTest {
     return lineBuilder.toString();
   }
 
+  public static Readable sourceFromString(String str) {
+    return new InputStreamReader(new ByteArrayInputStream(str.getBytes()));
+  }
+
   @Test
   void parsesNameAndValueOfHeaderLine() {
-    var headerLines =
-        new ByteArrayInputStream(("Content-Type: text/plain" + CRLF).getBytes());
+    var headerLines = sourceFromString("Content-Type: text/plain" + CRLF);
 
     var headerReader = new HttpHeaderReader(headerLines);
 
@@ -52,7 +56,7 @@ public class HttpHeaderReaderTest {
         // add newline which would precede the request body
         + CRLF;
 
-    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
+    var headerReader = new HttpHeaderReader(sourceFromString(headerLines));
     var headers = headerReader.readHeaders();
     assertThat(headers,
                is(Map.of(
@@ -63,31 +67,28 @@ public class HttpHeaderReaderTest {
 
   @Test
   void noHeaders() {
-    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(CRLF.getBytes()));
+    var headerReader = new HttpHeaderReader(sourceFromString(CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(emptyMap()));
   }
 
   @Test
   void missingFieldName() {
-    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(
-        (": foo" + CRLF).getBytes()));
+    var headerReader = new HttpHeaderReader(sourceFromString(": foo" + CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(emptyMap()));
   }
 
   @Test
   void missingFieldValue() {
-    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(
-        ("foo:" + CRLF).getBytes()));
+    var headerReader = new HttpHeaderReader(sourceFromString("foo:" + CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(Map.of("foo", "")));
   }
 
   @Test
   void allWhitespace() {
-    var headerReader = new HttpHeaderReader(new ByteArrayInputStream(
-        (" :   " + CRLF).getBytes()));
+    var headerReader = new HttpHeaderReader(sourceFromString(" :   " + CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(emptyMap()));
   }
@@ -97,7 +98,7 @@ public class HttpHeaderReaderTest {
     qt().forAll(headers(), optionalWhitespace(), optionalWhitespace())
         .asWithPrecursor(HttpHeaderReaderTest::headerLineFromComponents)
         .checkAssert((headers, ows1, ows2, headerLines) -> {
-          var reader = new HttpHeaderReader(new ByteArrayInputStream(headerLines.getBytes()));
+          var reader = new HttpHeaderReader(sourceFromString(headerLines));
           assertThat(reader.readHeaders(), is(headers));
         });
   }
