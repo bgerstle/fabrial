@@ -3,6 +3,7 @@ package com.eighthlight.fabrial.http.request;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
 
@@ -10,14 +11,16 @@ public class Request {
   public final String version;
   public final Method method;
   public final URI uri;
+  public final InputStream body;
 
-  public Request(String version, Method method, URI uri) {
+  public Request(String version, Method method, URI uri, InputStream body) {
     if (!HttpVersion.allVersions.contains(version)) {
       throw new IllegalArgumentException("Unexpected HTTP version: " + version);
     }
     this.version = version;
     this.method = method;
     this.uri = uri;
+    this.body = body;
   }
   
   @Override

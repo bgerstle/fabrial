@@ -92,7 +92,10 @@ public class HttpConnectionHandlerTests {
           HttpConnectionHandler handler = new HttpConnectionHandler(rs);
           rs.forEach(r ->
                          assertThat(
-                             handler.responseTo(new Request(HttpVersion.ONE_ONE, r.targetMethod, r.targetURI)),
+                             handler.responseTo(new Request(HttpVersion.ONE_ONE,
+                                                            r.targetMethod,
+                                                            r.targetURI,
+                                                            null)),
                              equalTo(r.response)
                          ));
         });

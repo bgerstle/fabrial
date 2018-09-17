@@ -30,7 +30,7 @@ public class ArbitraryHttp {
   }
 
   public static Gen<Request> requests(Gen<Method> methods, Gen<URI> uris, Gen<String> versions) {
-    return versions.zip(methods, uris, Request::new);
+    return versions.zip(methods, uris, (v, m, u) -> new Request(v, m, u, null));
   }
 
   // !!!: all of these "length" args are rough approximations. proper DSL necessary

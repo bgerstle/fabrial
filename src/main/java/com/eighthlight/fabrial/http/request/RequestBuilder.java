@@ -2,6 +2,7 @@ package com.eighthlight.fabrial.http.request;
 
 import com.eighthlight.fabrial.http.Method;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.NoSuchElementException;
@@ -11,6 +12,7 @@ public class RequestBuilder {
   private String version;
   private Method method;
   private URI uri;
+  private InputStream body;
 
   public RequestBuilder() {}
 
@@ -53,11 +55,17 @@ public class RequestBuilder {
     return this;
   }
 
+  public RequestBuilder withBody(InputStream body) {
+    this.body = body;
+    return this;
+  }
+
   public Request build() {
     try {
       return new Request(Optional.ofNullable(version).orElseThrow(),
                          Optional.ofNullable(method).orElseThrow(),
-                         Optional.ofNullable(uri).orElseThrow());
+                         Optional.ofNullable(uri).orElseThrow(),
+                         body);
     } catch (NoSuchElementException e) {
       throw new IllegalArgumentException(e);
     }
