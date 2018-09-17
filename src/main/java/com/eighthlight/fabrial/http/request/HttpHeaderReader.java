@@ -3,6 +3,7 @@ package com.eighthlight.fabrial.http.request;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -62,10 +63,7 @@ public class HttpHeaderReader {
     var headers = new HashMap<String, String>();
     var fieldName = nextFieldName();
     while (fieldName != null) {
-      var fieldValue = nextFieldValue();
-      if (fieldValue != null) {
-        headers.put(fieldName, fieldValue);
-      }
+      headers.put(fieldName, Optional.ofNullable(nextFieldValue()).orElse(""));
       skipToNextLine();
       fieldName = nextFieldName();
     }

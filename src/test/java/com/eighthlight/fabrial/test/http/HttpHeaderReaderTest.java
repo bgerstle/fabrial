@@ -66,7 +66,7 @@ public class HttpHeaderReaderTest {
     var headerReader = new HttpHeaderReader(new ByteArrayInputStream(
         ("foo:" + CRLF).getBytes()));
     var headers = headerReader.readHeaders();
-    assertThat(headers, is(emptyMap()));
+    assertThat(headers, is(Map.of("foo", "")));
   }
 
   @Test
