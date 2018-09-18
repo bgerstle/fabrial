@@ -1,12 +1,14 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.request.HttpHeaderReader;
+import com.eighthlight.fabrial.utils.Result;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.CharBuffer;
+import java.io.Reader;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +17,6 @@ import static com.eighthlight.fabrial.test.http.ArbitraryHttp.headers;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.optionalWhitespace;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 import static org.quicktheories.QuickTheory.qt;
 
@@ -35,28 +36,27 @@ public class HttpHeaderReaderTest {
     return lineBuilder.toString();
   }
 
-  public static Readable sourceFromString(String str) {
+  public static Reader sourceFromString(String str) {
     return new InputStreamReader(new ByteArrayInputStream(str.getBytes()));
   }
 
   @Test
-  void parsesNameAndValueOfHeaderLine() {
-    var headerLines = sourceFromString("Content-Type: text/plain" + CRLF);
+  void parsesNameAndValueOfHeaderLine() throws IOException {
+    var headerLines = sourceFromString("Content-Type: text/plain" + CRLF + CRLF);
 
     var headerReader = new HttpHeaderReader(headerLines);
 
-    assertThat(headerReader.nextFieldName(), is("Content-Type"));
-    assertThat(headerReader.nextFieldValue(), is("text/plain"));
+    assertThat(headerReader.readHeaders(), is(Map.of("Content-Type", "text/plain")));
   }
 
   @Test
-  void multipleHeaders() {
+  void multipleHeaders() throws IOException {
     var headerLines =
         String.join(CRLF, List.of(
             "Content-Type: text/plain; charset=utf-8",
             "Content-Length: 5"
         ))
-        // add newline which would precede the request body
+        // add newline which marks end of headers
         + CRLF;
 
     var headerReader = new HttpHeaderReader(sourceFromString(headerLines));
@@ -69,46 +69,50 @@ public class HttpHeaderReaderTest {
   }
 
   @Test
-  void noHeaders() {
+  void noHeaders() throws IOException {
     var headerReader = new HttpHeaderReader(sourceFromString(CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(emptyMap()));
   }
 
   @Test
-  void missingFieldName() {
+  void missingFieldName() throws IOException {
     var headerReader = new HttpHeaderReader(sourceFromString(": foo" + CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(emptyMap()));
   }
 
   @Test
-  void missingFieldValue() {
+  void missingFieldValue() throws IOException {
     var headerReader = new HttpHeaderReader(sourceFromString("foo:" + CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(Map.of("foo", "")));
   }
 
   @Test
-  void allWhitespace() {
+  void allWhitespace() throws IOException {
     var headerReader = new HttpHeaderReader(sourceFromString(" :   " + CRLF));
     var headers = headerReader.readHeaders();
     assertThat(headers, is(emptyMap()));
   }
 
   @Test
+  void trimsTrailingWhitespaceFromValue() throws IOException {
+    var headerReader = new HttpHeaderReader(sourceFromString("Content-Length: 5  " + CRLF + CRLF));
+    var headers = headerReader.readHeaders();
+    assertThat(headers, is(Map.of("Content-Length", "5")));
+  }
+
+  @Test
   void doesNotConsumeEntireStream() throws IOException {
-    var headerLines = String.join(CRLF, List.of(
-        "Accept: */*"
-    ))
-    // add newline and body
-    + CRLF + "body";
+    var headerLines =
+        "Accept: */*" + CRLF + CRLF + "body";
     var source = sourceFromString(headerLines);
     var headerReader = new HttpHeaderReader(source);
     var headers = headerReader.readHeaders();
+
     assertThat(headers, is(Map.of("Accept", "*/*")));
-    var cb = CharBuffer.allocate(0);
-    assertThat(source.read(cb), greaterThanOrEqualTo(1));
+    assertThat(IOUtils.toString(source), is("body"));
   }
 
   @Test
@@ -117,7 +121,7 @@ public class HttpHeaderReaderTest {
         .asWithPrecursor(HttpHeaderReaderTest::headerLineFromComponents)
         .checkAssert((headers, ows1, ows2, headerLines) -> {
           var reader = new HttpHeaderReader(sourceFromString(headerLines));
-          assertThat(reader.readHeaders(), is(headers));
+          assertThat(Result.attempt(reader::readHeaders).orElseAssert(), is(headers));
         });
   }
 }

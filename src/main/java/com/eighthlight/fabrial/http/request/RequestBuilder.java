@@ -2,18 +2,18 @@ package com.eighthlight.fabrial.http.request;
 
 import com.eighthlight.fabrial.http.Method;
 
-import java.io.InputStream;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 public class RequestBuilder {
-  private String version;
-  private Method method;
-  private URI uri;
-  private InputStream body;
-  private Map<String, String> headers;
+  public String version;
+  public Method method;
+  public URI uri;
+  public Reader body;
+  public Map<String, String> headers;
 
   public RequestBuilder() {}
 
@@ -61,7 +61,7 @@ public class RequestBuilder {
     return this;
   }
 
-  public RequestBuilder withBody(InputStream body) {
+  public RequestBuilder withBody(Reader body) {
     this.body = body;
     return this;
   }
