@@ -12,19 +12,35 @@ import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 
 public class RequestWriter {
   private final OutputStream os;
+  private final BufferedWriter writer;
 
   public RequestWriter(OutputStream os) {
     this.os = os;
+    this.writer = new BufferedWriter(new OutputStreamWriter(os));
   }
 
   public void writeRequest(Request request) throws IOException {
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
+    writeRequestLine(request);
+    writer.write(CRLF);
+    writeHeaders(request);
+    writer.write(CRLF);
+    writer.flush();
+    request.body.transferTo(os);
+  }
+
+  public void writeRequestLine(Request request) throws IOException {
     List<String> requestLineComponents = List.of(request.method.name(),
                                                  request.uri.toString(),
                                                  "HTTP/" + request.version);
-    String line = String.join(" ", requestLineComponents)
-                  + CRLF;
-    writer.write(line);
-    writer.flush();
+    writer.write(String.join(" ", requestLineComponents));
+  }
+
+  public void writeHeaders(Request request) throws IOException {
+    for (var entry: request.headers.entrySet()) {
+      writer.write(entry.getKey());
+      writer.write(":");
+      writer.write(entry.getValue());
+      writer.write(CRLF);
+    }
   }
 }

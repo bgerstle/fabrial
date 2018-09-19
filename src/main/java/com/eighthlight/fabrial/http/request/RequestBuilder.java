@@ -2,7 +2,7 @@ package com.eighthlight.fabrial.http.request;
 
 import com.eighthlight.fabrial.http.Method;
 
-import java.io.Reader;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -12,7 +12,7 @@ public class RequestBuilder {
   public String version;
   public Method method;
   public URI uri;
-  public Reader body;
+  public InputStream body;
   public Map<String, String> headers;
 
   public RequestBuilder() {}
@@ -61,7 +61,7 @@ public class RequestBuilder {
     return this;
   }
 
-  public RequestBuilder withBody(Reader body) {
+  public RequestBuilder withBody(InputStream body) {
     this.body = body;
     return this;
   }

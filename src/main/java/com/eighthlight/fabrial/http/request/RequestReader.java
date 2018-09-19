@@ -1,5 +1,6 @@
 package com.eighthlight.fabrial.http.request;
 
+import com.eighthlight.fabrial.utils.HttpLineReader;
 import com.eighthlight.fabrial.utils.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,36 +38,20 @@ public class RequestReader {
     }
   }
 
-  private void skipNewline(Reader reader) {
-    try {
-      char[] buf = new char[1];
-      int read = reader.read(buf, 0, 1);
-      if (read == -1) {
-        logger.trace("Encountered EOF after header fields instead of CRLF.");
-      } else {
-        var readChars = new String(buf);
-        if (!readChars.equals("\n")) {
-          logger.warn("Found non-newline character after header fields: " + readChars);
-        }
-      }
-    } catch (IOException e) {
-    }
-  }
-
   public Request readRequest() throws RequestParsingException {
     try {
       // must pass the reader through each step, otherwise the first reader
       // will consume the entire stream
-      var reader = new BufferedReader(new InputStreamReader(is));
+      var lineReader = new HttpLineReader(is);
       return Result
           .attempt(() -> {
-            var firstLine = reader.readLine();
+            var firstLine = lineReader.readLine();
             return Optional.ofNullable(firstLine)
                            .orElseThrow(() -> new RequestParsingException("Request is empty"));
           })
           .flatMapAttempt(RequestReader::withRequestLine)
           .flatMapAttempt(b -> {
-            var headerReader = new HttpHeaderReader(reader);
+            var headerReader = new HttpHeaderReader(is);
             var headers = headerReader.readHeaders();
             return b.withHeaders(headers);
           })
@@ -75,7 +60,7 @@ public class RequestReader {
             contentLength.flatMap((lenStr) -> {
               return Result.attempt(() -> Long.decode(lenStr)).toOptional();
             }).ifPresent((len) -> {
-              b.withBody(reader);
+              b.withBody(is);
             });
             return b.build();
           })

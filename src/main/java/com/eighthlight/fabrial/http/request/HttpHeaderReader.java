@@ -1,16 +1,15 @@
 package com.eighthlight.fabrial.http.request;
 
+import com.eighthlight.fabrial.utils.HttpLineReader;
 import com.eighthlight.fabrial.utils.Result;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-
-import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 
 /**
  * Scans an input string for header fields and values.
@@ -36,7 +35,7 @@ import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
  */
 public class HttpHeaderReader {
   private static final Pattern HEADER_LINE_PATTERN =
-      Pattern.compile("([!#$%&'*+-.\\^_'|~0-9a-zA-Z]+): *(.*)");
+      Pattern.compile("([!#$%&'*+-.\\^_'|~0-9a-zA-Z]+): *(.*?) *");
 
   // Invoke a scanner method reference, wrapping any thrown exceptions and returning null on error.
   private static <ArgType, RetType> RetType scanSafely(Function<ArgType, RetType> scanf, ArgType arg) {
@@ -47,37 +46,21 @@ public class HttpHeaderReader {
                  .orElse(null);
   }
 
-  private final Reader reader;
+  private final HttpLineReader reader;
 
-  public HttpHeaderReader(Reader reader) {
-    this.reader = reader;
-  }
-
-  private String nextLine() throws IOException {
-    var builder = new StringBuilder();
-    var readChar = reader.read();
-    while (readChar != -1) {
-      builder.appendCodePoint(readChar);
-      var crlfIndex = builder.lastIndexOf(CRLF);
-      if (crlfIndex != -1) {
-        // remove trailing newline, just like Scanner/BufferedReader would
-        builder.replace(crlfIndex, crlfIndex + CRLF.length(), "");
-        break;
-      }
-      readChar = reader.read();
-    }
-    return builder.toString();
+  public HttpHeaderReader(InputStream inputStream) {
+    this.reader = new HttpLineReader(inputStream);
   }
 
   public Map<String, String> readHeaders() throws IOException {
     var headers = new HashMap<String, String>();
-    var line = nextLine();
+    var line = reader.readLine();
     while (!line.isEmpty()) {
       var matcher = HEADER_LINE_PATTERN.matcher(line);
       if (matcher.matches() && matcher.groupCount() > 1) {
-        headers.put(matcher.group(1), matcher.groupCount() == 2 ? matcher.group(2).trim() : "");
+        headers.put(matcher.group(1), matcher.groupCount() == 2 ? matcher.group(2) : "");
       }
-      line = nextLine();
+      line = reader.readLine();
     }
     return headers;
   }

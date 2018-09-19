@@ -5,10 +5,7 @@ import com.eighthlight.fabrial.utils.Result;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 
@@ -36,13 +33,13 @@ public class HttpHeaderReaderTest {
     return lineBuilder.toString();
   }
 
-  public static Reader sourceFromString(String str) {
-    return new InputStreamReader(new ByteArrayInputStream(str.getBytes()));
+  public static InputStream sourceFromString(String str) {
+    return new ByteArrayInputStream(str.getBytes());
   }
 
   @Test
   void parsesNameAndValueOfHeaderLine() throws IOException {
-    var headerLines = sourceFromString("Content-Type: text/plain" + CRLF + CRLF);
+    InputStream headerLines = sourceFromString("Content-Type: text/plain" + CRLF + CRLF);
 
     var headerReader = new HttpHeaderReader(headerLines);
 
@@ -107,7 +104,7 @@ public class HttpHeaderReaderTest {
   void doesNotConsumeEntireStream() throws IOException {
     var headerLines =
         "Accept: */*" + CRLF + CRLF + "body";
-    var source = sourceFromString(headerLines);
+    InputStream source = sourceFromString(headerLines);
     var headerReader = new HttpHeaderReader(source);
     var headers = headerReader.readHeaders();
 
