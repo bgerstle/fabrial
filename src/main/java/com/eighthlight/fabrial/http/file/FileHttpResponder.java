@@ -64,7 +64,8 @@ public class FileHttpResponder implements HttpResponder {
     final var builder = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE);
     // bail early if file doesn't exist and this isn't an OPTIONS request
     if (!fileController.fileExistsAtPath(request.uri.getPath())
-        && request.method != Method.OPTIONS) {
+        && (request.method != Method.OPTIONS
+            && request.method != Method.PUT)) {
       return builder.withStatusCode(404).build();
     }
     switch (request.method) {
@@ -78,7 +79,7 @@ public class FileHttpResponder implements HttpResponder {
         return buildOptionsResponse(request, builder);
       }
       case PUT: {
-        return builder.withStatusCode(501).withReason("coming soon!").build();
+        return buildPutResponse(request, builder);
       }
       default:
         return builder.withStatusCode(405).build();
@@ -160,5 +161,9 @@ public class FileHttpResponder implements HttpResponder {
                   .withHeader("Content-Type", "text/plain; charset=" + charset.name().toLowerCase())
                   .withBody(new ByteArrayInputStream(contentBytes))
                   .build();
+  }
+
+  private Response buildPutResponse(Request request, ResponseBuilder builder) {
+    return builder.withStatusCode(411).build();
   }
 }
