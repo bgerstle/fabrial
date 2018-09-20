@@ -32,7 +32,7 @@ public class MockFileController implements FileHttpResponder.FileController {
   public List<String> getDirectoryContents(String relPathStr) {
     var file = fileAtPath(relPathStr);
     return file
-        .flatMap(f -> f.isDirectory() ? Optional.empty() : Optional.of((MockDirectory)f))
+        .flatMap(f -> f.isDirectory() ? Optional.of((MockDirectory)f) : Optional.empty())
         .map(d -> d.children)
         .map(cs -> cs.stream().map(c -> c.getName()).collect(Collectors.toList()))
         .orElse(List.of());
@@ -42,7 +42,7 @@ public class MockFileController implements FileHttpResponder.FileController {
   public long getFileSize(String relPathStr) {
     var file = fileAtPath(relPathStr);
     return file
-        .flatMap(f -> !f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
+        .flatMap(f -> f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
         .map(f -> f.data == null ? 0 : f.data.length)
         .map(Integer::toUnsignedLong)
         .orElse(0L);
@@ -52,7 +52,7 @@ public class MockFileController implements FileHttpResponder.FileController {
   public String getFileMimeType(String relPathStr) throws IOException {
     var file = fileAtPath(relPathStr);
     return file
-        .flatMap(f -> !f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
+        .flatMap(f -> f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
         .map(f -> f.type)
         .orElse(null);
   }
@@ -61,7 +61,7 @@ public class MockFileController implements FileHttpResponder.FileController {
   public InputStream getFileContents(String relPathStr) throws IOException {
     var file = fileAtPath(relPathStr);
     return file
-        .flatMap(f -> !f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
+        .flatMap(f -> f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
         .map(f -> f.data)
         .map(ByteArrayInputStream::new)
         .orElse(null);
