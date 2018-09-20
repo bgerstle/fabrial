@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.http.file;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,7 +63,11 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
   @Override
   public void updateFileContents(String relPathStr, InputStream data, int length) throws IOException {
     var file = absolutePathInBaseDir(relPathStr).toFile();
-    var fileOutStream = new FileOutputStream(file);
-    data.transferTo(fileOutStream);
+    try (var fileOutStream = new FileOutputStream(file)) {
+      // surely there's a way to "transfer N bytes w/ a buffer"...
+      var buf = ByteBuffer.allocate(length);
+      data.read(buf.array(), 0, length);
+      fileOutStream.write(buf.array(), 0, length);
+    }
   }
 }
