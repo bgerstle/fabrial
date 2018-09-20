@@ -3,7 +3,7 @@ package com.eighthlight.fabrial.test.file;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
-import com.eighthlight.fabrial.http.file.FileResponderFileControllerImpl;
+import com.eighthlight.fabrial.http.file.LocalFilesystemController;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ public class FileHttpResponderTest {
   void headEmptyFile() {
     try (var tmpFileFixture = new TempFileFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpFileFixture.tempFilePath.getParent()));
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent()));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -50,7 +50,7 @@ public class FileHttpResponderTest {
   void headAbsentFileNotFound() {
     try (var tmpDirFixture = new TempDirectoryFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpDirFixture.tempDirPath));
+          new LocalFilesystemController(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -69,7 +69,7 @@ public class FileHttpResponderTest {
       var data = "foo".getBytes();
       tmpFileFixture.write(new ByteArrayInputStream(data));
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpFileFixture.tempFilePath.getParent()));
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent()));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -86,7 +86,7 @@ public class FileHttpResponderTest {
   void unsupportedMethodOnExistingFile() {
     try (var tmpFileFixture = new TempFileFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpFileFixture.tempFilePath.getParent()));
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent()));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -103,7 +103,7 @@ public class FileHttpResponderTest {
   void unsupportedMethodOnAbsentFile() {
     try (var tmpDirFixture = new TempDirectoryFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpDirFixture.tempDirPath));
+          new LocalFilesystemController(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -121,7 +121,7 @@ public class FileHttpResponderTest {
   void optionsOnAbsentOrExistingFile(String path) {
     try (var tmpDirFixture = new TempDirectoryFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpDirFixture.tempDirPath));
+          new LocalFilesystemController(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -146,7 +146,7 @@ public class FileHttpResponderTest {
         var tmpFileFixture1 = new TempFileFixture(tmpDirFixture.tempDirPath);
         var tmpFileFixture2 = new TempFileFixture(tmpDirFixture.tempDirPath)) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpDirFixture.tempDirPath));
+          new LocalFilesystemController(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -172,7 +172,7 @@ public class FileHttpResponderTest {
   void getEmptyDirectoryResponseBodyIsEmpty() {
     try (var tmpDirFixture = new TempDirectoryFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpDirFixture.tempDirPath));
+          new LocalFilesystemController(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -190,7 +190,7 @@ public class FileHttpResponderTest {
   void getAbsentFileNotFound() {
     try (var tmpDirFixture = new TempDirectoryFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpDirFixture.tempDirPath));
+          new LocalFilesystemController(tmpDirFixture.tempDirPath));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -207,7 +207,7 @@ public class FileHttpResponderTest {
   void getEmptyFileReturnsEmpty200() {
     try (var tmpFileFixture = new TempFileFixture()) {
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpFileFixture.tempFilePath.getParent()));
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent()));
       var response = responder.getResponse(
           new RequestBuilder()
               .withVersion(HttpVersion.ONE_ONE)
@@ -226,7 +226,7 @@ public class FileHttpResponderTest {
       var data = "foo".getBytes();
       tmpFileFixture.write(new ByteArrayInputStream(data));
       var responder = new FileHttpResponder(
-          new FileResponderFileControllerImpl(tmpFileFixture.tempFilePath.getParent()));
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent()));
 
       var response = responder.getResponse(
           new RequestBuilder()
@@ -271,7 +271,7 @@ public class FileHttpResponderTest {
             tmpFileFixture.write(new ByteArrayInputStream(data));
 
             var responder = new FileHttpResponder(
-                new FileResponderFileControllerImpl(baseDirFixture.tempDirPath));
+                new LocalFilesystemController(baseDirFixture.tempDirPath));
 
             var relFilePath =
                 baseDirFixture.tempDirPath.relativize(tmpFileFixture.tempFilePath).toString();

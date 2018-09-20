@@ -8,10 +8,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class FileResponderFileControllerImpl implements FileHttpResponder.FileController {
+public class LocalFilesystemController implements FileHttpResponder.FileController {
   public final Path baseDirPath;
 
-  public FileResponderFileControllerImpl(Path baseDirPath) {
+  public LocalFilesystemController(Path baseDirPath) {
     this.baseDirPath = Optional.ofNullable(baseDirPath).orElse(Paths.get("."));
   }
 
