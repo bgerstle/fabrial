@@ -36,15 +36,21 @@ public class HttpRequestLineParsingTests {
     return pick(List.of("0.8", "2.6", "0.0"));
   }
 
+  public static String concatRequestLineComponents(
+      String method,
+      String uri,
+      String version) {
+    return method + " "
+           + uri + " "
+           + "HTTP/" + version
+           + CRLF;
+  }
+
   public static ByteArrayInputStream requestLineFromComponents(
       String method,
       String uri,
       String version) {
-    String requestLine = method + " "
-                         + uri + " "
-                         + "HTTP/" + version
-                         + CRLF;
-    return new ByteArrayInputStream(requestLine.getBytes(StandardCharsets.UTF_8));
+    return new ByteArrayInputStream(concatRequestLineComponents(method, uri, version).getBytes());
   }
 
   @Test

@@ -19,8 +19,7 @@ public class ArbitraryStrings {
     ).ofSize(length).map(chars ->
       chars.stream()
            .map(c -> Character.toString(c))
-           .reduce(String::concat)
-           .get()
+           .reduce("", String::concat)
     );
   }
 }
