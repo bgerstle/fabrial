@@ -5,9 +5,10 @@ import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.quicktheories.core.Gen;
 
 import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -20,64 +21,49 @@ import static org.quicktheories.generators.SourceDSL.lists;
 import static org.quicktheories.generators.SourceDSL.strings;
 
 public class HttpLineReaderTest {
+  private static ByteArrayInputStream asAsciiByteStream(String string) {
+    return new ByteArrayInputStream(string.getBytes(StandardCharsets.US_ASCII));
+  }
+
+  private static Gen<String> asciiStringsWithoutCRLF() {
+    return strings().ascii().ofLengthBetween(0, 32).assuming(s -> !s.contains(CRLF));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = {"", CRLF})
   void returnsEmptyString(String empty) {
-    var codePoints = empty.codePoints().toArray();
-    var buffer = ByteBuffer.allocate(codePoints.length * 4);
-    buffer.asIntBuffer().put(codePoints);
-    var bais = new ByteArrayInputStream(buffer.array());
-    var readBytes =
-        Result.attempt(new HttpLineReader(bais)::readLine)
-              .orElseAssert()
-              .codePoints()
-              .toArray();
-    var readLine = new String(readBytes, 0, readBytes.length);
+    var readLine =
+        Result.attempt(new HttpLineReader(asAsciiByteStream(empty))::readLine)
+              .orElseAssert();
     assertThat(readLine, is(emptyString()));
   }
 
   @Test
   void returnsLineWithoutCRLF() {
-    qt().forAll(strings().allPossible().ofLengthBetween(0, 32),
+    qt().forAll(asciiStringsWithoutCRLF(),
                 constant(CRLF).toOptionals(20))
-        .assuming((s, optCRLF) -> !s.contains(CRLF))
         .checkAssert((s, optCRLF) -> {
-          var combined = optCRLF.map(c -> s + c).orElse(s);
-          var codePoints = combined.codePoints().toArray();
-          var buffer = ByteBuffer.allocate(codePoints.length * 4);
-          buffer.asIntBuffer().put(codePoints);
-          var bais = new ByteArrayInputStream(buffer.array());
-          var readBytes =
-              Result.attempt(new HttpLineReader(bais)::readLine)
-                    .orElseAssert()
-                    .codePoints()
-                    .toArray();
-          var readLine = new String(readBytes, 0, readBytes.length);
+          var readLine =
+              Result.attempt(new HttpLineReader(asAsciiByteStream(s))::readLine)
+                    .orElseAssert();
           assertThat(readLine, equalTo(s));
         });
   }
 
   @Test
   void readsLines() {
-    qt().forAll(lists().of(strings().allPossible()
-                                    .ofLengthBetween(0, 32))
-                       .ofSizeBetween(0, 5))
-        .checkAssert(lines -> {
-          var joinedLines = String.join(CRLF, lines);
-          var codePoints = joinedLines.codePoints().toArray();
-          var buffer = ByteBuffer.allocate(codePoints.length * 4);
-          buffer.asIntBuffer().put(codePoints);
-          var bais = new ByteArrayInputStream(buffer.array());
+    var listsOfAsciiStrings =
+        lists().of(asciiStringsWithoutCRLF()).ofSizeBetween(0, 5);
 
+    qt().forAll(listsOfAsciiStrings).checkAssert(lines -> {
+          var joinedLines = String.join(CRLF, lines);
+          var lineReader = new HttpLineReader(asAsciiByteStream(joinedLines));
           for (var line: lines) {
-            var readBytes =
-                Result.attempt(new HttpLineReader(bais)::readLine)
-                      .orElseAssert()
-                      .codePoints()
-                      .toArray();
-            var readLine = new String(readBytes, 0, readBytes.length);
+            var readLine = Result.attempt(lineReader::readLine).orElseAssert();
             assertThat(readLine, equalTo(line));
           }
+          var readLineAfterExhaustedInput = Result.attempt(lineReader::readLine).orElseAssert();
+          assertThat(readLineAfterExhaustedInput, is(emptyString()));
         });
   }
 }
