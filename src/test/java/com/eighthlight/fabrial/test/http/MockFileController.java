@@ -1,14 +1,17 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
-import com.eighthlight.fabrial.utils.Result;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.eighthlight.fabrial.test.http.MockDirectory.PATH_SEPARATOR;
 
 public class MockFileController implements FileHttpResponder.FileController {
   MockDirectory root;
@@ -68,10 +71,32 @@ public class MockFileController implements FileHttpResponder.FileController {
   }
 
   @Override
-  public void updateFileContents(String relPathStr, InputStream data) throws IOException {
-    var file = fileAtPath(relPathStr);
-    fileAtPath(relPathStr)
-        .flatMap(f -> !f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
-        .ifPresent(f -> f.data = Result.attempt(data::readAllBytes).toOptional().orElse(null));
+  public void updateFileContents(String relPathStr, InputStream data, int length) throws IOException {
+    var node = fileAtPath(relPathStr);
+    if (node.isPresent() && node.get().isDirectory()) {
+      throw new UnsupportedOperationException("Can't update file data of a directory");
+    }
+    var pathComponents = Arrays.asList(relPathStr.split(PATH_SEPARATOR));
+    if (pathComponents.size() == 0) {
+      throw new UnsupportedOperationException("Can't update file data at empty path");
+    }
+
+    var file = (MockFile)node.orElseGet(() -> {
+      var name = pathComponents.get(pathComponents.size()-1);
+      var newFile = new MockFile(name);
+      var parentPath = String.join(PATH_SEPARATOR, pathComponents.subList(0, pathComponents.size()-1));
+      var parent = fileAtPath(parentPath);
+      if (!parent.isPresent()) {
+        throw new UnsupportedOperationException("Parent doesn't exist");
+      } else if (!parent.get().isDirectory()){
+        throw new UnsupportedOperationException("File exists at parent path");
+      }
+      var parentDir = (MockDirectory)parent.get();
+      parentDir.children.add(newFile);
+      return newFile;
+    });
+    var buf = ByteBuffer.allocate(length);
+    data.read(buf.array(), 0, length);
+    file.data = buf.array();
   }
 }

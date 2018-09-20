@@ -6,6 +6,7 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import com.eighthlight.fabrial.utils.Result;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 public class FileHttpResponder implements HttpResponder {
   private static final Logger logger = LoggerFactory.getLogger(FileHttpResponder.class);
@@ -46,7 +48,7 @@ public class FileHttpResponder implements HttpResponder {
 
     InputStream getFileContents(String relPathStr) throws IOException;
 
-    void updateFileContents(String relPathStr, InputStream data) throws IOException;
+    void updateFileContents(String relPathStr, InputStream data, int length) throws IOException;
   }
 
   public FileHttpResponder(FileController fileController) {
@@ -164,6 +166,22 @@ public class FileHttpResponder implements HttpResponder {
   }
 
   private Response buildPutResponse(Request request, ResponseBuilder builder) {
-    return builder.withStatusCode(411).build();
+    var contentLength = Optional
+        .ofNullable(request.headers.get("Content-Length"))
+        .map(l -> Result.attempt(() -> Integer.parseInt(l)));
+    if (!contentLength.isPresent()) {
+      return builder.withStatusCode(411).build();
+    } else if (contentLength.get().getError().isPresent()) {
+      logger.trace("Failed to parse content length");
+      return builder.withStatusCode(400).build();
+    }
+
+    try {
+      var unwrappedLength = contentLength.get().getValue().get();
+      fileController.updateFileContents(request.uri.getPath(), request.body, unwrappedLength);
+      return builder.withStatusCode(201).build();
+    } catch (Exception e) {
+      return builder.withStatusCode(500).withReason(e.getMessage()).build();
+    }
   }
 }

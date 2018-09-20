@@ -3,7 +3,7 @@ package com.eighthlight.fabrial.test.http;
 import java.util.*;
 
 public class MockDirectory extends AbstractMockFsNode {
-  private static final String PATH_SEPARATOR = "/";
+  public static final String PATH_SEPARATOR = "/";
   public ArrayList<MockFsNode> children;
 
 

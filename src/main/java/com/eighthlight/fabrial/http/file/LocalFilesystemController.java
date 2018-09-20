@@ -60,7 +60,7 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
   }
 
   @Override
-  public void updateFileContents(String relPathStr, InputStream data) throws IOException {
+  public void updateFileContents(String relPathStr, InputStream data, int length) throws IOException {
 
   }
 }

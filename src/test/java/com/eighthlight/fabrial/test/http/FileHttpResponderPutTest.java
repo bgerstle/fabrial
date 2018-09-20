@@ -5,6 +5,7 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.utils.Result;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -76,6 +77,20 @@ public class FileHttpResponderPutTest {
     assertThat(response.statusCode, is(201));
     assertThat(response.headers, is(emptyMap()));
 
-    assertThat(Result.attempt(() -> mockFC.getFileContents(createdFilename)), is(data));
+    var fileData =
+        Result.attempt(() -> mockFC.getFileContents(createdFilename))
+              .flatMapAttempt(bais -> bais.readAllBytes())
+              .orElseAssert();
+    assertThat(fileData, is(data));
+  }
+
+  @Disabled
+  void putUpdateExistingFile() {
+
+  }
+
+  @Disabled
+  void putDirectoryFails() {
+
   }
 }
