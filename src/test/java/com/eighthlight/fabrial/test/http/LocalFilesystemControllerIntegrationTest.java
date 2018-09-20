@@ -7,6 +7,7 @@ import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
@@ -21,13 +22,13 @@ public class LocalFilesystemControllerIntegrationTest {
   void respondsWithDirectoryContents() {
     try (var tmpDirFixture = new TempDirectoryFixture();
          var tmpFileFixture = new TempFileFixture(tmpDirFixture.tempDirPath)) {
-      var dataSource = new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      var fileController = new LocalFilesystemController(tmpDirFixture.tempDirPath);
 
-      assertThat(dataSource.fileExistsAtPath("/"), equalTo(true));
+      assertThat(fileController.fileExistsAtPath("/"), equalTo(true));
 
-      assertThat(dataSource.isDirectory("/"), equalTo(true));
+      assertThat(fileController.isDirectory("/"), equalTo(true));
 
-      assertThat(dataSource.getDirectoryContents("/"),
+      assertThat(fileController.getDirectoryContents("/"),
                  equalTo(List.of(tmpFileFixture.tempFilePath.getFileName().toString())));
     }
   }
@@ -35,12 +36,12 @@ public class LocalFilesystemControllerIntegrationTest {
   @Test
   void returnsNullWhenNotDirectory() {
     try (var tmpFileFixture = new TempFileFixture()) {
-      var dataSource =
+      var fileController =
           new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent().toAbsolutePath());
 
-      assertThat(dataSource.isDirectory(tmpFileFixture.tempFilePath.getFileName().toString()),
+      assertThat(fileController.isDirectory(tmpFileFixture.tempFilePath.getFileName().toString()),
                  is(false));
-      assertThat(dataSource.getDirectoryContents(tmpFileFixture.tempFilePath.getFileName().toString()),
+      assertThat(fileController.getDirectoryContents(tmpFileFixture.tempFilePath.getFileName().toString()),
                  is(nullValue()));
     }
   }
@@ -50,9 +51,9 @@ public class LocalFilesystemControllerIntegrationTest {
     try (var tmpDirFixture = new TempDirectoryFixture();
         var tmpFileFixture1 = new TempFileFixture(tmpDirFixture.tempDirPath);
         var tmpFileFixture2 = new TempFileFixture(tmpDirFixture.tempDirPath)) {
-      var dataSource =
+      var fileController =
           new LocalFilesystemController(tmpDirFixture.tempDirPath);
-      assertThat(dataSource.getDirectoryContents("/"),
+      assertThat(fileController.getDirectoryContents("/"),
                  containsInAnyOrder(tmpFileFixture1.tempFilePath.getFileName().toString(),
                                     tmpFileFixture2.tempFilePath.getFileName().toString()));
     }
@@ -61,10 +62,10 @@ public class LocalFilesystemControllerIntegrationTest {
   @Test
   void returnsZeroForEmptyFile() {
     try (var tmpFileFixture = new TempFileFixture()) {
-      var dataSource =
+      var fileController =
           new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
 
-      var actualSize = dataSource.getFileSize(tmpFileFixture.tempFilePath.getFileName().toString());
+      var actualSize = fileController.getFileSize(tmpFileFixture.tempFilePath.getFileName().toString());
       assertThat(actualSize, is(0L));
     }
   }
@@ -74,22 +75,38 @@ public class LocalFilesystemControllerIntegrationTest {
     try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
       String tmpFilename = tmpFileFixture.tempFilePath.getFileName().toString();
 
-      var dataSource =
+      var fileController =
           new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
 
       var testData = "foo".getBytes();
       tmpFileFixture.write(new ByteArrayInputStream(testData));
 
-      assertThat(dataSource.getFileSize(tmpFilename),
+      assertThat(fileController.getFileSize(tmpFilename),
                  is((long)testData.length));
 
-      var contents = dataSource.getFileContents(tmpFilename);
+      var contents = fileController.getFileContents(tmpFilename);
       var readBytes =
           Optional.ofNullable(contents)
                   .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
       assertThat(readBytes.orElse(null), is(testData));
 
-      assertThat(dataSource.getFileMimeType(tmpFilename), startsWith("text/plain"));
+      assertThat(fileController.getFileMimeType(tmpFilename), startsWith("text/plain"));
+    }
+  }
+  
+  @Test
+  void updatesExistingFile() throws IOException {
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
+      var data = "foo".getBytes();
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+      fileController.updateFileContents(tmpFileFixture.tempFilePath.getFileName().toString(),
+                                        new ByteArrayInputStream(data),
+                                        data.length);
+      var tmpFile = tmpFileFixture.tempFilePath.toFile();
+      assertThat(tmpFile.length(), is(Integer.toUnsignedLong(data.length)));
+      var fileStream = new FileInputStream(tmpFile);
+      assertThat(fileStream.readAllBytes(), is(data));
     }
   }
 }
