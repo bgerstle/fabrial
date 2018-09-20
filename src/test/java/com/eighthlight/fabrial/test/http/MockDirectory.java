@@ -1,9 +1,6 @@
 package com.eighthlight.fabrial.test.http;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class MockDirectory extends AbstractMockFsNode {
   private static final String PATH_SEPARATOR = "/";
@@ -45,5 +42,25 @@ public class MockDirectory extends AbstractMockFsNode {
   @Override
   public boolean isDirectory() {
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass())
+      return false;
+    return super.equals(o) && Objects.equals(children, ((MockDirectory)o).children);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), children);
+  }
+
+  @Override
+  public String toString() {
+    return "MockDirectory{" +
+           "name='" + name + "'" +
+           ", children=" + children +
+           '}';
   }
 }
