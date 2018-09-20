@@ -13,13 +13,11 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.headers;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.requests;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsNull.nullValue;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.strings;
 
@@ -32,19 +30,18 @@ public class RequestBodyParsingTest {
   }
 
   @Test
-  void omitsBodyWhenContentLengthMissing() throws Exception {
-    var body = "foo";
+  void requestWithEmptyBody() throws Exception {
     var request = new RequestBuilder()
         .withVersion(HttpVersion.ONE_ONE)
         .withMethod(Method.PUT)
         .withUriString("/foo")
-        .withBody(new ByteArrayInputStream(body.getBytes()))
+        .withBody(new ByteArrayInputStream(new byte[0]))
         .build();
     var requestReader = readerWithBytesFrom(request);
     var parsedRequest = requestReader.readRequest();
 
     assertThat(parsedRequest, equalTo(request));
-    assertThat(parsedRequest.body, is(nullValue()));;
+    assertThat(parsedRequest.body.readAllBytes(), is(new byte[0]));
   }
 
   @Test
@@ -55,10 +52,6 @@ public class RequestBodyParsingTest {
     var request = new RequestBuilder()
         .withVersion(HttpVersion.ZERO_NINE)
         .withMethod(Method.GET)
-        .withHeaders(Map.of(
-            "Content-Type", "text/plain",
-            "Content-Length", Integer.toString(bodyLength)
-        ))
         .withUriString("/")
         .withBody(new ByteArrayInputStream(bodyData))
         .build();
@@ -80,10 +73,6 @@ public class RequestBodyParsingTest {
           var bodyByteBuffer = ByteBuffer.allocate(bodyChars.length * 4);
           bodyByteBuffer.asIntBuffer().put(bodyChars);
           var bodyData = bodyByteBuffer.array();
-          headersWithBodyFields.putAll(Map.of(
-              "Content-Type", "text/plain",
-              "Content-Length", Integer.toString(bodyData.length)
-          ));
           // reassemble request w/ headers & body
           final var request = new RequestBuilder()
               .withVersion(emptyRequest.version)

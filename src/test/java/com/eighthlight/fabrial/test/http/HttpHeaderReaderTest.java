@@ -2,10 +2,11 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.request.HttpHeaderReader;
 import com.eighthlight.fabrial.utils.Result;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class HttpHeaderReaderTest {
     return lineBuilder.toString();
   }
 
-  public static InputStream sourceFromString(String str) {
+  public static ByteArrayInputStream sourceFromString(String str) {
     return new ByteArrayInputStream(str.getBytes());
   }
 
@@ -109,7 +110,7 @@ public class HttpHeaderReaderTest {
     var headers = headerReader.readHeaders();
 
     assertThat(headers, is(Map.of("Accept", "*/*")));
-    assertThat(IOUtils.toString(source), is("body"));
+    assertThat(new String(source.readAllBytes()), is("body"));
   }
 
   @Test

@@ -56,13 +56,7 @@ public class RequestReader {
             return b.withHeaders(headers);
           })
           .map(b -> {
-            var contentLength = Optional.ofNullable(b.headers.get("Content-Length"));
-            contentLength.flatMap((lenStr) -> {
-              return Result.attempt(() -> Long.decode(lenStr)).toOptional();
-            }).ifPresent((len) -> {
-              b.withBody(is);
-            });
-            return b.build();
+            return b.withBody(is).build();
           })
           .orElseThrow();
     } catch (Exception e) {
