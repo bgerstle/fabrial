@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.quicktheories.core.Gen;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -21,19 +20,19 @@ import static org.quicktheories.generators.SourceDSL.lists;
 import static org.quicktheories.generators.SourceDSL.strings;
 
 public class HttpLineReaderTest {
-  private static ByteArrayInputStream asAsciiByteStream(String string) {
-    return new ByteArrayInputStream(string.getBytes(StandardCharsets.US_ASCII));
-  }
-
   private static Gen<String> asciiStringsWithoutCRLF() {
     return strings().ascii().ofLengthBetween(0, 32).assuming(s -> !s.contains(CRLF));
+  }
+
+  private static HttpLineReader lineReaderWithBytesFromString(String str) {
+    return new HttpLineReader(new ByteArrayInputStream(str.getBytes()));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"", CRLF})
   void returnsEmptyString(String empty) {
     var readLine =
-        Result.attempt(new HttpLineReader(asAsciiByteStream(empty))::readLine)
+        Result.attempt(lineReaderWithBytesFromString(empty)::readLine)
               .orElseAssert();
     assertThat(readLine, is(emptyString()));
   }
@@ -44,7 +43,7 @@ public class HttpLineReaderTest {
                 constant(CRLF).toOptionals(20))
         .checkAssert((s, optCRLF) -> {
           var readLine =
-              Result.attempt(new HttpLineReader(asAsciiByteStream(s))::readLine)
+              Result.attempt(lineReaderWithBytesFromString(s)::readLine)
                     .orElseAssert();
           assertThat(readLine, equalTo(s));
         });
@@ -57,7 +56,7 @@ public class HttpLineReaderTest {
 
     qt().forAll(listsOfAsciiStrings).checkAssert(lines -> {
           var joinedLines = String.join(CRLF, lines);
-          var lineReader = new HttpLineReader(asAsciiByteStream(joinedLines));
+          var lineReader = lineReaderWithBytesFromString(joinedLines);
           for (var line: lines) {
             var readLine = Result.attempt(lineReader::readLine).orElseAssert();
             assertThat(readLine, equalTo(line));

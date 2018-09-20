@@ -5,6 +5,12 @@ import java.io.InputStream;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 
+/**
+ * Given an input stream, read ASCII strings separated by CRLF.
+ *
+ * Note that this assumes the data retrieved from the input stream is ASCII, since the HTTP message
+ * components are limited to ASCII.
+ */
 public class HttpLineReader  {
   private final InputStream inputStream;
 
