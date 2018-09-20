@@ -61,6 +61,8 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
 
   @Override
   public void updateFileContents(String relPathStr, InputStream data, int length) throws IOException {
-
+    var file = absolutePathInBaseDir(relPathStr).toFile();
+    var fileOutStream = new FileOutputStream(file);
+    data.transferTo(fileOutStream);
   }
 }
