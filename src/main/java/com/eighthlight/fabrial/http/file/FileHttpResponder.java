@@ -181,7 +181,9 @@ public class FileHttpResponder implements HttpResponder {
       fileController.updateFileContents(request.uri.getPath(), request.body, unwrappedLength);
       return builder.withStatusCode(201).build();
     } catch (Exception e) {
-      return builder.withStatusCode(500).withReason(e.getMessage()).build();
+      // TODO: catch any exceptions that indicate this was a bad request & not a server error
+      // e.g. trying to PUT a directory or some such nonsense
+      return builder.withStatusCode(400).withReason(e.getMessage()).build();
     }
   }
 }

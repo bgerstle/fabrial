@@ -5,7 +5,6 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.utils.Result;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -84,13 +83,27 @@ public class FileHttpResponderPutTest {
     assertThat(fileData, is(data));
   }
 
-  @Disabled
-  void putUpdateExistingFile() {
 
-  }
+  @Test
+  void updatingRootIsBadRequest() {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
 
-  @Disabled
-  void putDirectoryFails() {
+    mockFC.root = new MockDirectory("foo");
 
+    var data = "buz".getBytes();
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.PUT)
+            .withUriString("/")
+            .withBody(new ByteArrayInputStream(data))
+            .withHeaders(Map.of(
+                "Content-Length", Integer.toString(data.length)
+            ))
+            .build());
+    assertThat(response.statusCode, is(400));
+    assertThat(response.headers, is(emptyMap()));
   }
 }
