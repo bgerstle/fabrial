@@ -2,6 +2,7 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.http.request.RequestReader;
 import com.eighthlight.fabrial.utils.Result;
@@ -9,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -24,8 +24,15 @@ import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.strings;
 
 public class RequestBodyParsingTest {
+  private static RequestReader readerWithBytesFrom(Request request) {
+    var requestOS = new ByteArrayOutputStream();
+    Result.attempt(() -> new RequestWriter(requestOS).writeRequest(request))
+          .orElseAssert();
+    return new RequestReader(new ByteArrayInputStream(requestOS.toByteArray()));
+  }
+
   @Test
-  void omitsBodyWhenContentLengthMissing() throws IOException {
+  void omitsBodyWhenContentLengthMissing() throws Exception {
     var body = "foo";
     var request = new RequestBuilder()
         .withVersion(HttpVersion.ONE_ONE)
@@ -33,22 +40,15 @@ public class RequestBodyParsingTest {
         .withUriString("/foo")
         .withBody(new ByteArrayInputStream(body.getBytes()))
         .build();
-
-    var requestOS = new ByteArrayOutputStream();
-    new RequestWriter(requestOS).writeRequest(request);
-
-    var serializedRequest = new String(requestOS.toByteArray());
-
-    var requestReader = new RequestReader(new ByteArrayInputStream(serializedRequest.getBytes()));
-    var parsedRequest = Result.attempt(requestReader::readRequest).orElseAssert();
+    var requestReader = readerWithBytesFrom(request);
+    var parsedRequest = requestReader.readRequest();
 
     assertThat(parsedRequest, equalTo(request));
-
     assertThat(parsedRequest.body, is(nullValue()));;
   }
 
   @Test
-  void parsesPUTRequest() throws IOException {
+  void parsesPUTRequest() throws Exception {
     var body = "foo";
     var bodyData = body.getBytes(StandardCharsets.UTF_8);
     var bodyLength = bodyData.length;
@@ -62,22 +62,13 @@ public class RequestBodyParsingTest {
         .withUriString("/")
         .withBody(new ByteArrayInputStream(bodyData))
         .build();
-
-    var requestOS = new ByteArrayOutputStream();
-    new RequestWriter(requestOS).writeRequest(request);
-
-    var serializedRequest = new String(requestOS.toByteArray());
-
-    var requestReader = new RequestReader(new ByteArrayInputStream(serializedRequest.getBytes()));
-    var parsedRequest = Result.attempt(requestReader::readRequest).orElseAssert();
+    var requestReader = readerWithBytesFrom(request);
+    var parsedRequest = requestReader.readRequest();
 
     assertThat(parsedRequest, equalTo(request));
-
     assertThat(parsedRequest.body, notNullValue());
-
-    assertThat(new String(parsedRequest.body.readAllBytes(),
-                          StandardCharsets.UTF_8),
-               equalTo(body));
+    var parsedRequestBody = new String(parsedRequest.body.readAllBytes(), StandardCharsets.UTF_8);
+    assertThat(parsedRequestBody, equalTo(body));
   }
 
   @Test
@@ -102,12 +93,7 @@ public class RequestBodyParsingTest {
               .withHeaders(headersWithBodyFields)
               .build();
 
-          // write request to bytes
-          var requestOS = new ByteArrayOutputStream();
-          Result.attempt(() -> new RequestWriter(requestOS).writeRequest(request)).orElseAssert();
-
-          // read request from bytes
-          var requestReader = new RequestReader(new ByteArrayInputStream(requestOS.toByteArray()));
+          var requestReader = readerWithBytesFrom(request);
           var parsedRequest = Result.attempt(requestReader::readRequest).orElseAssert();
 
           assertThat(parsedRequest, equalTo(request));
