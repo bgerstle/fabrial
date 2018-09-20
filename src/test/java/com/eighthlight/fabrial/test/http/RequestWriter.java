@@ -25,7 +25,9 @@ public class RequestWriter {
     writeHeaders(request);
     writer.write(CRLF);
     writer.flush();
-    request.body.transferTo(os);
+    if (request.body != null) {
+      request.body.transferTo(os);
+    }
   }
 
   public void writeRequestLine(Request request) throws IOException {
@@ -36,6 +38,9 @@ public class RequestWriter {
   }
 
   public void writeHeaders(Request request) throws IOException {
+    if (request.headers == null) {
+      return;
+    }
     for (var entry: request.headers.entrySet()) {
       writer.write(entry.getKey());
       writer.write(":");
