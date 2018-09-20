@@ -31,9 +31,9 @@ public class FileHttpResponder implements HttpResponder {
                                                                      .reduce((m, s) -> s + ", " + m)
                                                                      .get();
 
-  private final DataSource dataSource;
+  private final FileController fileController;
 
-  public interface DataSource {
+  public interface FileController {
     boolean fileExistsAtPath(String relPathStr);
 
     boolean isDirectory(String relPathStr);
@@ -49,8 +49,8 @@ public class FileHttpResponder implements HttpResponder {
     void updateFileContents(String relPathStr, InputStream data) throws IOException;
   }
 
-  public FileHttpResponder(DataSource dataSource) {
-    this.dataSource = dataSource;
+  public FileHttpResponder(FileController fileController) {
+    this.fileController = fileController;
   }
 
   @Override
@@ -63,7 +63,7 @@ public class FileHttpResponder implements HttpResponder {
   public Response getResponse(Request request) {
     final var builder = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE);
     // bail early if file doesn't exist and this isn't an OPTIONS request
-    if (!dataSource.fileExistsAtPath(request.uri.getPath())
+    if (!fileController.fileExistsAtPath(request.uri.getPath())
         && request.method != Method.OPTIONS) {
       return builder.withStatusCode(404).build();
     }
@@ -87,7 +87,7 @@ public class FileHttpResponder implements HttpResponder {
 
   // serve "read" requests (GET/HEAD) for files. returning body if GET request
   private Response buildReadFileResponse(Request request, ResponseBuilder builder) {
-    var size = dataSource.getFileSize(request.uri.getPath());
+    var size = fileController.getFileSize(request.uri.getPath());
     // exit early w/ "empty file" response
     if (size == 0L) {
       // size can also be 0 for absent files. assuming caller has checked existence already
@@ -99,15 +99,15 @@ public class FileHttpResponder implements HttpResponder {
     try {
       builder.withStatusCode(200)
              .withHeader("Content-Length",
-                         Long.toString(dataSource.getFileSize(request.uri.getPath())));
+                         Long.toString(fileController.getFileSize(request.uri.getPath())));
 
-      var mimeType = dataSource.getFileMimeType(request.uri.getPath());
+      var mimeType = fileController.getFileMimeType(request.uri.getPath());
       if (mimeType != null) {
         builder.withHeader("Content-Type", mimeType);
       }
 
       if (request.method.equals(Method.GET)) {
-        builder.withBody(dataSource.getFileContents(request.uri.getPath()));
+        builder.withBody(fileController.getFileContents(request.uri.getPath()));
       }
 
       return builder.build();
@@ -125,7 +125,7 @@ public class FileHttpResponder implements HttpResponder {
   }
 
   private Response buildGetResponse(Request request, ResponseBuilder builder) {
-    if (dataSource.isDirectory(request.uri.getPath())) {
+    if (fileController.isDirectory(request.uri.getPath())) {
       return buildGetDirectoryResponse(request, builder);
     } else {
       return buildReadFileResponse(request, builder);
@@ -141,11 +141,11 @@ public class FileHttpResponder implements HttpResponder {
 
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
     var contents =
-        dataSource.getDirectoryContents(request.uri.getPath())
-                  .stream()
-                  .sorted()
-                  .reduce((p1, p2) -> p1 + "," + p2)
-                  .orElse("");
+        fileController.getDirectoryContents(request.uri.getPath())
+                      .stream()
+                      .sorted()
+                      .reduce((p1, p2) -> p1 + "," + p2)
+                      .orElse("");
 
     if (contents.isEmpty()) {
       return builder.withHeader("Content-Length", "0")
