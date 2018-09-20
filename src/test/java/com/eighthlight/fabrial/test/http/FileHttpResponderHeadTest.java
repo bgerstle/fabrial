@@ -87,4 +87,28 @@ public class FileHttpResponderHeadTest {
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
   }
+
+  @Test
+  void headNestedFileWithData() {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var childDir = new MockDirectory("fuz");
+    mockFC.root.children.add(childDir);
+
+    var grandChild = new MockFile("bar");
+    childDir.children.add(grandChild);
+    grandChild.data = "bytes".getBytes();
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.HEAD)
+            .withUriString(childDir.name + "/" + grandChild.name)
+            .build());
+    assertThat(response.statusCode, is(200));
+    assertThat(response.headers, hasEntry("Content-Length", Integer.toString(grandChild.data.length)));
+  }
 }
