@@ -64,7 +64,8 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
   public void updateFileContents(String relPathStr, InputStream data, int length) throws IOException {
     var file = absolutePathInBaseDir(relPathStr).toFile();
     try (var fileOutStream = new FileOutputStream(file)) {
-      // surely there's a way to "transfer N bytes w/ a buffer"...
+      // TODO: surely there's a way to "transfer N bytes w/ a buffer"...
+      // of course, without messing up the actual data w/ an underlying string encoder
       var buf = ByteBuffer.allocate(length);
       data.read(buf.array(), 0, length);
       fileOutStream.write(buf.array(), 0, length);

@@ -180,8 +180,7 @@ public class FileHttpResponder implements HttpResponder {
       var unwrappedLength = contentLength.get().getValue().get();
       fileController.updateFileContents(request.uri.getPath(), request.body, unwrappedLength);
       return builder.withStatusCode(201).build();
-    } catch (Exception e) {
-      // TODO: catch any exceptions that indicate this was a bad request & not a server error
+    } catch (IOException e) {
       // e.g. trying to PUT a directory or some such nonsense
       return builder.withStatusCode(400).withReason(e.getMessage()).build();
     }

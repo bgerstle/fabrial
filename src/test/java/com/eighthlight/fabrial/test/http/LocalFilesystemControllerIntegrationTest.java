@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class LocalFilesystemControllerIntegrationTest {
   @Test
@@ -107,6 +109,55 @@ public class LocalFilesystemControllerIntegrationTest {
       assertThat(tmpFile.length(), is(Integer.toUnsignedLong(data.length)));
       var fileStream = new FileInputStream(tmpFile);
       assertThat(fileStream.readAllBytes(), is(data));
+    }
+  }
+
+  @Test
+  void createsNewFiles() throws IOException {
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
+      var data = "foo".getBytes();
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      fileController.updateFileContents("foo",
+                                        new ByteArrayInputStream(data),
+                                        data.length);
+      var newFilePath = Paths.get(tmpDirFixture.tempDirPath.toString(), "foo");
+      var tmpFile = newFilePath.toFile();
+      assertThat(tmpFile.length(), is(Integer.toUnsignedLong(data.length)));
+      var fileStream = new FileInputStream(tmpFile);
+      assertThat(fileStream.readAllBytes(), is(data));
+    }
+  }
+
+  @Test
+  void failsToUpdateExistingDirs() throws Exception {
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
+      var data = "foo".getBytes();
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      assertThrows(FileNotFoundException.class, () -> {
+        fileController.updateFileContents("/",
+                                          new ByteArrayInputStream(data),
+                                          data.length);
+      });
+    }
+  }
+
+  @Test
+  void failsToCreateFilesInsideOtherFiles() {
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
+      var data = "foo".getBytes();
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+      var fileChildPath = Paths.get(
+          tmpFileFixture.tempFilePath.getFileName().toString(),
+          "bar"
+      ).toString();
+      assertThrows(FileNotFoundException.class, () -> {
+        fileController.updateFileContents(fileChildPath,
+                                          new ByteArrayInputStream(data),
+                                          data.length);
+      });
     }
   }
 }
