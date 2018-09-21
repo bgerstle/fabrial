@@ -16,23 +16,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FileHttpResponderPutTest {
   @Test
-  void putAbsentFile() {
-    var mockFC = new MockFileController();
-    var responder = new FileHttpResponder(mockFC);
-
-    mockFC.root = new MockDirectory("foo");
-
-    var response = responder.getResponse(
-        new RequestBuilder()
-            .withVersion(HttpVersion.ONE_ONE)
-            .withMethod(Method.PUT)
-            .withUriString("baz")
-            .build());
-    assertThat(response.statusCode, is(404));
-    assertThat(response.headers, is(emptyMap()));
-  }
-
-  @Test
   void putWithoutContentLengthHeader() {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
@@ -81,6 +64,34 @@ public class FileHttpResponderPutTest {
               .flatMapAttempt(bais -> bais.readAllBytes())
               .orElseAssert();
     assertThat(fileData, is(data));
+  }
+
+  @Test
+  void putModifyFile() {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var file = new MockFile("bar");
+    mockFC.root.children.add(file);
+
+    var data = "buz".getBytes();
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.PUT)
+            .withUriString(file.getName())
+            .withBody(new ByteArrayInputStream(data))
+            .withHeaders(Map.of(
+                "Content-Length", Integer.toString(data.length)
+            ))
+            .build());
+    assertThat(response.statusCode, is(200));
+    assertThat(response.headers, is(emptyMap()));
+
+    assertThat(file.data, is(data));
   }
 
 

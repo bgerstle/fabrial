@@ -177,9 +177,10 @@ public class FileHttpResponder implements HttpResponder {
     }
 
     try {
+      var didExist = fileController.fileExistsAtPath(request.uri.getPath());
       var unwrappedLength = contentLength.get().getValue().get();
       fileController.updateFileContents(request.uri.getPath(), request.body, unwrappedLength);
-      return builder.withStatusCode(201).build();
+      return builder.withStatusCode(didExist ? 200 : 201).build();
     } catch (IOException e) {
       // e.g. trying to PUT a directory or some such nonsense
       return builder.withStatusCode(400).withReason(e.getMessage()).build();
