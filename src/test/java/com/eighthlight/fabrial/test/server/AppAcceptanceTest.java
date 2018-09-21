@@ -2,6 +2,7 @@ package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.test.file.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.file.TempFileFixture;
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,6 +35,16 @@ import static org.hamcrest.core.AllOf.allOf;
 public class AppAcceptanceTest {
   private static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class);
 
+  private static List<String> sendRequest(Request request, int port) throws IOException {
+    try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
+      clientFixture.client.connect(1000, 3, 1000);
+      OutputStream os = clientFixture.client.getOutputStream();
+      InputStream is = clientFixture.client.getInputStream();
+      new RequestWriter(os).writeRequest(request);
+      return Arrays.asList(new BufferedReader(new InputStreamReader((is))).lines().toArray(String[]::new));
+    }
+  }
+
   private static List<String> responseToRequestForFileInDir(Method method,
                                                             Path dir,
                                                             Path path,
@@ -43,18 +55,12 @@ public class AppAcceptanceTest {
              .toString();
     return Result.attempt(() -> {
       // TEMP: need to recreate client for each file until multiple requests per conn is supported
-      try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
-        clientFixture.client.connect(1000, 3, 1000);
-        OutputStream os = clientFixture.client.getOutputStream();
-        InputStream is = clientFixture.client.getInputStream();
-        new RequestWriter(os)
-            .writeRequest(new RequestBuilder()
-                              .withUriString(relPathStr)
-                              .withVersion(HttpVersion.ONE_ONE)
-                              .withMethod(method)
-                              .build());
-        return Arrays.asList(new BufferedReader(new InputStreamReader((is))).lines().toArray(String[]::new));
-      }
+      return sendRequest(new RequestBuilder()
+                             .withUriString(relPathStr)
+                             .withVersion(HttpVersion.ONE_ONE)
+                             .withMethod(method)
+                             .build(),
+                         port);
     }).orElseAssert();
   }
 
@@ -195,6 +201,37 @@ public class AppAcceptanceTest {
             var body = response.get(4);
             assertThat(body, equalTo(expectedBody));
           });
+    }
+  }
+
+  @Test
+  void putNewFile() throws IOException {
+    int testPort = 8082;
+    try (var tmpDirectoryFixture = new TempDirectoryFixture();
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tmpDirectoryFixture.tempDirPath.toString())) {
+      var body = "foo".getBytes();
+      var responseLines =
+          sendRequest(new RequestBuilder()
+                          .withVersion(HttpVersion.ONE_ONE)
+                          .withMethod(Method.PUT)
+                          .withUriString("/foo")
+                          .withBody(new ByteArrayInputStream(body))
+                          .withHeaders(Map.of(
+                              "Content-Length", Integer.toString(body.length)
+                          ))
+                          .build(),
+                      testPort);
+      assertThat(responseLines, hasSize(1));
+      assertThat(responseLines.get(0),
+                 is("HTTP/1.1 201 "));
+
+      var newFilePath = Paths.get(
+          tmpDirectoryFixture.tempDirPath.toString(),
+          "foo"
+      );
+      try (var fileReader = new FileInputStream(newFilePath.toFile())) {
+        assertThat(fileReader.readAllBytes(), is(body));
+      }
     }
   }
 }
