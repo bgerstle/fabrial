@@ -205,7 +205,7 @@ public class AppAcceptanceTest {
   }
 
   @Test
-  void putNewFile() throws IOException {
+  void createThenUpdateFile() throws IOException {
     int testPort = 8082;
     try (var tmpDirectoryFixture = new TempDirectoryFixture();
         AppProcessFixture appFixture = new AppProcessFixture(testPort, tmpDirectoryFixture.tempDirPath.toString())) {
@@ -231,6 +231,27 @@ public class AppAcceptanceTest {
       );
       try (var fileReader = new FileInputStream(newFilePath.toFile())) {
         assertThat(fileReader.readAllBytes(), is(body));
+      }
+
+      var body2 = "bar".getBytes();
+
+      var responseLines2 =
+          sendRequest(new RequestBuilder()
+                          .withVersion(HttpVersion.ONE_ONE)
+                          .withMethod(Method.PUT)
+                          .withUriString("/foo")
+                          .withBody(new ByteArrayInputStream(body2))
+                          .withHeaders(Map.of(
+                              "Content-Length", Integer.toString(body2.length)
+                          ))
+                          .build(),
+                      testPort);
+      assertThat(responseLines2, hasSize(1));
+      assertThat(responseLines2.get(0),
+                 is("HTTP/1.1 200 "));
+
+      try (var fileReader = new FileInputStream(newFilePath.toFile())) {
+        assertThat(fileReader.readAllBytes(), is(body2));
       }
     }
   }

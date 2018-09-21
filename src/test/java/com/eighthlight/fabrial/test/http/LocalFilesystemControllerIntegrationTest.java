@@ -6,13 +6,11 @@ import com.eighthlight.fabrial.test.file.TempFileFixture;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,6 +18,66 @@ import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInA
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class LocalFilesystemControllerIntegrationTest {
+  @Test
+  void detectsExistingDirs() {
+   try (var tmpDirFixture = new TempDirectoryFixture()) {
+     var fileController = new LocalFilesystemController(tmpDirFixture.tempDirPath);
+
+     assertThat(fileController.fileExistsAtPath("/"), is(true));
+   }
+  }
+
+  @Test
+  void detectsExistingEmptyFiles() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+
+      var filename = tmpFileFixture.tempFilePath.getFileName().toString();
+      assertThat(fileController.fileExistsAtPath(filename),  is(true));
+    }
+  }
+
+  @Test
+  void detectsExistingFilesWithData() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+
+      tmpFileFixture.write(new ByteArrayInputStream("foo".getBytes()));
+
+      var filename = tmpFileFixture.tempFilePath.getFileName().toString();
+      assertThat(fileController.fileExistsAtPath("/" + filename),  is(true));
+    }
+  }
+
+  @Test
+  void detectsFilesThatWereJustCreated() throws IOException {
+    try (var tmpDirFixture = new TempDirectoryFixture()) {
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+
+      var newFileName = "foo";
+
+      assertThat(fileController.fileExistsAtPath(newFileName), is(false));
+
+
+      try (var fileWriter = new FileOutputStream(Paths.get(tmpDirFixture.tempDirPath.toString(), newFileName).toFile())) {
+        fileWriter.write("foo".getBytes());
+      }
+
+      assertThat(fileController.fileExistsAtPath(newFileName),  is(true));
+    }
+  }
+
+  @Test
+  void detectsAbsentFiles() {
+    var fileController =
+        new LocalFilesystemController(Paths.get(UUID.randomUUID().toString()));
+    assertThat(fileController.fileExistsAtPath("/"), is(false));
+  }
+
+
   @Test
   void respondsWithDirectoryContents() {
     try (var tmpDirFixture = new TempDirectoryFixture();
@@ -102,6 +160,7 @@ public class LocalFilesystemControllerIntegrationTest {
       var data = "foo".getBytes();
       var fileController =
           new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+
       fileController.updateFileContents(tmpFileFixture.tempFilePath.getFileName().toString(),
                                         new ByteArrayInputStream(data),
                                         data.length);
@@ -118,6 +177,7 @@ public class LocalFilesystemControllerIntegrationTest {
       var data = "foo".getBytes();
       var fileController =
           new LocalFilesystemController(tmpDirFixture.tempDirPath);
+
       fileController.updateFileContents("foo",
                                         new ByteArrayInputStream(data),
                                         data.length);
