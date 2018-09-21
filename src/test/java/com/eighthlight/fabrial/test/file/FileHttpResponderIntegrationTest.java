@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -29,7 +30,7 @@ import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.strings;
 
-public class FileHttpResponderTest {
+public class FileHttpResponderIntegrationTest {
   @Test
   void headEmptyFile() {
     try (var tmpFileFixture = new TempFileFixture()) {
@@ -298,5 +299,30 @@ public class FileHttpResponderTest {
             baseDirFixture.close();
           }
         });
+  }
+
+  @Test
+  void putUpdateFileReturns200() throws IOException {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var responder = new FileHttpResponder(
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent()));
+      var body = "foo".getBytes();
+      var response = responder.getResponse(
+          new RequestBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withMethod(Method.PUT)
+              .withUriString(tmpFileFixture.tempFilePath.getFileName().toString())
+              .withBody(new ByteArrayInputStream(body))
+              .withHeaders(Map.of(
+                  "Content-Length", Integer.toString(body.length)
+              ))
+              .build());
+      assertThat(response.statusCode, is(200));
+      assertThat(response.body, is(nullValue()));
+
+      try (var newFileReader = new FileInputStream(tmpFileFixture.tempFilePath.toFile())) {
+        assertThat(newFileReader.readAllBytes(), is(body));
+      }
+    }
   }
 }
