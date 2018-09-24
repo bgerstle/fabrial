@@ -114,6 +114,12 @@ public class MockFileController implements FileHttpResponder.FileController {
     if (!file.isPresent()) {
       throw new FileNotFoundException("No file at path " + relPathStr);
     }
+
+    if (file.get().isDirectory()
+        && !((MockDirectory)file.get()).children.isEmpty()) {
+      throw new IOException("Directory not empty");
+    }
+
     var parentPath = Optional.ofNullable(Paths.get(relPathStr).getParent())
                              .map(Path::toString)
                              .orElse("");

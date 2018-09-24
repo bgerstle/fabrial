@@ -34,4 +34,43 @@ public class FileHttpResponderDeleteTest {
 
     assertThat(mockFC.root.children, not(contains(file)));
   }
+
+  @Test
+  void deleteAbsentFile() {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.DELETE)
+            .withUriString("bar")
+            .build());
+    assertThat(response.statusCode, is(404));
+    assertThat(response.headers, is(emptyMap()));
+  }
+
+  @Test
+  void deleteDirWithFiles() {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var childDir = new MockDirectory("bar");
+    mockFC.root.children.add(childDir);
+
+    childDir.children.add(new MockFile("baz"));
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.DELETE)
+            .withUriString("bar")
+            .build());
+    assertThat(response.statusCode, is(500));
+    assertThat(response.headers, is(emptyMap()));
+  }
 }
