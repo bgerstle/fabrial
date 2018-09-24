@@ -103,6 +103,7 @@ public class FileHttpResponder implements HttpResponder {
     var rangeHeader = request.headers.get("Range");
     if (rangeHeader == null) {
       // requested entire file, skip range handling
+      builder.withHeader("Content-Length", Long.toString(size));
       builder.withBody(fileController.getFileContents(request.uri.getPath(),
                                                       0,
                                                       toIntExact(size)));
@@ -115,7 +116,8 @@ public class FileHttpResponder implements HttpResponder {
 
       var range = Range.between(Integer.parseInt(matcher.group(1)),
                                 Integer.parseInt(matcher.group(2)));
-
+      var length = range.getMaximum() - range.getMinimum() + 1;
+      builder.withHeader("Content-Length", Integer.toString(length));
       builder.withHeader("Content-Range",
                          "bytes=" + range.getMinimum() + "-" + range.getMaximum()
                          + "/" + Long.toString(fileController.getFileSize(request.uri.getPath())));
@@ -123,7 +125,7 @@ public class FileHttpResponder implements HttpResponder {
       // TODO: wrap w/ try/catch for index out of bounds and return invalid range
       builder.withBody(fileController.getFileContents(request.uri.getPath(),
                                                       range.getMinimum(),
-                                                      range.getMaximum() - range.getMinimum() + 1));
+                                                      length));
       builder.withStatusCode(206);
     }
   }
@@ -144,17 +146,17 @@ public class FileHttpResponder implements HttpResponder {
 
     try {
       var sizeStr = Long.toString(size);
-      builder.withHeader("Content-Length", sizeStr);
-
-      var mimeType = fileController.getFileMimeType(request.uri.getPath());
-      if (mimeType != null) {
-        builder.withHeader("Content-Type", mimeType);
-      }
 
       if (request.method.equals(Method.GET)) {
         buildGetFileResponse(request, builder);
       } else {
+        builder.withHeader("Content-Length", sizeStr);
         builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
+      }
+
+      var mimeType = fileController.getFileMimeType(request.uri.getPath());
+      if (mimeType != null) {
+        builder.withHeader("Content-Type", mimeType);
       }
 
       return builder.build();

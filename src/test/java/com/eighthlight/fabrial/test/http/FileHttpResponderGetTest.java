@@ -84,7 +84,7 @@ public class FileHttpResponderGetTest {
             .withUriString(child.name)
             .build());
     assertThat(response.statusCode, is(206));
-    assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
+    assertThat(response.headers, hasEntry("Content-Length", "2"));
     assertThat(response.headers, hasEntry("Content-Type", child.type));
     assertThat(response.headers, hasEntry("Content-Range", "bytes=0-1/" + child.data.length));
     assertThat(response.body, is(not(nullValue())));

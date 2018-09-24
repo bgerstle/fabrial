@@ -288,7 +288,7 @@ public class AppAcceptanceTest {
       for (int i = 0; i < strings.size(); i++) {
         var s = strings.get(i);
         var rangeStart = s.length() * i;
-        var rangeEnd = s.length() + rangeStart;
+        var rangeEnd = s.length() + rangeStart - 1;
         var responseLines =
             sendRequest(new RequestBuilder()
                             .withVersion(HttpVersion.ONE_ONE)
@@ -302,12 +302,12 @@ public class AppAcceptanceTest {
         assertThat(responseLines, hasSize(6));
         assertThat(responseLines.get(0),
                    is("HTTP/1.1 206 "));
-        assertThat(responseLines.subList(1, 3),
+        assertThat(responseLines.subList(1, 4),
                    containsInAnyOrder(
                        "Content-Type: text/plain",
                        "Content-Length: " + s.length(),
-                       "Content-Range: " + "bytes=" + rangeStart + "-" + rangeEnd / data.length));
-        assertThat(responseLines.get(4), is(s));
+                       "Content-Range: " + "bytes=" + rangeStart + "-" + rangeEnd  + "/" + data.length));
+        assertThat(responseLines.get(5), is(s));
       }
     }
   }
