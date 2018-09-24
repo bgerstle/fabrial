@@ -294,7 +294,7 @@ public class LocalFilesystemControllerIntegrationTest {
   }
 
   @Test
-  void throwsWhenOutOfBounds() throws IOException {
+  void throwsWhenOutOfBounds() {
     try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
       String tmpFilename = tmpFileFixture.tempFilePath.getFileName().toString();
 

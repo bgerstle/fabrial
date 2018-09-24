@@ -1,6 +1,5 @@
 package com.eighthlight.fabrial.http.file;
 
-import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,10 +70,9 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
     var buf = ByteBuffer.allocate(length);
     var actualRead = fis.read(buf.array(), 0, length);
     if (actualRead != length) {
-      logger.warn("Only read {} of {} requested bytes.",
-                  StructuredArguments.kv("actualRead", Integer.toString(actualRead)),
-                  StructuredArguments.kv("expectedRead", Integer.toString(length)),
-                  StructuredArguments.kv("readOffset", Integer.toString(offset)));
+      throw new IOException(
+          String.format("Failed to read %d bytes at %d offset", length, offset)
+      );
     }
     return new ByteArrayInputStream(buf.array());
   }

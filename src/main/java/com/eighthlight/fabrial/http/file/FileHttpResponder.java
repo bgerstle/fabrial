@@ -181,7 +181,7 @@ public class FileHttpResponder implements HttpResponder {
     }
   }
 
-  private Response buildOptionsResponse(Request requet, ResponseBuilder builder) {
+  private Response buildOptionsResponse(Request request, ResponseBuilder builder) {
     return builder.withStatusCode(200)
                   .withHeader("Allow", allowedMethodsAsString)
                   .withHeader("Content-Length", "0")
