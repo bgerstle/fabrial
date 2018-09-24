@@ -220,4 +220,15 @@ public class LocalFilesystemControllerIntegrationTest {
       });
     }
   }
+
+  @Test
+  void deletesExistingFiles() {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+      fileController.removeFile(tmpFileFixture.tempFilePath.getFileName().toString());
+      assertThat(tmpFileFixture.tempFilePath.toFile().exists(),
+                 is(false));
+    }
+  }
 }
