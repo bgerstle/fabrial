@@ -306,7 +306,7 @@ public class AppAcceptanceTest {
                    containsInAnyOrder(
                        "Content-Type: text/plain",
                        "Content-Length: " + s.length(),
-                       "Content-Range: " + "bytes=" + rangeStart + "-" + rangeEnd  + "/" + data.length));
+                       "Content-Range: " + "bytes " + rangeStart + "-" + rangeEnd  + "/" + data.length));
         assertThat(responseLines.get(5), is(s));
       }
     }

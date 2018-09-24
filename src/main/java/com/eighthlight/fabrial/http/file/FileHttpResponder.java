@@ -119,7 +119,7 @@ public class FileHttpResponder implements HttpResponder {
       var length = range.getMaximum() - range.getMinimum() + 1;
       builder.withHeader("Content-Length", Integer.toString(length));
       builder.withHeader("Content-Range",
-                         "bytes=" + range.getMinimum() + "-" + range.getMaximum()
+                         "bytes " + range.getMinimum() + "-" + range.getMaximum()
                          + "/" + Long.toString(fileController.getFileSize(request.uri.getPath())));
 
       // TODO: wrap w/ try/catch for index out of bounds and return invalid range
