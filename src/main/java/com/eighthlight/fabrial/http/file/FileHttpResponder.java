@@ -192,8 +192,6 @@ public class FileHttpResponder implements HttpResponder {
   private Response buildDeleteResponse(Request request, ResponseBuilder builder) {
     try {
       fileController.removeFile(request.uri.getPath());
-    } catch (FileNotFoundException e) {
-      return builder.withStatusCode(404).build();
     } catch (IOException e) {
       return builder.withStatusCode(500)
                     .withReason(e.getMessage())
