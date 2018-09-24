@@ -67,9 +67,16 @@ public class MockFileController implements FileHttpResponder.FileController {
   @Override
   public InputStream getFileContents(String relPathStr, int offset, int length) throws IOException {
     var file = fileAtPath(relPathStr);
+    if (!file.isPresent()) {
+      throw new FileNotFoundException("File not found");
+    }
+    var lastIndex = offset+length-1;
+    if (offset < 0 || lastIndex > getFileSize(relPathStr)) {
+      throw new IOException("Read out of bounds");
+    }
     return file
         .flatMap(f -> f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
-        .map(f -> Arrays.copyOfRange(f.data, offset, length))
+        .map(f -> Arrays.copyOfRange(f.data, offset, lastIndex))
         .map(ByteArrayInputStream::new)
         .orElse(null);
   }

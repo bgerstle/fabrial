@@ -166,7 +166,7 @@ public class FileHttpResponder implements HttpResponder {
       // in the off chance this happens between the time we checked in getResponse & now, return 404
       return builder.withStatusCode(404).build();
     } catch (IOException e) {
-      logger.error("Unexpected IOException getting contents of file for {}",
+      logger.warn("Failed to get contents of file for {}",
                    StructuredArguments.kv("request", request));
       // Some other exception, wrap in 500
       return builder.withStatusCode(500).withReason(e.getMessage()).build();

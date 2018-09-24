@@ -90,4 +90,26 @@ public class FileHttpResponderGetTest {
     assertThat(response.body, is(not(nullValue())));
     assertThat(response.body.readAllBytes(), is(Arrays.copyOfRange(child.data, 0, 2)));
   }
+
+  @Test
+  void responds500ReadError() throws IOException {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var child = new MockFile("bar");
+    mockFC.root.children.add(child);
+    child.data = "foo".getBytes();
+    child.type = "text/plain";
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.GET)
+            .withHeaders(Map.of("Range", "bytes=0-10"))
+            .withUriString(child.name)
+            .build());
+    assertThat(response.statusCode, is(500));
+  }
 }
