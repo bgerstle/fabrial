@@ -83,6 +83,9 @@ public class FileHttpResponder implements HttpResponder {
       case PUT: {
         return buildPutResponse(request, builder);
       }
+      case DELETE: {
+        return buildDeleteResponse(request, builder);
+      }
       default:
         return builder.withStatusCode(405).build();
     }
@@ -185,5 +188,9 @@ public class FileHttpResponder implements HttpResponder {
       // e.g. trying to PUT a directory or some such nonsense
       return builder.withStatusCode(400).withReason(e.getMessage()).build();
     }
+  }
+
+  private Response buildDeleteResponse(Request request, ResponseBuilder builder) {
+    return builder.withStatusCode(200).build();
   }
 }
