@@ -222,7 +222,7 @@ public class LocalFilesystemControllerIntegrationTest {
   }
 
   @Test
-  void deletesExistingFiles() {
+  void deletesExistingFiles() throws IOException {
     try (var tmpFileFixture = new TempFileFixture()) {
       var fileController =
           new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());

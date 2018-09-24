@@ -73,7 +73,10 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
   }
 
   @Override
-  public void removeFile(String relPathStr) {
-    absolutePathInBaseDir(relPathStr).toFile().delete();
+  public void removeFile(String relPathStr) throws IOException {
+    var deleted = absolutePathInBaseDir(relPathStr).toFile().delete();
+    if (!deleted) {
+      throw new IOException("Failed to delete file");
+    }
   }
 }
