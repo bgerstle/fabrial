@@ -11,10 +11,7 @@ import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +46,8 @@ public class FileHttpResponder implements HttpResponder {
     InputStream getFileContents(String relPathStr) throws IOException;
 
     void updateFileContents(String relPathStr, InputStream data, int length) throws IOException;
+
+    void removeFile(String relPathStr) throws IOException;
   }
 
   public FileHttpResponder(FileController fileController) {
@@ -191,6 +190,15 @@ public class FileHttpResponder implements HttpResponder {
   }
 
   private Response buildDeleteResponse(Request request, ResponseBuilder builder) {
+    try {
+      fileController.removeFile(request.uri.getPath());
+    } catch (FileNotFoundException e) {
+      return builder.withStatusCode(404).build();
+    } catch (IOException e) {
+      return builder.withStatusCode(500)
+                    .withReason(e.getMessage())
+                    .build();
+    }
     return builder.withStatusCode(200).build();
   }
 }

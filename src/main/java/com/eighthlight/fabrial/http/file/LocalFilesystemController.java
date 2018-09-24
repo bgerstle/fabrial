@@ -71,4 +71,9 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
       fileOutStream.write(buf.array(), 0, length);
     }
   }
+
+  @Override
+  public void removeFile(String relPathStr) {
+
+  }
 }
