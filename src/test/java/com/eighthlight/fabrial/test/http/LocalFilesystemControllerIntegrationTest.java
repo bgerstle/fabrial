@@ -231,4 +231,17 @@ public class LocalFilesystemControllerIntegrationTest {
                  is(false));
     }
   }
+
+  @Test
+  void failsToDeleteDirectoriesWithFiles() {
+    try (var tmpDirFixture = new TempDirectoryFixture();
+        var tmpFileFixture = new TempFileFixture(tmpDirFixture.tempDirPath)) {
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      assertThrows(IOException.class, () -> {
+        fileController.removeFile("/");
+      });
+      assertThat(tmpDirFixture.tempDirPath.toFile().exists(), is(true));
+    }
+  }
 }
