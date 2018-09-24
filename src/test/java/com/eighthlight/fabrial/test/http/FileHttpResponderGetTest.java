@@ -58,10 +58,7 @@ public class FileHttpResponderGetTest {
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
     assertThat(response.headers, hasEntry("Content-Type", child.type));
-
-    assertThat(response.headers, hasEntry(
-        "Content-Range",
-        "bytes=0-" + (child.data.length - 1) + "/" + child.data.length));
+    assertThat(response.headers, not(hasKey("Content-Range")));
 
     assertThat(response.body, is(not(nullValue())));
     assertThat(response.body.readAllBytes(), is(child.data));
@@ -86,7 +83,7 @@ public class FileHttpResponderGetTest {
             .withHeaders(Map.of("Range", "bytes=0-1"))
             .withUriString(child.name)
             .build());
-    assertThat(response.statusCode, is(200));
+    assertThat(response.statusCode, is(206));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
     assertThat(response.headers, hasEntry("Content-Type", child.type));
     assertThat(response.headers, hasEntry("Content-Range", "bytes=0-1/" + child.data.length));
