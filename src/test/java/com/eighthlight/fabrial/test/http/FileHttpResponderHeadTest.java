@@ -86,6 +86,7 @@ public class FileHttpResponderHeadTest {
             .build());
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
+    assertThat(response.headers, hasEntry("Accept-Ranges", "bytes=0-" + child.data.length));
   }
 
   @Test

@@ -102,9 +102,10 @@ public class FileHttpResponder implements HttpResponder {
     }
 
     try {
+      var sizeStr = Long.toString(size);
       builder.withStatusCode(200)
-             .withHeader("Content-Length",
-                         Long.toString(fileController.getFileSize(request.uri.getPath())));
+             .withHeader("Content-Length", sizeStr)
+             .withHeader("Accept-Ranges", "bytes=0-" + sizeStr);
 
       var mimeType = fileController.getFileMimeType(request.uri.getPath());
       if (mimeType != null) {
