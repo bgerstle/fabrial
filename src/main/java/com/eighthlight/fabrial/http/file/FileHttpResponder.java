@@ -175,7 +175,7 @@ public class FileHttpResponder implements HttpResponder {
       return builder.withStatusCode(411).build();
     } else if (contentLength.get().getError().isPresent()) {
       logger.trace("Failed to parse content length");
-      return builder.withStatusCode(400).build();
+      return builder.withStatusCode(411).build();
     }
 
     try {
