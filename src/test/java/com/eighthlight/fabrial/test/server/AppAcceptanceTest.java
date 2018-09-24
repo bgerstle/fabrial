@@ -275,4 +275,40 @@ public class AppAcceptanceTest {
       assertThat(tmpFileFixture.tempFilePath.toFile().exists(), is(false));
     }
   }
+
+  @Test
+  void getFileInParts() throws IOException {
+    int testPort = 8082;
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt");
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tmpFileFixture.tempFilePath.getParent().toString())) {
+      var strings = List.of("bar", "baz", "buz");
+      var data = String.join("", strings).getBytes();
+      tmpFileFixture.write(new ByteArrayInputStream(data));
+
+      for (int i = 0; i < strings.size(); i++) {
+        var s = strings.get(i);
+        var rangeStart = s.length() * i;
+        var rangeEnd = s.length() + rangeStart;
+        var responseLines =
+            sendRequest(new RequestBuilder()
+                            .withVersion(HttpVersion.ONE_ONE)
+                            .withMethod(Method.GET)
+                            .withHeaders(Map.of(
+                                "Range", "bytes=" + rangeStart + "-" + rangeEnd
+                            ))
+                            .withUriString(tmpFileFixture.tempFilePath.getFileName().toString())
+                            .build(),
+                        testPort);
+        assertThat(responseLines, hasSize(6));
+        assertThat(responseLines.get(0),
+                   is("HTTP/1.1 206 "));
+        assertThat(responseLines.subList(1, 3),
+                   containsInAnyOrder(
+                       "Content-Type: text/plain",
+                       "Content-Length: " + s.length(),
+                       "Content-Range: " + "bytes=" + rangeStart + "-" + rangeEnd / data.length));
+        assertThat(responseLines.get(4), is(s));
+      }
+    }
+  }
 }
