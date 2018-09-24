@@ -8,6 +8,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -104,5 +106,29 @@ public class MockFileController implements FileHttpResponder.FileController {
     var buf = ByteBuffer.allocate(length);
     data.read(buf.array(), 0, length);
     file.data = buf.array();
+  }
+
+  @Override
+  public void removeFile(String relPathStr) throws IOException {
+    var file = fileAtPath(relPathStr);
+    if (!file.isPresent()) {
+      throw new FileNotFoundException("No file at path " + relPathStr);
+    }
+
+    if (file.get().isDirectory()
+        && !((MockDirectory)file.get()).children.isEmpty()) {
+      throw new IOException("Directory not empty");
+    }
+
+    var parentPath = Optional.ofNullable(Paths.get(relPathStr).getParent())
+                             .map(Path::toString)
+                             .orElse("");
+    var parent =
+        fileAtPath(parentPath)
+            .flatMap(p -> p.isDirectory() ? Optional.of((MockDirectory)p) : Optional.empty());
+    if (!parent.isPresent()) {
+      throw new FileNotFoundException("Parent not found at " + parentPath);
+    }
+    parent.get().children.remove(file.get());
   }
 }

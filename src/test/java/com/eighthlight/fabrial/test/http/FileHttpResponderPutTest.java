@@ -36,6 +36,29 @@ public class FileHttpResponderPutTest {
   }
 
   @Test
+  void putWithInvalidContentLengthHeader() {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var data = "buz".getBytes();
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.PUT)
+            .withUriString("baz")
+            .withBody(new ByteArrayInputStream(data))
+            .withHeaders(Map.of(
+                "Content-Length", "fuz"
+            ))
+            .build());
+    assertThat(response.statusCode, is(411));
+    assertThat(response.headers, is(emptyMap()));
+  }
+
+  @Test
   void putCreateFile() {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);

@@ -220,4 +220,55 @@ public class LocalFilesystemControllerIntegrationTest {
       });
     }
   }
+
+  @Test
+  void deletesExistingFiles() throws IOException {
+    try (var tmpFileFixture = new TempFileFixture()) {
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+      fileController.removeFile(tmpFileFixture.tempFilePath.getFileName().toString());
+      assertThat(tmpFileFixture.tempFilePath.toFile().exists(), is(false));
+    }
+  }
+
+  @Test
+  void failsToDeleteDirectoriesWithFiles() {
+    try (var tmpDirFixture = new TempDirectoryFixture();
+        var tmpFileFixture = new TempFileFixture(tmpDirFixture.tempDirPath)) {
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      assertThrows(IOException.class, () -> {
+        fileController.removeFile("/");
+      });
+      assertThat(tmpDirFixture.tempDirPath.toFile().exists(), is(true));
+    }
+  }
+
+  @Test
+  void deletesEmptyDirectories() throws IOException {
+    try (var tmpDirFixture = new TempDirectoryFixture();
+        var childDirFixture = new TempDirectoryFixture(tmpDirFixture.tempDirPath)) {
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      fileController.removeFile(childDirFixture.tempDirPath.getFileName().toString());
+      assertThat(childDirFixture.tempDirPath.toFile().exists(), is(false));
+    }
+  }
+
+  @Test
+  void deletesNestedFile() throws IOException {
+    try (var tmpDirFixture = new TempDirectoryFixture();
+        var childDirFixture = new TempDirectoryFixture(tmpDirFixture.tempDirPath);
+        var tmpFileFixture = new TempFileFixture(childDirFixture.tempDirPath)) {
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      var relFilePath =
+          tmpDirFixture
+              .tempDirPath
+              .relativize(tmpFileFixture.tempFilePath.toAbsolutePath())
+              .toString();
+      fileController.removeFile(relFilePath);
+      assertThat(tmpFileFixture.tempFilePath.toFile().exists(), is(false));
+    }
+  }
 }
