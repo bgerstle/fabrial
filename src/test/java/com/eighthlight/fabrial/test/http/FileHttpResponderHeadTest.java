@@ -55,6 +55,7 @@ public class FileHttpResponderHeadTest {
 
     var child = new MockFile("bar");
     mockFC.root.children.add(child);
+    child.type = "text/plain";
 
 
     var response = responder.getResponse(
@@ -77,6 +78,7 @@ public class FileHttpResponderHeadTest {
     var child = new MockFile("bar");
     mockFC.root.children.add(child);
     child.data = "bytes".getBytes();
+    child.type = "text/plain";
 
     var response = responder.getResponse(
         new RequestBuilder()
@@ -86,6 +88,7 @@ public class FileHttpResponderHeadTest {
             .build());
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
+    assertThat(response.headers, hasEntry("Content-Type", child.type));
     assertThat(response.headers, hasEntry("Accept-Ranges", "bytes=0-" + child.data.length));
   }
 
@@ -102,6 +105,7 @@ public class FileHttpResponderHeadTest {
     var grandChild = new MockFile("bar");
     childDir.children.add(grandChild);
     grandChild.data = "bytes".getBytes();
+    grandChild.type = "image/jpeg";
 
     var response = responder.getResponse(
         new RequestBuilder()
@@ -111,5 +115,6 @@ public class FileHttpResponderHeadTest {
             .build());
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(grandChild.data.length)));
+    assertThat(response.headers, hasEntry("Content-Type", grandChild.type));
   }
 }
