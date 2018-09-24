@@ -51,7 +51,7 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
   }
 
   @Override
-  public InputStream getFileContents(String relPathStr) throws IOException {
+  public InputStream getFileContents(String relPathStr, int offset, int length) throws IOException {
     return new FileInputStream(absolutePathInBaseDir(relPathStr).toFile());
   }
 

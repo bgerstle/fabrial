@@ -7,13 +7,12 @@ import com.eighthlight.fabrial.http.request.RequestBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 public class FileHttpResponderGetTest {
   @Test
@@ -59,10 +58,15 @@ public class FileHttpResponderGetTest {
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
     assertThat(response.headers, hasEntry("Content-Type", child.type));
-    assertThat(response.headers, hasEntry("Content-Range", "bytes=0-" + child.data.length));
+
+    assertThat(response.headers, hasEntry(
+        "Content-Range",
+        "bytes=0-" + (child.data.length - 1) + "/" + child.data.length));
+
     assertThat(response.body, is(not(nullValue())));
     assertThat(response.body.readAllBytes(), is(child.data));
   }
+
   @Test
   void getFirstByteOfFile() throws IOException {
     var mockFC = new MockFileController();
@@ -87,6 +91,6 @@ public class FileHttpResponderGetTest {
     assertThat(response.headers, hasEntry("Content-Type", child.type));
     assertThat(response.headers, hasEntry("Content-Range", "bytes=0-0/" + child.data.length));
     assertThat(response.body, is(not(nullValue())));
-    assertThat(response.body.readAllBytes(), is(child.data));
+    assertThat(response.body.readAllBytes(), is(Arrays.copyOfRange(child.data, 0, 1)));
   }
 }

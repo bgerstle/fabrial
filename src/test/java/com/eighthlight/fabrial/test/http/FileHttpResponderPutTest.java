@@ -83,7 +83,7 @@ public class FileHttpResponderPutTest {
     assertThat(response.headers, is(emptyMap()));
 
     var fileData =
-        Result.attempt(() -> mockFC.getFileContents(createdFilename))
+        Result.attempt(() -> mockFC.getFileContents(createdFilename, 0, data.length))
               .flatMapAttempt(bais -> bais.readAllBytes())
               .orElseAssert();
     assertThat(fileData, is(data));

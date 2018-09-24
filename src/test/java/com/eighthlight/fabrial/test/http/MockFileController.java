@@ -65,11 +65,11 @@ public class MockFileController implements FileHttpResponder.FileController {
   }
 
   @Override
-  public InputStream getFileContents(String relPathStr) throws IOException {
+  public InputStream getFileContents(String relPathStr, int offset, int length) throws IOException {
     var file = fileAtPath(relPathStr);
     return file
         .flatMap(f -> f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
-        .map(f -> f.data)
+        .map(f -> Arrays.copyOfRange(f.data, offset, length))
         .map(ByteArrayInputStream::new)
         .orElse(null);
   }

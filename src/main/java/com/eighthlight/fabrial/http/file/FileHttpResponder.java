@@ -8,13 +8,20 @@ import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import net.logstash.logback.argument.StructuredArguments;
+import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
+
+import static java.lang.Math.toIntExact;
 
 public class FileHttpResponder implements HttpResponder {
   private static final Logger logger = LoggerFactory.getLogger(FileHttpResponder.class);
@@ -43,7 +50,7 @@ public class FileHttpResponder implements HttpResponder {
 
     String getFileMimeType(String relPathStr) throws IOException;
 
-    InputStream getFileContents(String relPathStr) throws IOException;
+    InputStream getFileContents(String relPathStr, int offset, int length) throws IOException;
 
     void updateFileContents(String relPathStr, InputStream data, int length) throws IOException;
 
@@ -90,6 +97,27 @@ public class FileHttpResponder implements HttpResponder {
     }
   }
 
+  private void buildGetResponseBody(Request request, ResponseBuilder builder) throws IOException {
+    var size = fileController.getFileSize(request.uri.getPath());
+    var range = Optional
+        .ofNullable(request.headers.get("Range"))
+        .map(Pattern.compile("(\\d*)-(\\d*)")::matcher)
+        .flatMap(matcher -> {
+          if (!matcher.find() || matcher.groupCount() != 2) {
+            return Optional.empty();
+          }
+          return Optional.of(Range.between(Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2))));
+        })
+        .orElse(Range.between(0, toIntExact(size)-1));
+    // TODO: wrap w/ try/catch for index out of bounds and return invalid range
+    builder.withHeader("Content-Range",
+                       "bytes=" + range.getMinimum() + "-" + range.getMaximum()
+                       + "/" + Long.toString(size));
+    builder.withBody(fileController.getFileContents(request.uri.getPath(),
+                                                    range.getMinimum(),
+                                                    range.getMaximum() - range.getMinimum() + 1));
+  }
+
   // serve "read" requests (GET/HEAD) for files. returning body if GET request
   private Response buildReadFileResponse(Request request, ResponseBuilder builder) {
     var size = fileController.getFileSize(request.uri.getPath());
@@ -106,23 +134,15 @@ public class FileHttpResponder implements HttpResponder {
       builder.withStatusCode(200)
              .withHeader("Content-Length", sizeStr);
 
-      if (request.method.equals(Method.HEAD)) {
-        builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
-      } else {
-        assert request.method.equals(Method.GET);
-        builder.withHeader("Content-Range",
-                           "bytes=0-"
-                           + Long.toString(size - 1)
-                           + "/" + sizeStr);
-      }
-
       var mimeType = fileController.getFileMimeType(request.uri.getPath());
       if (mimeType != null) {
         builder.withHeader("Content-Type", mimeType);
       }
 
       if (request.method.equals(Method.GET)) {
-        builder.withBody(fileController.getFileContents(request.uri.getPath()));
+        buildGetResponseBody(request, builder);
+      } else {
+        builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
       }
 
       return builder.build();

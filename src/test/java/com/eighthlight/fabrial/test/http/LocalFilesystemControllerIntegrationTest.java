@@ -144,7 +144,7 @@ public class LocalFilesystemControllerIntegrationTest {
       assertThat(fileController.getFileSize(tmpFilename),
                  is((long)testData.length));
 
-      var contents = fileController.getFileContents(tmpFilename);
+      var contents = fileController.getFileContents(tmpFilename, 0, testData.length);
       var readBytes =
           Optional.ofNullable(contents)
                   .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
