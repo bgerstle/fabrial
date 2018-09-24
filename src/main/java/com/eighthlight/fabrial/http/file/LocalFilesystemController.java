@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.http.file;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -8,10 +9,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource {
+public class LocalFilesystemController implements FileHttpResponder.FileController {
   public final Path baseDirPath;
 
-  public FileResponderDataSourceImpl(Path baseDirPath) {
+  public LocalFilesystemController(Path baseDirPath) {
     this.baseDirPath = Optional.ofNullable(baseDirPath).orElse(Paths.get("."));
   }
 
@@ -60,7 +61,14 @@ public class FileResponderDataSourceImpl implements FileHttpResponder.DataSource
   }
 
   @Override
-  public void updateFileContents(String relPathStr, InputStream data) throws IOException {
-
+  public void updateFileContents(String relPathStr, InputStream data, int length) throws IOException {
+    var file = absolutePathInBaseDir(relPathStr).toFile();
+    try (var fileOutStream = new FileOutputStream(file)) {
+      // TODO: surely there's a way to "transfer N bytes w/ a buffer"...
+      // of course, without messing up the actual data w/ an underlying string encoder
+      var buf = ByteBuffer.allocate(length);
+      data.read(buf.array(), 0, length);
+      fileOutStream.write(buf.array(), 0, length);
+    }
   }
 }

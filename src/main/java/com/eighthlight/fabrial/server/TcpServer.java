@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.server;
 
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
-import com.eighthlight.fabrial.http.file.FileResponderDataSourceImpl;
+import com.eighthlight.fabrial.http.file.LocalFilesystemController;
 import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class TcpServer implements Closeable {
          new HttpConnectionHandler(
              Set.of(
                  new FileHttpResponder(
-                     new FileResponderDataSourceImpl(config.directoryPath)
+                     new LocalFilesystemController(config.directoryPath)
                  ))));
   }
 

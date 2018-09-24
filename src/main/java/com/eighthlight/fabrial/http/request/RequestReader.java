@@ -20,7 +20,9 @@ public class RequestReader {
   }
 
   private static RequestBuilder withRequestLine(String requestLine) throws RequestParsingException {
-    if (requestLine.startsWith(" ")) {
+    if (requestLine.isEmpty()) {
+      throw new RequestParsingException("Request is empty.");
+    } else if (requestLine.startsWith(" ")) {
       throw new RequestParsingException("Requests should not have leading whitespace");
     }
     Scanner requestLineScanner = new Scanner(requestLine).useDelimiter(" ");
