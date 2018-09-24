@@ -1,5 +1,9 @@
 package com.eighthlight.fabrial.http.file;
 
+import net.logstash.logback.argument.StructuredArguments;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -9,7 +13,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.Math.toIntExact;
+
 public class LocalFilesystemController implements FileHttpResponder.FileController {
+  private static final Logger logger = LoggerFactory.getLogger(LocalFilesystemController.class);
+
   public final Path baseDirPath;
 
   public LocalFilesystemController(Path baseDirPath) {
@@ -52,7 +60,23 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
 
   @Override
   public InputStream getFileContents(String relPathStr, int offset, int length) throws IOException {
-    return new FileInputStream(absolutePathInBaseDir(relPathStr).toFile());
+    var file = absolutePathInBaseDir(relPathStr).toFile();
+    var fis = new FileInputStream(file);
+    fis.skip(offset);
+    if (length == toIntExact(file.length()) - offset) {
+      // if reading the rest of the file, just return the stream
+      return fis;
+    }
+    // if reading portion of the file, do so and return as a wrapped buffer
+    var buf = ByteBuffer.allocate(length);
+    var actualRead = fis.read(buf.array(), 0, length);
+    if (actualRead != length) {
+      logger.warn("Only read {} of {} requested bytes.",
+                  StructuredArguments.kv("actualRead", Integer.toString(actualRead)),
+                  StructuredArguments.kv("expectedRead", Integer.toString(length)),
+                  StructuredArguments.kv("readOffset", Integer.toString(offset)));
+    }
+    return new ByteArrayInputStream(buf.array());
   }
 
   @Override
