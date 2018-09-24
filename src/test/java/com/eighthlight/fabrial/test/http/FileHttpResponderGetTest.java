@@ -68,7 +68,7 @@ public class FileHttpResponderGetTest {
   }
 
   @Test
-  void getFirstByteOfFile() throws IOException {
+  void getFirstTwoBytesOfFile() throws IOException {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
 
@@ -83,14 +83,14 @@ public class FileHttpResponderGetTest {
         new RequestBuilder()
             .withVersion(HttpVersion.ONE_ONE)
             .withMethod(Method.GET)
-            .withHeaders(Map.of("Range", "bytes=0-0"))
+            .withHeaders(Map.of("Range", "bytes=0-1"))
             .withUriString(child.name)
             .build());
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
     assertThat(response.headers, hasEntry("Content-Type", child.type));
-    assertThat(response.headers, hasEntry("Content-Range", "bytes=0-0/" + child.data.length));
+    assertThat(response.headers, hasEntry("Content-Range", "bytes=0-1/" + child.data.length));
     assertThat(response.body, is(not(nullValue())));
-    assertThat(response.body.readAllBytes(), is(Arrays.copyOfRange(child.data, 0, 1)));
+    assertThat(response.body.readAllBytes(), is(Arrays.copyOfRange(child.data, 0, 2)));
   }
 }
