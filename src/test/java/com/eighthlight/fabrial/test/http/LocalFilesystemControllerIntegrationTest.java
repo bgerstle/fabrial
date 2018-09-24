@@ -292,4 +292,19 @@ public class LocalFilesystemControllerIntegrationTest {
 
     }
   }
+
+  @Test
+  void throwsWhenOutOfBounds() throws IOException {
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
+      String tmpFilename = tmpFileFixture.tempFilePath.getFileName().toString();
+
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+
+      assertThrows(IOException.class, () -> {
+        fileController.getFileContents(tmpFilename, 1, 2);
+      });
+
+    }
+  }
 }
