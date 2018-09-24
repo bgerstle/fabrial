@@ -227,8 +227,7 @@ public class LocalFilesystemControllerIntegrationTest {
       var fileController =
           new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
       fileController.removeFile(tmpFileFixture.tempFilePath.getFileName().toString());
-      assertThat(tmpFileFixture.tempFilePath.toFile().exists(),
-                 is(false));
+      assertThat(tmpFileFixture.tempFilePath.toFile().exists(), is(false));
     }
   }
 
@@ -242,6 +241,17 @@ public class LocalFilesystemControllerIntegrationTest {
         fileController.removeFile("/");
       });
       assertThat(tmpDirFixture.tempDirPath.toFile().exists(), is(true));
+    }
+  }
+
+  @Test
+  void deletesEmptyDirectories() throws IOException {
+    try (var tmpDirFixture = new TempDirectoryFixture();
+        var childDirFixture = new TempDirectoryFixture(tmpDirFixture.tempDirPath)) {
+      var fileController =
+          new LocalFilesystemController(tmpDirFixture.tempDirPath);
+      fileController.removeFile(childDirFixture.tempDirPath.getFileName().toString());
+      assertThat(childDirFixture.tempDirPath.toFile().exists(), is(false));
     }
   }
 }
