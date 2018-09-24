@@ -255,4 +255,24 @@ public class AppAcceptanceTest {
       }
     }
   }
+
+  @Test
+  void deleteFile() throws IOException {
+    int testPort = 8082;
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt");
+        AppProcessFixture appFixture = new AppProcessFixture(testPort, tmpFileFixture.tempFilePath.getParent().toString())) {
+      var responseLines =
+          sendRequest(new RequestBuilder()
+                          .withVersion(HttpVersion.ONE_ONE)
+                          .withMethod(Method.DELETE)
+                          .withUriString(tmpFileFixture.tempFilePath.getFileName().toString())
+                          .build(),
+                      testPort);
+      assertThat(responseLines, hasSize(1));
+      assertThat(responseLines.get(0),
+                 is("HTTP/1.1 200 "));
+
+      assertThat(tmpFileFixture.tempFilePath.toFile().exists(), is(false));
+    }
+  }
 }
