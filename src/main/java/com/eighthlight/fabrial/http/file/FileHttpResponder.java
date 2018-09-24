@@ -107,10 +107,13 @@ public class FileHttpResponder implements HttpResponder {
              .withHeader("Content-Length", sizeStr);
 
       if (request.method.equals(Method.HEAD)) {
-        builder.withHeader("Accept-Ranges", "bytes=0-" + sizeStr);
+        builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
       } else {
         assert request.method.equals(Method.GET);
-        builder.withHeader("Content-Range", "bytes=0-" + sizeStr);
+        builder.withHeader("Content-Range",
+                           "bytes=0-"
+                           + Long.toString(size - 1)
+                           + "/" + sizeStr);
       }
 
       var mimeType = fileController.getFileMimeType(request.uri.getPath());
