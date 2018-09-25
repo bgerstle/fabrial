@@ -85,11 +85,12 @@ public class HttpRequestByteRange {
     var last = parseRangeComponent(matcher.group(3), fileSize);
 
     if (first.isPresent() && last.isPresent()) {
-      if (first.get() > last.get()) {
-        throw new ParsingException("Last index of range must be greater than the first.");
+      try {
+        // return range w/ desired first & last positions (e.g. "0-5")
+        return new HttpRequestByteRange(first.get(), last.get());
+      } catch (IllegalArgumentException e) {
+        throw new ParsingException(e);
       }
-      // return range w/ desired first & last positions (e.g. "0-5")
-      return new HttpRequestByteRange(first.get(), last.get());
     } else if (first.isPresent()) {
       // return range from desired first position to end of file (e.g. "5-")
       return new HttpRequestByteRange(first.get(), fileSize - 1);
@@ -102,6 +103,12 @@ public class HttpRequestByteRange {
   }
 
   public HttpRequestByteRange(int first, int last) {
+    if (first < 0) {
+      throw new IllegalArgumentException("First position must be greater than or equal to zero.");
+    }
+    if (last < first) {
+      throw new IllegalArgumentException("Last position cannot be less than the first.");
+    }
     this.first = first;
     this.last = last;
   }

@@ -7,6 +7,7 @@ import org.quicktheories.api.Pair;
 import org.quicktheories.api.Tuple3;
 import org.quicktheories.core.Gen;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -91,6 +92,31 @@ public class ArbitraryByteRangeTest {
           assertThat(range.first, is(size - suffixLength));
           assertThat(range.last, is(size - 1));
           assertThat(range.length(), is(suffixLength));
+        });
+  }
+
+  @Test
+  void rangesWithTheSameFirstAndLastPositionsAreEqual() {
+    qt().forAll(fileSizeFirstPosAndLastPos(), fileSizeFirstPosAndLastPos())
+        .checkAssert((t1, t2) -> {
+          var r1 = new HttpRequestByteRange(t1._2, t1._3);
+          var r2 = new HttpRequestByteRange(t2._2, t2._3);
+          assertThat(r1.equals(r2), equalTo(
+              r1.first == r2.first
+              && r1.last == r2.last
+          ));
+          assertThat(r1.equals(r2), equalTo(r1.hashCode() == r2.hashCode()));
+        });
+  }
+
+  @Test
+  void identicallyConstructedRangesAreEqual() {
+    qt().forAll(fileSizeFirstPosAndLastPos())
+        .checkAssert((t1) -> {
+          var r1 = new HttpRequestByteRange(t1._2, t1._3);
+          var r2 = new HttpRequestByteRange(t1._2, t1._3);
+          assertThat(r1, equalTo(r2));
+          assertThat(r1.hashCode(), equalTo(r2.hashCode()));
         });
   }
 }

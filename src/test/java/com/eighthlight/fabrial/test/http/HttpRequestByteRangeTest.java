@@ -3,8 +3,8 @@ package com.eighthlight.fabrial.test.http;
 import com.eighthlight.fabrial.http.request.HttpRequestByteRange;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class HttpRequestByteRangeTest {
@@ -92,5 +92,19 @@ public class HttpRequestByteRangeTest {
     assertThat(range.first, is(2));
     assertThat(range.last, is(4));
     assertThat(range.length(), is(3));
+  }
+
+  @Test
+  void throwsWhenInitializedWithInvalidFirstPosition() {
+    assertThrows(IllegalArgumentException.class, () -> {
+      new HttpRequestByteRange(-1, 0);
+    });
+  }
+
+  @Test
+  void throwsWhenFirstGreaterThanLast() {
+    assertThrows(IllegalArgumentException.class, () -> {
+      new HttpRequestByteRange(1, 0);
+    });
   }
 }
