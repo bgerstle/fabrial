@@ -27,22 +27,13 @@ public class HttpRequestByteRange {
     }
   }
 
-  private static final Pattern RANGE_PATTERN = Pattern.compile("([^=]+)=(\\d*)-(\\d*)$");
-
-  private static Optional<Integer> parseRangeComponent(String str, int max) throws ParsingException {
-    if (str == null || str.isEmpty()) {
-      return Optional.empty();
-    }
-    try {
-      var parsedInt = Integer.parseInt(str);
-      if (parsedInt < 0 || parsedInt >= max) {
-        throw new ParsingException("Out of bounds range component " + str);
-      }
-      return Optional.of(parsedInt);
-    } catch (NumberFormatException e) {
-      throw new ParsingException(e);
-    }
+  private static Optional<Integer> parseRangeComponent(String str) {
+    return Optional.ofNullable(str)
+                   .flatMap(s -> s.isEmpty() ? Optional.empty() : Optional.of(s))
+                   .map(Integer::parseInt);
   }
+
+  private static final Pattern RANGE_PATTERN = Pattern.compile("([^=]+)=(\\d*)-(\\d*)$");
 
   /**
    * Parse a byte range header field, as specified in HTTP/1.1 Range Requests RFC 7233:
@@ -80,33 +71,31 @@ public class HttpRequestByteRange {
       throw new ParsingException("Unacceptable range request unit: " + unit);
     }
 
-    var first = parseRangeComponent(matcher.group(2), fileSize);
-    var last =
-        // passing MAX to bypass fileSize checking
-        parseRangeComponent(matcher.group(3), Integer.MAX_VALUE)
-        // wrap to max index, see RFC 7233 section 2.1:
-        // "if the [suffix length] value is greater than or equal to the length...the byte range
-        // is interpreted as the remainder of the representation"
-        .map(l -> Integer.min(l, fileSize - 1));
+    try {
+      var first = parseRangeComponent(matcher.group(2));
 
-    if (first.isPresent() && last.isPresent()) {
-      try {
+      // wrap last to max index, see RFC 7233 section 2.1:
+      // "if the last-byte value...is greater than or equal to the length...of the data, the byte range
+      // is interpreted as the remainder of the representation"
+      var last = parseRangeComponent(matcher.group(3)).map(l -> Integer.min(l, fileSize - 1));
+
+      if (first.isPresent() && last.isPresent()) {
         // return range w/ desired first & last positions (e.g. "0-5")
         return new HttpRequestByteRange(first.get(), last.get());
-      } catch (IllegalArgumentException e) {
-        throw new ParsingException(e);
+      } else if (first.isPresent()) {
+        // return range from desired first position to end of file (e.g. "5-")
+        return new HttpRequestByteRange(first.get(), fileSize - 1);
+      } else if (last.isPresent()) {
+        if (last.get() < 1) {
+          throw new ParsingException("Suffix range of '-0' is invalid.");
+        }
+        // return range for the desired trailing bytes of a file (e.g. "-5")
+        return new HttpRequestByteRange(fileSize - last.get(), fileSize - 1);
+      } else {
+        throw new ParsingException("Ranges must have at least one component: X-Y, X-, or -Y.");
       }
-    } else if (first.isPresent()) {
-      // return range from desired first position to end of file (e.g. "5-")
-      return new HttpRequestByteRange(first.get(), fileSize - 1);
-    } else if (last.isPresent()) {
-      if (last.get() < 1) {
-        throw new ParsingException("Suffix range of '-0' is invalid.");
-      }
-      // return range for the desired trailing bytes of a file (e.g. "-5")
-      return new HttpRequestByteRange(fileSize - last.get(), fileSize - 1);
-    } else {
-      throw new ParsingException("Ranges must have at least one component: X-Y, X-, or -Y.");
+    } catch (IllegalArgumentException e) {
+      throw new ParsingException(e);
     }
   }
 
