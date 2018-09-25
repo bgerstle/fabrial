@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.toIntExact;
 
@@ -182,24 +183,28 @@ public class FileHttpResponder implements HttpResponder {
   }
 
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
-    var contents =
+    var list =
         fileController.getDirectoryContents(request.uri.getPath())
                       .stream()
                       .sorted()
-                      .reduce((p1, p2) -> p1 + "," + p2)
-                      .orElse("");
+                      .map(p -> {
+                        return "<a href=\"" + p + "\">" + p + "</a>";
+                      })
+                      .map(s -> "<li>" + s + "</li>")
+                      .collect(Collectors.joining("\n"));
 
-    if (contents.isEmpty()) {
+    if (list.isEmpty()) {
       return builder.withHeader("Content-Length", "0")
                     .withStatusCode(200)
                     .build();
     }
 
+    var contents = String.join("\n", "<ul>", list, "</ul>");
     var charset = StandardCharsets.UTF_8;
     var contentBytes = contents.getBytes(charset);
     return builder.withStatusCode(200)
                   .withHeader("Content-Length", Integer.toString(contentBytes.length))
-                  .withHeader("Content-Type", "text/plain; charset=" + charset.name().toLowerCase())
+                  .withHeader("Content-Type", "text/html")
                   .withBody(new ByteArrayInputStream(contentBytes))
                   .build();
   }
