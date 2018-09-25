@@ -70,13 +70,16 @@ public class MockFileController implements FileHttpResponder.FileController {
     if (!file.isPresent()) {
       throw new FileNotFoundException("File not found");
     }
-    var lastIndex = offset+length-1;
-    if (offset < 0 || lastIndex > getFileSize(relPathStr)) {
+    if (length == 0) {
+      return new ByteArrayInputStream(new byte[0]);
+    }
+    var lastIndexExclusive = offset+length;
+    if (offset < 0 || lastIndexExclusive > getFileSize(relPathStr)) {
       throw new IOException("Read out of bounds");
     }
     return file
         .flatMap(f -> f.isDirectory() ? Optional.empty() : Optional.of((MockFile)f))
-        .map(f -> Arrays.copyOfRange(f.data, offset, lastIndex))
+        .map(f -> Arrays.copyOfRange(f.data, offset, lastIndexExclusive))
         .map(ByteArrayInputStream::new)
         .orElse(null);
   }
