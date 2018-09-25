@@ -112,7 +112,7 @@ public class FileHttpResponder implements HttpResponder {
       try {
         range = HttpRequestByteRange.parseFromHeader(rangeHeader, fileSizeInt);
       } catch (HttpRequestByteRange.ParsingException e) {
-        builder.withStatusCode(400);
+        builder.withStatusCode(416);
         return;
       }
 
