@@ -96,39 +96,6 @@ public class FileHttpResponder implements HttpResponder {
     }
   }
 
-  private void buildGetFileResponse(Request request, ResponseBuilder builder) throws IOException {
-    var size = fileController.getFileSize(request.uri.getPath());
-    // TODO: handle malformed ranges
-    var rangeHeader = request.headers.get("Range");
-    if (rangeHeader == null) {
-      // requested entire file, skip range handling
-      builder.withHeader("Content-Length", Long.toString(size));
-      builder.withBody(fileController.getFileContents(request.uri.getPath(),
-                                                      0,
-                                                      toIntExact(size)));
-    } else {
-      var fileSizeInt = toIntExact(fileController.getFileSize(request.uri.getPath()));
-      HttpRequestByteRange range;
-      try {
-        range = HttpRequestByteRange.parseFromHeader(rangeHeader, fileSizeInt);
-      } catch (HttpRequestByteRange.ParsingException e) {
-        builder.withStatusCode(416);
-        return;
-      }
-
-
-      builder.withHeader("Content-Length", Integer.toString(range.length()));
-      builder.withHeader("Content-Range",
-                         range.toString() + "/" + fileSizeInt);
-
-      // TODO: wrap w/ try/catch for index out of bounds and return invalid range
-      builder.withBody(fileController.getFileContents(request.uri.getPath(),
-                                                      range.last,
-                                                      range.length()));
-      builder.withStatusCode(206);
-    }
-  }
-
   // serve "read" requests (GET/HEAD) for files. returning body if GET request
   private Response buildReadFileResponse(Request request, ResponseBuilder builder) {
     var size = fileController.getFileSize(request.uri.getPath());
@@ -146,11 +113,37 @@ public class FileHttpResponder implements HttpResponder {
     try {
       var sizeStr = Long.toString(size);
 
-      if (request.method.equals(Method.GET)) {
-        buildGetFileResponse(request, builder);
-      } else {
+      if (request.method.equals(Method.HEAD)) {
         builder.withHeader("Content-Length", sizeStr);
         builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
+      } else {
+        var sizeInt = toIntExact(size);
+        var rangeHeader = request.headers.get("Range");
+        if (rangeHeader == null) {
+          // requested entire file, skip range handling
+          builder.withHeader("Content-Length", Long.toString(size))
+                 .withBody(fileController.getFileContents(request.uri.getPath(),0, sizeInt));
+        } else {
+          HttpRequestByteRange range;
+          try {
+            range = HttpRequestByteRange.parseFromHeader(rangeHeader, sizeInt);
+          } catch (HttpRequestByteRange.ParsingException e) {
+            // return early with unsatisfiable range response
+            return builder.withStatusCode(416)
+                          .withHeader("Content-Range", "*/" + sizeInt)
+                          .build();
+          }
+
+          builder.withHeader("Content-Length", Integer.toString(range.length()));
+          builder.withHeader("Content-Range",
+                             range.toString() + "/" + sizeInt);
+
+          // TODO: wrap w/ try/catch for index out of bounds and return invalid range
+          builder.withBody(fileController.getFileContents(request.uri.getPath(),
+                                                          range.first,
+                                                          range.length()));
+          builder.withStatusCode(206);
+        }
       }
 
       var mimeType = fileController.getFileMimeType(request.uri.getPath());

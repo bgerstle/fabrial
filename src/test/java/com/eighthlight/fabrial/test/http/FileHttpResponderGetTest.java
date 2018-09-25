@@ -89,7 +89,8 @@ public class FileHttpResponderGetTest {
     assertThat(response.headers, hasEntry("Content-Type", child.type));
     assertThat(response.headers, hasEntry("Content-Range", "bytes 0-1/" + child.data.length));
     assertThat(response.body, is(not(nullValue())));
-    assertThat(response.body.readAllBytes(), is(Arrays.copyOfRange(child.data, 0, 2)));
+    assertThat(new String(response.body.readAllBytes()),
+               is(new String(Arrays.copyOfRange(child.data, 0, 2))));
   }
 
   @Test
