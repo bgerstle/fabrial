@@ -27,7 +27,7 @@ public class HttpRequestByteRange {
     }
   }
 
-  private static final Pattern RANGE_PATTERN = Pattern.compile("([^=]+)=(\\d*)-(\\d*)");
+  private static final Pattern RANGE_PATTERN = Pattern.compile("([^=]+)=(\\d*)-(\\d*)$");
 
   private static Optional<Integer> parseRangeComponent(String component,
                                                        int fileSize) throws ParsingException {
@@ -73,7 +73,7 @@ public class HttpRequestByteRange {
                                                      int fileSize) throws ParsingException {
     var matcher = RANGE_PATTERN.matcher(headerValue);
     if (!matcher.find()) {
-      throw new ParsingException("Failed to match range components. Expected 'bytes=first?-last?'");
+      throw new ParsingException("Failed to match range components. Expected 'bytes=[first]-[last]'");
     }
 
     var unit = matcher.group(1);
@@ -95,6 +95,9 @@ public class HttpRequestByteRange {
       // return range from desired first position to end of file (e.g. "5-")
       return new HttpRequestByteRange(first.get(), fileSize - 1);
     } else if (last.isPresent()) {
+      if (last.get() < 1) {
+        throw new ParsingException("Suffix range of '-0' is invalid.");
+      }
       // return range for the desired trailing bytes of a file (e.g. "-5")
       return new HttpRequestByteRange(fileSize - last.get(), fileSize - 1);
     } else {

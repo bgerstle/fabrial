@@ -11,25 +11,25 @@ public class HttpRequestByteRangeTest {
   @Test
   void failsToParseEmptyString() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
-                 () -> HttpRequestByteRange.parseFromHeader("", 0));
+                 () -> HttpRequestByteRange.parseFromHeader("", 1));
   }
 
   @Test
   void failsToParseUnitsOtherThanBytes() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
-                 () -> HttpRequestByteRange.parseFromHeader("bits=0-0", 0));
+                 () -> HttpRequestByteRange.parseFromHeader("bits=0-0", 1));
   }
 
   @Test
   void failsToParseEmptyRange() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
-                 () -> HttpRequestByteRange.parseFromHeader("bytes=-", 0));
+                 () -> HttpRequestByteRange.parseFromHeader("bytes=-", 1));
   }
 
   @Test
   void failsToParseNegativeFirstIndex() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
-                 () -> HttpRequestByteRange.parseFromHeader("bytes=-1-", 0));
+                 () -> HttpRequestByteRange.parseFromHeader("bytes=-1-", 1));
   }
 
   @Test
@@ -41,7 +41,7 @@ public class HttpRequestByteRangeTest {
   @Test
   void failsToParseNegativeLastIndex() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
-                 () -> HttpRequestByteRange.parseFromHeader("bytes=0--1", 0));
+                 () -> HttpRequestByteRange.parseFromHeader("bytes=0--1", 1));
   }
 
   @Test
@@ -60,6 +60,12 @@ public class HttpRequestByteRangeTest {
   void failsToParseRangeLargerThanSize() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
                  () -> HttpRequestByteRange.parseFromHeader("bytes=0-1", 1));
+  }
+
+  @Test
+  void failsToParseEmptySuffixRange() {
+    assertThrows(HttpRequestByteRange.ParsingException.class,
+                 () -> HttpRequestByteRange.parseFromHeader("-0", 1));
   }
 
   @Test

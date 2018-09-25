@@ -82,9 +82,10 @@ public class ArbitraryByteRangeTest {
   @Test
   void parsesRangesWithValidLastPosition() {
     qt().forAll(fileSizeAndPosition())
-        .checkAssert(t2 -> {
-          var size = t2._1;
-          var suffixLength = t2._2;
+        .assuming(p -> p._2 > 0)
+        .checkAssert(p -> {
+          var size = p._1;
+          var suffixLength = p._2;
           var rangeHeader = String.format("bytes=-%d", suffixLength);
           var range = Result
               .attempt(() -> HttpRequestByteRange.parseFromHeader(rangeHeader, size))
