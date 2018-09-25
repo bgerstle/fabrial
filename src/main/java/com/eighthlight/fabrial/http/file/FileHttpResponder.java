@@ -3,12 +3,12 @@ package com.eighthlight.fabrial.http.file;
 import com.eighthlight.fabrial.http.HttpResponder;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.request.HttpRequestByteRange;
 import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import net.logstash.logback.argument.StructuredArguments;
-import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import static java.lang.Math.toIntExact;
 
@@ -108,24 +107,24 @@ public class FileHttpResponder implements HttpResponder {
                                                       0,
                                                       toIntExact(size)));
     } else {
-      var matcher = Pattern.compile("bytes=(\\d*)-(\\d*)").matcher(rangeHeader);
-      if (!matcher.find() || matcher.groupCount() != 2) {
-        builder.withStatusCode(416);
+      var fileSizeInt = toIntExact(fileController.getFileSize(request.uri.getPath()));
+      HttpRequestByteRange range;
+      try {
+        range = HttpRequestByteRange.parseFromHeader(rangeHeader, fileSizeInt);
+      } catch (HttpRequestByteRange.ParsingException e) {
+        builder.withStatusCode(400);
         return;
       }
 
-      var range = Range.between(Integer.parseInt(matcher.group(1)),
-                                Integer.parseInt(matcher.group(2)));
-      var length = range.getMaximum() - range.getMinimum() + 1;
-      builder.withHeader("Content-Length", Integer.toString(length));
+
+      builder.withHeader("Content-Length", Integer.toString(range.length()));
       builder.withHeader("Content-Range",
-                         "bytes " + range.getMinimum() + "-" + range.getMaximum()
-                         + "/" + Long.toString(fileController.getFileSize(request.uri.getPath())));
+                         range.toString() + "/" + fileSizeInt);
 
       // TODO: wrap w/ try/catch for index out of bounds and return invalid range
       builder.withBody(fileController.getFileContents(request.uri.getPath(),
-                                                      range.getMinimum(),
-                                                      length));
+                                                      range.last,
+                                                      range.length()));
       builder.withStatusCode(206);
     }
   }
