@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -144,7 +145,7 @@ public class LocalFilesystemControllerIntegrationTest {
       assertThat(fileController.getFileSize(tmpFilename),
                  is((long)testData.length));
 
-      var contents = fileController.getFileContents(tmpFilename);
+      var contents = fileController.getFileContents(tmpFilename, 0, testData.length);
       var readBytes =
           Optional.ofNullable(contents)
                   .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
@@ -269,6 +270,41 @@ public class LocalFilesystemControllerIntegrationTest {
               .toString();
       fileController.removeFile(relFilePath);
       assertThat(tmpFileFixture.tempFilePath.toFile().exists(), is(false));
+    }
+  }
+
+  @Test
+  void returnsDesiredPortionOfFile() throws IOException {
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
+      String tmpFilename = tmpFileFixture.tempFilePath.getFileName().toString();
+
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+
+      var testData = "foo".getBytes();
+      tmpFileFixture.write(new ByteArrayInputStream(testData));
+
+      var contents = fileController.getFileContents(tmpFilename, 1, 2);
+      var readBytes =
+          Optional.ofNullable(contents)
+                  .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+      assertThat(readBytes.orElse(null), is(Arrays.copyOfRange(testData, 1, 3)));
+
+    }
+  }
+
+  @Test
+  void throwsWhenOutOfBounds() {
+    try (var tmpFileFixture = new TempFileFixture(Paths.get("/tmp"), ".txt")) {
+      String tmpFilename = tmpFileFixture.tempFilePath.getFileName().toString();
+
+      var fileController =
+          new LocalFilesystemController(tmpFileFixture.tempFilePath.getParent());
+
+      assertThrows(IOException.class, () -> {
+        fileController.getFileContents(tmpFilename, 1, 2);
+      });
+
     }
   }
 }

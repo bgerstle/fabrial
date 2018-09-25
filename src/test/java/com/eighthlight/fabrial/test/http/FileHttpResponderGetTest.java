@@ -6,48 +6,17 @@ import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import org.junit.jupiter.api.Test;
 
-import static java.util.Collections.emptyMap;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.*;
 
-public class FileHttpResponderHeadTest {
+public class FileHttpResponderGetTest {
   @Test
-  void headAbsentFile() {
-    var mockFC = new MockFileController();
-    var responder = new FileHttpResponder(mockFC);
-
-    mockFC.root = new MockDirectory("foo");
-
-    var response = responder.getResponse(
-        new RequestBuilder()
-            .withVersion(HttpVersion.ONE_ONE)
-            .withMethod(Method.HEAD)
-            .withUriString("baz")
-            .build());
-    assertThat(response.statusCode, is(404));
-    assertThat(response.headers, is(emptyMap()));
-  }
-
-  @Test
-  void headRootDir() {
-    var mockFC = new MockFileController();
-    var responder = new FileHttpResponder(mockFC);
-
-    mockFC.root = new MockDirectory("foo");
-
-    var response = responder.getResponse(
-        new RequestBuilder()
-            .withVersion(HttpVersion.ONE_ONE)
-            .withMethod(Method.HEAD)
-            .withUriString("/")
-            .build());
-    assertThat(response.statusCode, is(200));
-    assertThat(response.headers, hasEntry("Content-Length", "0"));
-  }
-
-  @Test
-  void headEmptyFile() {
+  void getEmptyFile() throws IOException {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
 
@@ -55,21 +24,21 @@ public class FileHttpResponderHeadTest {
 
     var child = new MockFile("bar");
     mockFC.root.children.add(child);
-    child.type = "text/plain";
 
 
     var response = responder.getResponse(
         new RequestBuilder()
             .withVersion(HttpVersion.ONE_ONE)
-            .withMethod(Method.HEAD)
+            .withMethod(Method.GET)
             .withUriString(child.name)
             .build());
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", "0"));
+    assertThat(response.body, is(nullValue()));
   }
 
   @Test
-  void headFileWithData() {
+  void getFileWithData() throws IOException {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
 
@@ -77,44 +46,70 @@ public class FileHttpResponderHeadTest {
 
     var child = new MockFile("bar");
     mockFC.root.children.add(child);
-    child.data = "bytes".getBytes();
+    child.data = "foo".getBytes();
     child.type = "text/plain";
 
     var response = responder.getResponse(
         new RequestBuilder()
             .withVersion(HttpVersion.ONE_ONE)
-            .withMethod(Method.HEAD)
+            .withMethod(Method.GET)
             .withUriString(child.name)
             .build());
     assertThat(response.statusCode, is(200));
     assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
     assertThat(response.headers, hasEntry("Content-Type", child.type));
-    assertThat(response.headers, hasEntry("Accept-Ranges", "bytes=0-" + (child.data.length - 1)));
+    assertThat(response.headers, not(hasKey("Content-Range")));
+
+    assertThat(response.body, is(not(nullValue())));
+    assertThat(response.body.readAllBytes(), is(child.data));
   }
 
   @Test
-  void headNestedFileWithData() {
+  void getFirstTwoBytesOfFile() throws IOException {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
 
     mockFC.root = new MockDirectory("foo");
 
-    var childDir = new MockDirectory("fuz");
-    mockFC.root.children.add(childDir);
-
-    var grandChild = new MockFile("bar");
-    childDir.children.add(grandChild);
-    grandChild.data = "bytes".getBytes();
-    grandChild.type = "image/jpeg";
+    var child = new MockFile("bar");
+    mockFC.root.children.add(child);
+    child.data = "foo".getBytes();
+    child.type = "text/plain";
 
     var response = responder.getResponse(
         new RequestBuilder()
             .withVersion(HttpVersion.ONE_ONE)
-            .withMethod(Method.HEAD)
-            .withUriString(childDir.name + "/" + grandChild.name)
+            .withMethod(Method.GET)
+            .withHeaders(Map.of("Range", "bytes=0-1"))
+            .withUriString(child.name)
             .build());
-    assertThat(response.statusCode, is(200));
-    assertThat(response.headers, hasEntry("Content-Length", Integer.toString(grandChild.data.length)));
-    assertThat(response.headers, hasEntry("Content-Type", grandChild.type));
+    assertThat(response.statusCode, is(206));
+    assertThat(response.headers, hasEntry("Content-Length", "2"));
+    assertThat(response.headers, hasEntry("Content-Type", child.type));
+    assertThat(response.headers, hasEntry("Content-Range", "bytes 0-1/" + child.data.length));
+    assertThat(response.body, is(not(nullValue())));
+    assertThat(response.body.readAllBytes(), is(Arrays.copyOfRange(child.data, 0, 2)));
+  }
+
+  @Test
+  void responds500ReadError() throws IOException {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var child = new MockFile("bar");
+    mockFC.root.children.add(child);
+    child.data = "foo".getBytes();
+    child.type = "text/plain";
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.GET)
+            .withHeaders(Map.of("Range", "bytes=0-10"))
+            .withUriString(child.name)
+            .build());
+    assertThat(response.statusCode, is(500));
   }
 }

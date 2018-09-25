@@ -8,13 +8,20 @@ import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import net.logstash.logback.argument.StructuredArguments;
+import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
+
+import static java.lang.Math.toIntExact;
 
 public class FileHttpResponder implements HttpResponder {
   private static final Logger logger = LoggerFactory.getLogger(FileHttpResponder.class);
@@ -43,7 +50,7 @@ public class FileHttpResponder implements HttpResponder {
 
     String getFileMimeType(String relPathStr) throws IOException;
 
-    InputStream getFileContents(String relPathStr) throws IOException;
+    InputStream getFileContents(String relPathStr, int offset, int length) throws IOException;
 
     void updateFileContents(String relPathStr, InputStream data, int length) throws IOException;
 
@@ -90,29 +97,66 @@ public class FileHttpResponder implements HttpResponder {
     }
   }
 
+  private void buildGetFileResponse(Request request, ResponseBuilder builder) throws IOException {
+    var size = fileController.getFileSize(request.uri.getPath());
+    // TODO: handle malformed ranges
+    var rangeHeader = request.headers.get("Range");
+    if (rangeHeader == null) {
+      // requested entire file, skip range handling
+      builder.withHeader("Content-Length", Long.toString(size));
+      builder.withBody(fileController.getFileContents(request.uri.getPath(),
+                                                      0,
+                                                      toIntExact(size)));
+    } else {
+      var matcher = Pattern.compile("bytes=(\\d*)-(\\d*)").matcher(rangeHeader);
+      if (!matcher.find() || matcher.groupCount() != 2) {
+        builder.withStatusCode(416);
+        return;
+      }
+
+      var range = Range.between(Integer.parseInt(matcher.group(1)),
+                                Integer.parseInt(matcher.group(2)));
+      var length = range.getMaximum() - range.getMinimum() + 1;
+      builder.withHeader("Content-Length", Integer.toString(length));
+      builder.withHeader("Content-Range",
+                         "bytes " + range.getMinimum() + "-" + range.getMaximum()
+                         + "/" + Long.toString(fileController.getFileSize(request.uri.getPath())));
+
+      // TODO: wrap w/ try/catch for index out of bounds and return invalid range
+      builder.withBody(fileController.getFileContents(request.uri.getPath(),
+                                                      range.getMinimum(),
+                                                      length));
+      builder.withStatusCode(206);
+    }
+  }
+
   // serve "read" requests (GET/HEAD) for files. returning body if GET request
   private Response buildReadFileResponse(Request request, ResponseBuilder builder) {
     var size = fileController.getFileSize(request.uri.getPath());
+
+    // set "default" status code of 200. logic below may override
+    builder.withStatusCode(200);
+
     // exit early w/ "empty file" response
     if (size == 0L) {
       // size can also be 0 for absent files. assuming caller has checked existence already
-      return builder.withStatusCode(200)
-                    .withHeader("Content-Length", "0")
+      return builder.withHeader("Content-Length", "0")
                     .build();
     }
 
     try {
-      builder.withStatusCode(200)
-             .withHeader("Content-Length",
-                         Long.toString(fileController.getFileSize(request.uri.getPath())));
+      var sizeStr = Long.toString(size);
+
+      if (request.method.equals(Method.GET)) {
+        buildGetFileResponse(request, builder);
+      } else {
+        builder.withHeader("Content-Length", sizeStr);
+        builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
+      }
 
       var mimeType = fileController.getFileMimeType(request.uri.getPath());
       if (mimeType != null) {
         builder.withHeader("Content-Type", mimeType);
-      }
-
-      if (request.method.equals(Method.GET)) {
-        builder.withBody(fileController.getFileContents(request.uri.getPath()));
       }
 
       return builder.build();
@@ -122,7 +166,7 @@ public class FileHttpResponder implements HttpResponder {
       // in the off chance this happens between the time we checked in getResponse & now, return 404
       return builder.withStatusCode(404).build();
     } catch (IOException e) {
-      logger.error("Unexpected IOException getting contents of file for {}",
+      logger.warn("Failed to get contents of file for {}",
                    StructuredArguments.kv("request", request));
       // Some other exception, wrap in 500
       return builder.withStatusCode(500).withReason(e.getMessage()).build();
@@ -137,7 +181,7 @@ public class FileHttpResponder implements HttpResponder {
     }
   }
 
-  private Response buildOptionsResponse(Request requet, ResponseBuilder builder) {
+  private Response buildOptionsResponse(Request request, ResponseBuilder builder) {
     return builder.withStatusCode(200)
                   .withHeader("Allow", allowedMethodsAsString)
                   .withHeader("Content-Length", "0")
