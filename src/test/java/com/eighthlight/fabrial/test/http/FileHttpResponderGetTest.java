@@ -7,6 +7,7 @@ import com.eighthlight.fabrial.http.request.RequestBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -117,6 +118,9 @@ public class FileHttpResponderGetTest {
             .build());
     assertThat(response.statusCode, is(500));
   }
+
+  @Test
+  void respondsToInvalidRangeWith416() {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
 
@@ -131,9 +135,10 @@ public class FileHttpResponderGetTest {
         new RequestBuilder()
             .withVersion(HttpVersion.ONE_ONE)
             .withMethod(Method.GET)
-            .withHeaders(Map.of("Range", "bytes=0-10"))
+            .withHeaders(Map.of("Range", "bytes=10-0"))
             .withUriString(child.name)
             .build());
-    assertThat(response.statusCode, is(500));
+    assertThat(response.statusCode, is(416));
+    assertThat(response.headers, hasEntry("Content-Range", "*/" + child.data.length));
   }
 }
