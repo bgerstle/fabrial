@@ -29,15 +29,14 @@ public class HttpRequestByteRange {
 
   private static final Pattern RANGE_PATTERN = Pattern.compile("([^=]+)=(\\d*)-(\\d*)$");
 
-  private static Optional<Integer> parseRangeComponent(String component,
-                                                       int fileSize) throws ParsingException {
-    if (component == null || component.isEmpty()) {
+  private static Optional<Integer> parseRangeComponent(String str, int max) throws ParsingException {
+    if (str == null || str.isEmpty()) {
       return Optional.empty();
     }
     try {
-      var parsedInt = Integer.parseInt(component);
-      if (parsedInt < 0 || parsedInt >= fileSize) {
-        throw new ParsingException("Out of bounds range component " + component);
+      var parsedInt = Integer.parseInt(str);
+      if (parsedInt < 0 || parsedInt >= max) {
+        throw new ParsingException("Out of bounds range component " + str);
       }
       return Optional.of(parsedInt);
     } catch (NumberFormatException e) {
@@ -82,7 +81,13 @@ public class HttpRequestByteRange {
     }
 
     var first = parseRangeComponent(matcher.group(2), fileSize);
-    var last = parseRangeComponent(matcher.group(3), fileSize);
+    var last =
+        // passing MAX to bypass fileSize checking
+        parseRangeComponent(matcher.group(3), Integer.MAX_VALUE)
+        // wrap to max index, see RFC 7233 section 2.1:
+        // "if the [suffix length] value is greater than or equal to the the length...the byte range
+        // is interpreted as the remainder of the representation"
+        .map(l -> Integer.min(l, fileSize - 1));
 
     if (first.isPresent() && last.isPresent()) {
       try {
