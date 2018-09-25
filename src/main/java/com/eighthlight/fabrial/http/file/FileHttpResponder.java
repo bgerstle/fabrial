@@ -3,12 +3,12 @@ package com.eighthlight.fabrial.http.file;
 import com.eighthlight.fabrial.http.HttpResponder;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.request.HttpRequestByteRange;
 import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import net.logstash.logback.argument.StructuredArguments;
-import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import static java.lang.Math.toIntExact;
 
@@ -97,39 +96,6 @@ public class FileHttpResponder implements HttpResponder {
     }
   }
 
-  private void buildGetFileResponse(Request request, ResponseBuilder builder) throws IOException {
-    var size = fileController.getFileSize(request.uri.getPath());
-    // TODO: handle malformed ranges
-    var rangeHeader = request.headers.get("Range");
-    if (rangeHeader == null) {
-      // requested entire file, skip range handling
-      builder.withHeader("Content-Length", Long.toString(size));
-      builder.withBody(fileController.getFileContents(request.uri.getPath(),
-                                                      0,
-                                                      toIntExact(size)));
-    } else {
-      var matcher = Pattern.compile("bytes=(\\d*)-(\\d*)").matcher(rangeHeader);
-      if (!matcher.find() || matcher.groupCount() != 2) {
-        builder.withStatusCode(416);
-        return;
-      }
-
-      var range = Range.between(Integer.parseInt(matcher.group(1)),
-                                Integer.parseInt(matcher.group(2)));
-      var length = range.getMaximum() - range.getMinimum() + 1;
-      builder.withHeader("Content-Length", Integer.toString(length));
-      builder.withHeader("Content-Range",
-                         "bytes " + range.getMinimum() + "-" + range.getMaximum()
-                         + "/" + Long.toString(fileController.getFileSize(request.uri.getPath())));
-
-      // TODO: wrap w/ try/catch for index out of bounds and return invalid range
-      builder.withBody(fileController.getFileContents(request.uri.getPath(),
-                                                      range.getMinimum(),
-                                                      length));
-      builder.withStatusCode(206);
-    }
-  }
-
   // serve "read" requests (GET/HEAD) for files. returning body if GET request
   private Response buildReadFileResponse(Request request, ResponseBuilder builder) {
     var size = fileController.getFileSize(request.uri.getPath());
@@ -147,11 +113,38 @@ public class FileHttpResponder implements HttpResponder {
     try {
       var sizeStr = Long.toString(size);
 
-      if (request.method.equals(Method.GET)) {
-        buildGetFileResponse(request, builder);
-      } else {
+      if (request.method.equals(Method.HEAD)) {
         builder.withHeader("Content-Length", sizeStr);
         builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
+      } else {
+        var sizeInt = toIntExact(size);
+        var rangeHeader = request.headers.get("Range");
+        if (rangeHeader == null) {
+          // requested entire file, skip range handling
+          builder.withHeader("Content-Length", Long.toString(size))
+                 .withBody(fileController.getFileContents(request.uri.getPath(),0, sizeInt));
+        } else {
+          HttpRequestByteRange range;
+          try {
+            range = HttpRequestByteRange.parseFromHeader(rangeHeader, sizeInt);
+          } catch (HttpRequestByteRange.ParsingException e) {
+            // return early with unsatisfiable range response
+            return builder.withStatusCode(416)
+                          .withHeader("Content-Range", "*/" + sizeInt)
+                          .withReason(e.getMessage())
+                          .build();
+          }
+
+          builder.withHeader("Content-Length", Integer.toString(range.length()));
+          builder.withHeader("Content-Range",
+                             range.toString() + "/" + sizeInt);
+
+          // TODO: wrap w/ try/catch for index out of bounds and return invalid range
+          builder.withBody(fileController.getFileContents(request.uri.getPath(),
+                                                          range.first,
+                                                          range.length()));
+          builder.withStatusCode(206);
+        }
       }
 
       var mimeType = fileController.getFileMimeType(request.uri.getPath());
