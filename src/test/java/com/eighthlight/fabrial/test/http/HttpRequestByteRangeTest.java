@@ -45,21 +45,9 @@ public class HttpRequestByteRangeTest {
   }
 
   @Test
-  void failsToParseLastIndexWhichExceedsSize() {
-    assertThrows(HttpRequestByteRange.ParsingException.class,
-                 () -> HttpRequestByteRange.parseFromHeader("bytes=0-2", 1));
-  }
-
-  @Test
   void failsToParseFirstIndexGreaterThanLastIndex() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
                  () -> HttpRequestByteRange.parseFromHeader("bytes=1-0", 1));
-  }
-
-  @Test
-  void failsToParseRangeLargerThanSize() {
-    assertThrows(HttpRequestByteRange.ParsingException.class,
-                 () -> HttpRequestByteRange.parseFromHeader("bytes=0-1", 1));
   }
 
   @Test
@@ -117,5 +105,13 @@ public class HttpRequestByteRangeTest {
   @Test
   void formatsFirstAndLastInRange() {
     assertThat(new HttpRequestByteRange(0, 1).toString(), is("bytes 0-1"));
+  }
+
+  @Test
+  void wrapsRangesToFileLength() throws HttpRequestByteRange.ParsingException {
+    var range = HttpRequestByteRange.parseFromHeader("bytes=0-5", 2);
+    assertThat(range.first, is(0));
+    assertThat(range.last, is(1));
+    assertThat(range.length(), is(2));
   }
 }
