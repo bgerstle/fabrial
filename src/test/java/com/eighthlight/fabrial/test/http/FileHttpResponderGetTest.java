@@ -92,7 +92,31 @@ public class FileHttpResponderGetTest {
   }
 
   @Test
-  void responds500ReadError() throws IOException {
+  void sends500ResponseOnReadError() throws IOException {
+    var mockFC = new MockFileController() {
+      @Override
+      public InputStream getFileContents(String relPathStr, int offset, int length) throws IOException {
+        throw new IOException("test");
+      }
+    };
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    // file must have data, otherwise we'll either get a 200 for an empty file response
+    var child = new MockFile("bar");
+    mockFC.root.children.add(child);
+    child.data = "foo".getBytes();
+    child.type = "text/plain";
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.GET)
+            .withUriString(child.name)
+            .build());
+    assertThat(response.statusCode, is(500));
+  }
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
 
