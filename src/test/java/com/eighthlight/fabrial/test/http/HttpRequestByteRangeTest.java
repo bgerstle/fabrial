@@ -7,7 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class HttypRequestByteRangeTest {
+public class HttpRequestByteRangeTest {
   @Test
   void failsToParseEmptyString() {
     assertThrows(HttpRequestByteRange.ParsingException.class,
@@ -79,10 +79,18 @@ public class HttypRequestByteRangeTest {
   }
 
   @Test
-  void parsesRangeWithoutStart() throws HttpRequestByteRange.ParsingException {
-    var range = HttpRequestByteRange.parseFromHeader("bytes=-1", 5);
+  void parsesRangeWithoutFirstIndex() throws HttpRequestByteRange.ParsingException {
+    var range = HttpRequestByteRange.parseFromHeader("bytes=-2", 5);
     assertThat(range.first, is(3));
     assertThat(range.last, is(4));
-    assertThat(range.length(), is(1));
+    assertThat(range.length(), is(2));
+  }
+
+  @Test
+  void parsesRangeWithoutLastIndex() throws HttpRequestByteRange.ParsingException {
+    var range = HttpRequestByteRange.parseFromHeader("bytes=2-", 5);
+    assertThat(range.first, is(2));
+    assertThat(range.last, is(4));
+    assertThat(range.length(), is(3));
   }
 }

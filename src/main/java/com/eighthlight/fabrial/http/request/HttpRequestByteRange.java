@@ -1,11 +1,14 @@
 package com.eighthlight.fabrial.http.request;
 
-import com.eighthlight.fabrial.utils.Result;
-
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+/**
+ * Value representing the first & last bytes of an HTTP range request.
+ *
+ * All ranges are inclusive.
+ */
 public class HttpRequestByteRange {
   public final int first;
   public final int last;
@@ -26,9 +29,48 @@ public class HttpRequestByteRange {
 
   private static final Pattern RANGE_PATTERN = Pattern.compile("([^=]+)=(\\d*)-(\\d*)");
 
-  public static HttpRequestByteRange parseFromHeader(
-      String headerValue,
-      int fileSize) throws ParsingException {
+  private static Optional<Integer> parseRangeComponent(String component,
+                                                       int fileSize) throws ParsingException {
+    if (component == null || component.isEmpty()) {
+      return Optional.empty();
+    }
+    try {
+      var parsedInt = Integer.parseInt(component);
+      if (parsedInt < 0 || parsedInt >= fileSize) {
+        throw new ParsingException("Out of bounds range component " + component);
+      }
+      return Optional.of(parsedInt);
+    } catch (NumberFormatException e) {
+      throw new ParsingException(e);
+    }
+  }
+
+  /**
+   * Parse a byte range header field, as specified in HTTP/1.1 Range Requests RFC 7233:
+   *
+   *     byte-ranges-specifier = bytes-unit "=" byte-range-set
+   *     byte-range-set  = 1#( byte-range-spec / suffix-byte-range-spec )
+   *     byte-range-spec = first-byte-pos "-" [ last-byte-pos ]
+   *     first-byte-pos  = 1*DIGIT
+   *     last-byte-pos   = 1*DIGIT
+   *
+   * Which describes ranges such as "bytes=N-M" or "bytes=N-", that can be interpreted as
+   * "bytes N through M" and "all bytes after N" respectively. There's also a "suffix" spec:
+   *
+   *     suffix-byte-range-spec = "-" suffix-length
+   *     suffix-length = 1*DIGIT
+   *
+   * An example being: "bytes=-5", interpreted as "the last five bytes of the file".
+   * @param headerValue The value of the "Range" header field of an HTTP request.
+   * @param fileSize    The size of the file targeted by the request. Used for bounds checking.
+   * @return A range object initialized with first & last values, including any computations
+   *         necessary to calculate effective first & last for partially-specified ranges
+   *         (e.g. "5-" or "-10").
+   * @throws ParsingException If the range is malformed in any way or the first/last positions are
+   *                          out of bounds.
+   */
+  public static HttpRequestByteRange parseFromHeader(String headerValue,
+                                                     int fileSize) throws ParsingException {
     var matcher = RANGE_PATTERN.matcher(headerValue);
     if (!matcher.find()) {
       throw new ParsingException("Failed to match range components. Expected 'bytes=first?-last?'");
@@ -39,25 +81,24 @@ public class HttpRequestByteRange {
       throw new ParsingException("Unacceptable range request unit: " + unit);
     }
 
-    var first = Result.<String, NumberFormatException>of(
-        Optional
-            .ofNullable(matcher.group(2))
-            .flatMap(s -> s.isEmpty() ? Optional.empty() : Optional.of(s))
-            .orElse("0")
-    ).flatMapAttempt(Integer::parseInt)
-     .flatMap(i -> i < 0 || i > fileSize - 1 ? Result.failure(new ParsingException("Out of bounds first position")) : Result.success(i))
-     .orElseThrow();
+    var first = parseRangeComponent(matcher.group(2), fileSize);
+    var last = parseRangeComponent(matcher.group(3), fileSize);
 
-    var last = Result.<String, NumberFormatException>of(
-        Optional
-            .ofNullable(matcher.group(3))
-            .flatMap(s -> s.isEmpty() ? Optional.empty() : Optional.of(s))
-            .orElse(Integer.toString(fileSize - 1))
-    ).flatMapAttempt(Integer::parseInt)
-     .flatMap(i -> i < 0 || i > fileSize - 1 ? Result.failure(new ParsingException("Out of bounds last position")) : Result.success(i))
-     .orElseThrow();
-
-    return new HttpRequestByteRange(first, last);
+    if (first.isPresent() && last.isPresent()) {
+      if (first.get() > last.get()) {
+        throw new ParsingException("Last index of range must be greater than the first.");
+      }
+      // return range w/ desired first & last positions (e.g. "0-5")
+      return new HttpRequestByteRange(first.get(), last.get());
+    } else if (first.isPresent()) {
+      // return range from desired first position to end of file (e.g. "5-")
+      return new HttpRequestByteRange(first.get(), fileSize - 1);
+    } else if (last.isPresent()) {
+      // return range for the desired trailing bytes of a file (e.g. "-5")
+      return new HttpRequestByteRange(fileSize - last.get(), fileSize - 1);
+    } else {
+      throw new ParsingException("Ranges must have at least one component: X-Y, X-, or -Y.");
+    }
   }
 
   public HttpRequestByteRange(int first, int last) {
@@ -65,6 +106,9 @@ public class HttpRequestByteRange {
     this.last = last;
   }
 
+  /**
+   * @return The number of bytes contained in the range.
+   */
   public int length() {
     return last - first + 1;
   }
