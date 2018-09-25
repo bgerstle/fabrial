@@ -174,44 +174,59 @@ public class AppAcceptanceTest {
         var fileFixture2 = new TempFileFixture(baseDirFixture.tempDirPath);
         var childDirFixture = new TempDirectoryFixture(baseDirFixture.tempDirPath);
         var appFixture = new AppProcessFixture(testPort, baseDirFixture.tempDirPath.toString())) {
-      Files
-          .find(baseDirFixture.tempDirPath,
-                1,
-                (p, attrs) -> attrs.isDirectory())
-          .forEach((path) -> {
-            var response = Result.attempt(() -> {
-              return sendRequest(new RequestBuilder()
-                                     .withVersion(HttpVersion.ONE_ONE)
-                                     .withMethod(Method.GET)
-                                     .withUriString("/")
-                                     .build(),
-                                 testPort);
-            }).orElseAssert();
+      var response = Result.attempt(() -> {
+        return sendRequest(new RequestBuilder()
+                               .withVersion(HttpVersion.ONE_ONE)
+                               .withMethod(Method.GET)
+                               .withUriString("/")
+                               .build(),
+                           testPort);
+      }).orElseAssert();
 
-            assertThat(response.get(0),
-                       startsWith("HTTP/1.1 200 "));
-            var headers = response.subList(1,3);
-            var dirListing =
-                List.of(fileFixture1.tempFilePath,
-                        fileFixture2.tempFilePath,
-                        childDirFixture.tempDirPath)
-                    .stream()
-                    .sorted()
-                    .map(p -> {
-                      var filename = p.getFileName().toString();
-                      return "<a href=\"" + filename + "\">" + filename + "</a>";
-                    })
-                    .map(s -> "<li>" + s + "</li>")
-                    .collect(Collectors.joining("\n"));
-            var expectedBody = String.join("\n", "<ul>", dirListing, "</ul>");
-            var body = String.join("\n", response.subList(4, response.size()));
-            assertThat(body, equalTo(expectedBody));
-            var expectedLength = expectedBody.getBytes(StandardCharsets.UTF_8).length;
-            assertThat(headers,
-                       containsInAnyOrder(
-                           "Content-Length: " + expectedLength,
-                           "Content-Type: text/html"));
-          });
+      assertThat(response.get(0),
+                 startsWith("HTTP/1.1 200 "));
+      var headers = response.subList(1,3);
+      var dirListing =
+          List.of(fileFixture1.tempFilePath,
+                  fileFixture2.tempFilePath,
+                  childDirFixture.tempDirPath)
+              .stream()
+              .sorted()
+              .map(p -> {
+                var filename = p.getFileName().toString();
+                return "<a href=\"" + filename + "\">" + filename + "</a>";
+              })
+              .map(s -> "<li>" + s + "</li>")
+              .collect(Collectors.joining("\n"));
+      var expectedBody = String.join("\n", "<ul>", dirListing, "</ul>");
+      var body = String.join("\n", response.subList(4, response.size()));
+      assertThat(body, equalTo(expectedBody));
+      var expectedLength = expectedBody.getBytes(StandardCharsets.UTF_8).length;
+      assertThat(headers,
+                 containsInAnyOrder(
+                     "Content-Length: " + expectedLength,
+                     "Content-Type: text/html"));
+    }
+  }
+
+  @Test
+  void getEmptyDirContents() throws IOException {
+    int testPort = 8082;
+    try (var baseDirFixture = new TempDirectoryFixture();
+        var appFixture = new AppProcessFixture(testPort, baseDirFixture.tempDirPath.toString())) {
+      var response = Result.attempt(() -> {
+        return sendRequest(new RequestBuilder()
+                               .withVersion(HttpVersion.ONE_ONE)
+                               .withMethod(Method.GET)
+                               .withUriString("/")
+                               .build(),
+                           testPort);
+      }).orElseAssert();
+
+      assertThat(response.get(0),
+                 startsWith("HTTP/1.1 200 "));
+      var headers = response.subList(1,3);
+      assertThat(response.get(1), is("Content-Length: 0"));
     }
   }
 
