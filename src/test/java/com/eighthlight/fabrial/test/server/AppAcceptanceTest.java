@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -168,38 +169,48 @@ public class AppAcceptanceTest {
   @Test
   void getDirContents() throws IOException {
     int testPort = 8082;
-    try (var tempDirectoryFixture = new TempDirectoryFixture();
-        var tmpFileFixture1 = new TempFileFixture(tempDirectoryFixture.tempDirPath);
-        var tmpFileFixture2 = new TempFileFixture(tempDirectoryFixture.tempDirPath);
-        var appFixture = new AppProcessFixture(testPort, tempDirectoryFixture.tempDirPath.toString())) {
+    try (var baseDirFixture = new TempDirectoryFixture();
+        var fileFixture1 = new TempFileFixture(baseDirFixture.tempDirPath);
+        var fileFixture2 = new TempFileFixture(baseDirFixture.tempDirPath);
+        var childDirFixture = new TempDirectoryFixture(baseDirFixture.tempDirPath);
+        var appFixture = new AppProcessFixture(testPort, baseDirFixture.tempDirPath.toString())) {
       Files
-          .find(tempDirectoryFixture.tempDirPath,
+          .find(baseDirFixture.tempDirPath,
                 1,
                 (p, attrs) -> attrs.isDirectory())
           .forEach((path) -> {
-            var response = responseToRequestForFileInDir(Method.GET,
-                                                         tempDirectoryFixture.tempDirPath,
-                                                         path,
-                                                         testPort);
+            var response = Result.attempt(() -> {
+              return sendRequest(new RequestBuilder()
+                                     .withVersion(HttpVersion.ONE_ONE)
+                                     .withMethod(Method.GET)
+                                     .withUriString("/")
+                                     .build(),
+                                 testPort);
+            }).orElseAssert();
+
             assertThat(response.get(0),
                        startsWith("HTTP/1.1 200 "));
             var headers = response.subList(1,3);
-            var expectedBody =
-                List.of(tmpFileFixture1, tmpFileFixture2)
+            var dirListing =
+                List.of(fileFixture1.tempFilePath,
+                        fileFixture2.tempFilePath,
+                        childDirFixture.tempDirPath)
                     .stream()
-                    .map(t -> t.tempFilePath)
-                    .map(Path::getFileName)
-                    .map(Path::toString)
                     .sorted()
-                    .reduce((p1, p2) -> p1 + "," + p2)
-                    .get();
+                    .map(p -> {
+                      var filename = p.getFileName().toString();
+                      return "<a href=\"" + filename + "\">" + filename + "</a>";
+                    })
+                    .map(s -> "<li>" + s + "</li>")
+                    .collect(Collectors.joining("\n"));
+            var expectedBody = String.join("\n", "<ul>", dirListing, "</ul>");
+            var body = String.join("\n", response.subList(4, response.size()));
+            assertThat(body, equalTo(expectedBody));
             var expectedLength = expectedBody.getBytes(StandardCharsets.UTF_8).length;
             assertThat(headers,
                        containsInAnyOrder(
                            "Content-Length: " + expectedLength,
-                           "Content-Type: text/plain; charset=utf-8"));
-            var body = response.get(4);
-            assertThat(body, equalTo(expectedBody));
+                           "Content-Type: text/html"));
           });
     }
   }
