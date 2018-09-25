@@ -107,4 +107,9 @@ public class HttpRequestByteRangeTest {
       new HttpRequestByteRange(1, 0);
     });
   }
+
+  @Test
+  void formatsFirstAndLastInRange() {
+    assertThat(new HttpRequestByteRange(0, 1).toString(), is("bytes 0-1"));
+  }
 }
