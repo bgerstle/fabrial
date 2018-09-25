@@ -131,6 +131,7 @@ public class FileHttpResponder implements HttpResponder {
             // return early with unsatisfiable range response
             return builder.withStatusCode(416)
                           .withHeader("Content-Range", "*/" + sizeInt)
+                          .withReason(e.getMessage())
                           .build();
           }
 

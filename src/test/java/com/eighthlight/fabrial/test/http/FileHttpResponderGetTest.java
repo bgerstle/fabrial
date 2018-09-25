@@ -140,6 +140,7 @@ public class FileHttpResponderGetTest {
             .withUriString(child.name)
             .build());
     assertThat(response.statusCode, is(416));
+    assertThat(response.reason, is("Out of bounds range component 10"));
     assertThat(response.headers, hasEntry("Content-Range", "*/" + child.data.length));
   }
 }
