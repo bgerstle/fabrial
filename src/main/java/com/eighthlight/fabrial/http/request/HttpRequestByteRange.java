@@ -85,7 +85,7 @@ public class HttpRequestByteRange {
         // passing MAX to bypass fileSize checking
         parseRangeComponent(matcher.group(3), Integer.MAX_VALUE)
         // wrap to max index, see RFC 7233 section 2.1:
-        // "if the [suffix length] value is greater than or equal to the the length...the byte range
+        // "if the [suffix length] value is greater than or equal to the length...the byte range
         // is interpreted as the remainder of the representation"
         .map(l -> Integer.min(l, fileSize - 1));
 
