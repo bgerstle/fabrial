@@ -161,7 +161,7 @@ public class FileHttpResponder implements HttpResponder {
       return builder.withStatusCode(404).build();
     } catch (IOException e) {
       logger.warn("Failed to get contents of file for {}",
-                   StructuredArguments.kv("request", request));
+                  StructuredArguments.kv("request", request));
       // Some other exception, wrap in 500
       return builder.withStatusCode(500).withReason(e.getMessage()).build();
     }
@@ -188,6 +188,9 @@ public class FileHttpResponder implements HttpResponder {
                       .stream()
                       .sorted()
                       .map(p -> {
+                        // would be nice to append "/" to directories
+                        // dir items must not contain leading slash
+                        // or the <base> element won't work
                         return "<a href=\"" + p + "\">" + p + "</a>";
                       })
                       .map(s -> "<li>" + s + "</li>")
@@ -199,7 +202,24 @@ public class FileHttpResponder implements HttpResponder {
                     .build();
     }
 
-    var contents = String.join("\n", "<ul>", list, "</ul>");
+    var body = String.join("\n", "<ul>", list, "</ul>");
+    var basePathBuilder = new StringBuilder(request.uri.toString());
+    if (basePathBuilder.charAt(0) != '/') {
+      basePathBuilder.insert('/', 0);
+    }
+    if (basePathBuilder.charAt(basePathBuilder.length() - 1) != '/') {
+      basePathBuilder.append('/');
+    }
+    var basePath = basePathBuilder.toString();
+    var contents =
+        String.join(
+            "\n",
+            "<head>",
+            "<base target=_self href=\"" + basePath + "\"/>",
+            "</head>",
+            "<body>",
+            body,
+            "</body>");
     var charset = StandardCharsets.UTF_8;
     var contentBytes = contents.getBytes(charset);
     return builder.withStatusCode(200)
