@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
@@ -59,7 +60,7 @@ public class HttpRequestLineParsingTests {
         .checkAssert((m, u, v) -> {
           Object req;
           try {
-            req = new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest();
+            req = new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest().get();
           } catch (RequestParsingException e) {
             req = e;
           }
@@ -85,7 +86,7 @@ public class HttpRequestLineParsingTests {
               );
 
           assertThrows(RequestParsingException.class, () -> {
-            new RequestReader(is).readRequest();
+            new RequestReader(is).readRequest().get();
           });
         });
   }
@@ -95,7 +96,7 @@ public class HttpRequestLineParsingTests {
     qt().forAll(invalidMethods(), invalidUris(), httpVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(RequestParsingException.class, () -> {
-            new RequestReader(requestLineFromComponents(m, u, v)).readRequest();
+            new RequestReader(requestLineFromComponents(m, u, v)).readRequest().get();
           });
         });
   }
@@ -105,7 +106,7 @@ public class HttpRequestLineParsingTests {
     qt().forAll(methods(), requestTargets(), invalidVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(RequestParsingException.class, () -> {
-            new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest();
+            new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest().get();
           });
         });
   }
@@ -119,16 +120,22 @@ public class HttpRequestLineParsingTests {
           ("GET " + uri.toString() + " HTTP/" + version + " " + CRLF
         ).getBytes(StandardCharsets.UTF_8));
 
-    assertThat(new RequestReader(is).readRequest(),
+    assertThat(new RequestReader(is).readRequest().get(),
                equalTo(new RequestBuilder().withVersion(version).withMethod(Method.GET).withUri(uri).build()));
   }
 
 
   @Test
-  void leadingWhitespaceCausesError() throws Exception{
+  void leadingWhitespaceCausesError() throws Exception {
     InputStream is = new ByteArrayInputStream((" GET / HTTP/1.1" + CRLF).getBytes(StandardCharsets.UTF_8));
     assertThrows(RequestParsingException.class, () -> {
-      new RequestReader(is).readRequest();
+      new RequestReader(is).readRequest().get();
     });
+  }
+
+  @Test
+  void emptyStringTest() throws Exception {
+    assertThat(new RequestReader(new ByteArrayInputStream(new byte[0])).readRequest().get(),
+               equalTo(Optional.empty()));
   }
 }

@@ -88,6 +88,10 @@ public class Result<V, E extends Throwable> {
     return Optional.ofNullable(value).orElseThrow(() -> error);
   }
 
+  public <R extends E> V orElseThrow(Function<E, R> exceptionMapper) throws R {
+    return Optional.ofNullable(value).orElseThrow(() -> exceptionMapper.apply(error));
+  }
+
   public V orElseAssert() {
     return Optional.ofNullable(value).orElseThrow(() -> new AssertionError(error));
   }

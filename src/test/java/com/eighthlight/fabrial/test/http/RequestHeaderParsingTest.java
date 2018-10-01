@@ -34,7 +34,7 @@ public class RequestHeaderParsingTest {
               HttpHeaderReaderTest.headerLineFromComponents(request.headers, "","");
           var requestMessage = requestLine + headerLines;
           var requestReader = new RequestReader(new ByteArrayInputStream(requestMessage.getBytes()));
-          assertThat(Result.attempt(requestReader::readRequest).orElseAssert(),
+          assertThat(Result.attempt(requestReader::readRequest).orElseAssert().get(),
                      equalTo(request));
         });
   }

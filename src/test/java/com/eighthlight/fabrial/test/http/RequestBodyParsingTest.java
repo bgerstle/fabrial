@@ -38,7 +38,7 @@ public class RequestBodyParsingTest {
         .withBody(new ByteArrayInputStream(new byte[0]))
         .build();
     var requestReader = readerWithBytesFrom(request);
-    var parsedRequest = requestReader.readRequest();
+    var parsedRequest = requestReader.readRequest().get();
 
     assertThat(parsedRequest, equalTo(request));
     assertThat(parsedRequest.body.readAllBytes(), is(new byte[0]));
@@ -56,7 +56,7 @@ public class RequestBodyParsingTest {
         .withBody(new ByteArrayInputStream(bodyData))
         .build();
     var requestReader = readerWithBytesFrom(request);
-    var parsedRequest = requestReader.readRequest();
+    var parsedRequest = requestReader.readRequest().get();
 
     assertThat(parsedRequest, equalTo(request));
     assertThat(parsedRequest.body, notNullValue());
@@ -83,7 +83,7 @@ public class RequestBodyParsingTest {
               .build();
 
           var requestReader = readerWithBytesFrom(request);
-          var parsedRequest = Result.attempt(requestReader::readRequest).orElseAssert();
+          var parsedRequest = Result.attempt(requestReader::readRequest).orElseAssert().get();
 
           assertThat(parsedRequest, equalTo(request));
           assertThat(parsedRequest.body, notNullValue());

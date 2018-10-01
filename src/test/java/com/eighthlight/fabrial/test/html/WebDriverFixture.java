@@ -2,7 +2,6 @@ package com.eighthlight.fabrial.test.html;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 
 public class WebDriverFixture implements AutoCloseable {
   public final WebDriver driver;
