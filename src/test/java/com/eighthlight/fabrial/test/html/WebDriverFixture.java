@@ -8,9 +8,7 @@ public class WebDriverFixture implements AutoCloseable {
   public final WebDriver driver;
 
   public static WebDriverFixture chrome() {
-    var opts = new ChromeOptions();
-    opts.addArguments("--headless", "--disable-gpu");
-    return new WebDriverFixture(new ChromeDriver(opts));
+    return new WebDriverFixture(new ChromeDriver());
   }
 
   public WebDriverFixture(WebDriver driver) {
