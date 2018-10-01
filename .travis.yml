@@ -1,6 +1,6 @@
 language: java
 install: true
-sudo: false
+sudo: true
 addons:
   apt:
     packages:
