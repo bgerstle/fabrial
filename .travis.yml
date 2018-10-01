@@ -14,4 +14,5 @@ jdk:
   - oraclejdk10
 script:
   - ./gradlew check -i
+  - sudo apt-get install chromium-chromedriver
   - ./gradlew clean testAcceptance -i
