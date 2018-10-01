@@ -35,7 +35,7 @@ public class GetDirContentsAcceptanceTest {
       serverFixture.server.start();
       driverFixture.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
       var page = new FileServerPage(driverFixture.driver,
-                                    "localhost:" + ServerConfig.DEFAULT_PORT);
+                                    "http://localhost:" + ServerConfig.DEFAULT_PORT);
 
       assertThat(
           page.goToPageForDirectory("/")
@@ -58,7 +58,7 @@ public class GetDirContentsAcceptanceTest {
       serverFixture.server.start();
       driverFixture.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
       var page = new FileServerPage(driverFixture.driver,
-                                    "localhost:" + ServerConfig.DEFAULT_PORT);
+                                    "http://localhost:" + ServerConfig.DEFAULT_PORT);
 
       var rootFiles = page.goToPageForDirectory("/").fileList();
 
@@ -97,7 +97,7 @@ public class GetDirContentsAcceptanceTest {
       serverFixture.server.start();
       driverFixture.driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
       var page = new FileServerPage(driverFixture.driver,
-                                    "localhost:" + ServerConfig.DEFAULT_PORT);
+                                    "http://localhost:" + ServerConfig.DEFAULT_PORT);
 
       assertThat(
           page.goToPageForDirectory("/")
