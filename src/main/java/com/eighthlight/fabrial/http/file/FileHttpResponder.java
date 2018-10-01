@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -187,13 +188,13 @@ public class FileHttpResponder implements HttpResponder {
         fileController.getDirectoryContents(request.uri.getPath())
                       .stream()
                       .sorted()
-                      .map(p -> {
-                        // would be nice to append "/" to directories
-                        // dir items must not contain leading slash
-                        // or the <base> element won't work
-                        return "<a href=\"" + p + "\">" + p + "</a>";
+                      .map(filename ->  {
+                        var absPath = Paths.get("/",
+                                                request.uri.getPath(),
+                                                filename)
+                                           .toString();
+                        return "<li><a href=\"" + absPath + "\">" + filename + "</a></li>";
                       })
-                      .map(s -> "<li>" + s + "</li>")
                       .collect(Collectors.joining("\n"));
 
     if (list.isEmpty()) {
@@ -203,25 +204,9 @@ public class FileHttpResponder implements HttpResponder {
     }
 
     var body = String.join("\n", "<ul>", list, "</ul>");
-    var basePathBuilder = new StringBuilder(request.uri.toString());
-    if (basePathBuilder.charAt(0) != '/') {
-      basePathBuilder.insert('/', 0);
-    }
-    if (basePathBuilder.charAt(basePathBuilder.length() - 1) != '/') {
-      basePathBuilder.append('/');
-    }
-    var basePath = basePathBuilder.toString();
-    var contents =
-        String.join(
-            "\n",
-            "<head>",
-            "<base target=_self href=\"" + basePath + "\"/>",
-            "</head>",
-            "<body>",
-            body,
-            "</body>");
+
     var charset = StandardCharsets.UTF_8;
-    var contentBytes = contents.getBytes(charset);
+    var contentBytes = body.getBytes(charset);
     return builder.withStatusCode(200)
                   .withHeader("Content-Length", Integer.toString(contentBytes.length))
                   .withHeader("Content-Type", "text/html")
