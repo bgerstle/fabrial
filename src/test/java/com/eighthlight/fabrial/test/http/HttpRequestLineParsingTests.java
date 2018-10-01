@@ -135,7 +135,7 @@ public class HttpRequestLineParsingTests {
 
   @Test
   void emptyStringTest() throws Exception {
-    assertThat(new RequestReader(new ByteArrayInputStream(new byte[0])).readRequest().get(),
+    assertThat(new RequestReader(new ByteArrayInputStream(new byte[0])).readRequest(),
                equalTo(Optional.empty()));
   }
 }
