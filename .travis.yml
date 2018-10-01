@@ -15,4 +15,4 @@ jdk:
 script:
   - ./gradlew check -i
   - sudo apt-get install chromium-chromedriver
-  - ./gradlew clean testAcceptance -i
+  - CHROMEDRIVER=/usr/lib/chromium-browser/chromedriver ./gradlew testAcceptance -i

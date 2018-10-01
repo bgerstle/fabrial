@@ -76,11 +76,15 @@ task testAcceptance(dependsOn: 'jar', type: Test) {
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
 
-
-
     useJUnitPlatform {
         includeTags 'acceptance'
         includeEngines 'junit-jupiter'
     }
+
+    systemProperties([
+        "webdriver.chrome.driver": System.getenv("CHROMEDRIVER") ?: "/usr/local/bin/chromedriver"
+    ])
+
+    outputs.upToDateWhen { false }
 }
 testAcceptance.dependsOn tasks.fatJar
