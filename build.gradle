@@ -82,6 +82,5 @@ task testAcceptance(dependsOn: 'jar', type: Test) {
         includeTags 'acceptance'
         includeEngines 'junit-jupiter'
     }
-    systemProperty "webdriver.chrome.driver", "chromedriver"
 }
 testAcceptance.dependsOn tasks.fatJar
