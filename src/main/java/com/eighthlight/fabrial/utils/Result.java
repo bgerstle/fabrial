@@ -49,10 +49,13 @@ public class Result<V, E extends Throwable> {
     try {
       return Result.success(p.get());
     } catch (Throwable e) {
-      return Result.failure((E)e);
+      @SuppressWarnings("unchecked")
+      E err = (E)e;
+      return Result.failure(err);
     }
   }
 
+  @SuppressWarnings("unchecked")
   public static <V, E extends Throwable> Result<V, E> of(Object o) {
     if (o instanceof Throwable) {
       return Result.failure((E)o);
@@ -74,11 +77,14 @@ public class Result<V, E extends Throwable> {
         .orElseGet(() -> Result.failure(Objects.requireNonNull(error)));
   }
 
+
   public <T> Result<T, E> flatMap(Function<? super V, ? extends Result<? extends T, ? super E>> mapper) {
     return getValue()
-        .map((v) ->
-          Objects.requireNonNull((Result<T, E>) mapper.apply(v))
-        )
+        .map((v) -> {
+          @SuppressWarnings("unchecked")
+          var r = (Result<T, E>) mapper.apply(v);
+          return Objects.requireNonNull(r);
+        })
         .orElseGet(() ->
                        Result.failure(Objects.requireNonNull(error))
         );
@@ -86,10 +92,6 @@ public class Result<V, E extends Throwable> {
 
   public V orElseThrow() throws E {
     return Optional.ofNullable(value).orElseThrow(() -> error);
-  }
-
-  public <R extends E> V orElseThrow(Function<E, R> exceptionMapper) throws R {
-    return Optional.ofNullable(value).orElseThrow(() -> exceptionMapper.apply(error));
   }
 
   public V orElseAssert() {
