@@ -166,40 +166,6 @@ public class AppAcceptanceTest {
   }
 
   @Test
-  void getDirContents() throws IOException {
-    int testPort = 8082;
-    try (var baseDirFixture = new TempDirectoryFixture();
-        var fileFixture1 = new TempFileFixture(baseDirFixture.tempDirPath);
-        var fileFixture2 = new TempFileFixture(baseDirFixture.tempDirPath);
-        var childDirFixture = new TempDirectoryFixture(baseDirFixture.tempDirPath);
-        var appFixture = new AppProcessFixture(testPort, baseDirFixture.tempDirPath.toString())) {
-      var response = Result.attempt(() -> {
-        return sendRequest(new RequestBuilder()
-                               .withVersion(HttpVersion.ONE_ONE)
-                               .withMethod(Method.GET)
-                               .withUriString("/")
-                               .build(),
-                           testPort);
-      }).orElseAssert();
-
-      assertThat(response.get(0),
-                 startsWith("HTTP/1.1 200 "));
-      var headers = response.subList(1,3);
-      var body = String.join("\n", response.subList(4, response.size()));
-      assertThat(body, allOf(
-          containsString(childDirFixture.tempDirPath.getFileName().toString()),
-          containsString(fileFixture1.tempFilePath.getFileName().toString()),
-          containsString(fileFixture2.tempFilePath.getFileName().toString())
-      ));
-      var expectedLength = body.getBytes(StandardCharsets.UTF_8).length;
-      assertThat(headers,
-                 containsInAnyOrder(
-                     "Content-Length: " + expectedLength,
-                     "Content-Type: text/html"));
-    }
-  }
-
-  @Test
   void getEmptyDirContents() throws IOException {
     int testPort = 8082;
     try (var baseDirFixture = new TempDirectoryFixture();

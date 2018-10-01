@@ -37,6 +37,7 @@ dependencies {
     testCompile('org.quicktheories:quicktheories:0.25')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.0')
     testCompile group: 'commons-io', name: 'commons-io', version: '2.6'
+    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '2.41.0'
 }
 
 test {
@@ -81,5 +82,6 @@ task testAcceptance(dependsOn: 'jar', type: Test) {
         includeTags 'acceptance'
         includeEngines 'junit-jupiter'
     }
+    systemProperty "webdriver.chrome.driver", "chromedriver"
 }
 testAcceptance.dependsOn tasks.fatJar
