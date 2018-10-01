@@ -10,9 +10,6 @@ public class WebDriverFixture implements AutoCloseable {
   public static WebDriverFixture chrome() {
     var opts = new ChromeOptions();
     opts.addArguments("--no-sandbox", "--disable-dev-shm-usage");
-    if (System.getenv("CI") != null) {
-      opts.addArguments("--headless");
-    }
     return new WebDriverFixture(new ChromeDriver(opts));
   }
 
