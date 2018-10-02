@@ -21,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpServer implements Closeable {
-  // TODO: make logger instance-specific, prefixing logs w/ config & object info
   private static final Logger logger = LoggerFactory.getLogger(TcpServer.class);
 
   public final ServerConfig config;
@@ -102,8 +101,8 @@ public class TcpServer implements Closeable {
 
   // Handle new client connections
   private void handleConnection(Socket connection) {
-    try (MDC.MDCCloseable cra = MDC.putCloseable("connectionId",
-                                                 Integer.toHexString(connection.hashCode()))) {
+    var connectionId = Integer.toHexString(connection.hashCode());
+    try (MDC.MDCCloseable cra = MDC.putCloseable("connectionId", connectionId)) {
       logger.trace("Accepted connection");
 
       this.connectionCount.incrementAndGet();
@@ -125,10 +124,7 @@ public class TcpServer implements Closeable {
         connection.close();
         logger.trace("Closed connection");
       } catch (IOException e) {
-        logger.error("Connection to "
-                     + connection.getRemoteSocketAddress()
-                     + " encountered exception while closing",
-                     e);
+        logger.error("Connection encountered exception while closing", e);
       }
 
       this.connectionCount.decrementAndGet();
