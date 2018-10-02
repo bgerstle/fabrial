@@ -3,9 +3,12 @@ package com.eighthlight.fabrial.test.http;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import org.junit.jupiter.api.Test;
+import org.quicktheories.api.Tuple4;
 import org.quicktheories.core.Gen;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -27,17 +30,53 @@ public class HttpResponseTesting {
     return nonAsciiStrings();
   }
 
+  static Gen<Tuple4<Integer, String, Optional<String>, Optional<Map<String, String>>>>
+  responseFields() {
+    return statusCodes()
+        .zip(httpVersions(),
+             responseReasons(32).toOptionals(30),
+             headers().toOptionals(30),
+             Tuple4::of);
+  }
 
   @Test
   void constructsWithValidInput() {
+    qt().forAll(responseFields())
+        .checkAssert((fields) -> {
+          var builder = new ResponseBuilder().withStatusCode(fields._1)
+                                             .withVersion(fields._2);
+          fields._3.ifPresent(builder::withReason);
+          fields._4.ifPresent(builder::withHeaders);
+          Response resp = builder.build();
+          assertThat(resp.statusCode, equalTo(fields._1));
+          assertThat(resp.version, equalTo(fields._2));
+          assertThat(resp.reason, equalTo(fields._3.orElse(null)));
+          assertThat(resp.headers, equalTo(fields._4.orElse(Map.of())));
+        });
+  }
+
+  @Test
+  void responseEquality() {
+    qt().forAll(responseFields())
+        .checkAssert((fields) -> {
+          var builder = new ResponseBuilder().withStatusCode(fields._1)
+                                             .withVersion(fields._2);
+          fields._3.ifPresent(builder::withReason);
+          fields._4.ifPresent(builder::withHeaders);
+          var r1 = builder.build();
+          var r2 = builder.build();
+          assertThat(r1, equalTo(r2));
+          assertThat(r1.hashCode(), equalTo(r2.hashCode()));
+        });
+  }
     qt().forAll(httpVersions(), statusCodes(), responseReasons(32).toOptionals(30))
         .checkAssert((v, s, r) -> {
           var builder = new ResponseBuilder().withVersion(v).withStatusCode(s);
           builder = r.map(builder::withReason).orElse(builder);
-          Response resp = builder.build();
-          assertThat(resp.version, equalTo(v));
-          assertThat(resp.statusCode, equalTo(s));
-          assertThat(resp.reason, equalTo(r.orElse(null)));
+          var r1 = builder.build();
+          var r2 = builder.build();
+          assertThat(r1, equalTo(r2));
+          assertThat(r1.hashCode(), equalTo(r2.hashCode()));
         });
   }
 
