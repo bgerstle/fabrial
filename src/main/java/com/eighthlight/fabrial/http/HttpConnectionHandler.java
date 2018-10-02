@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,7 +36,10 @@ public class HttpConnectionHandler implements ConnectionHandler {
     // TODO: handle multiple requests on one connection
     Request request;
     try {
-      request = new RequestReader(is).readRequest();
+      request = new RequestReader(is).readRequest().get();
+    } catch (NoSuchElementException e) {
+      logger.trace("Skipping empty line.");
+      return;
     } catch (RequestParsingException e) {
       logger.info("Failed to parse request, responding with 400", e);
       new ResponseWriter(os)
@@ -47,6 +51,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
           );
       return;
     }
+
     logger.info("Handling request {}", StructuredArguments.kv("request", request));
     Response response = responseTo(request);
     logger.info("Writing response {}", StructuredArguments.kv("response", response));

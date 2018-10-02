@@ -1,6 +1,11 @@
 language: java
 install: true
 sudo: false
+addons:
+  apt:
+    packages:
+      - google-chrome-stable
+      - chromium-chromedriver
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
@@ -12,4 +17,4 @@ jdk:
   - oraclejdk10
 script:
   - ./gradlew check -i
-  - ./gradlew clean testAcceptance -i
+  - CHROMEDRIVER=/usr/lib/chromium-browser/chromedriver ./gradlew testAcceptance -i

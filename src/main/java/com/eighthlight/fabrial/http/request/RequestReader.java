@@ -1,7 +1,6 @@
 package com.eighthlight.fabrial.http.request;
 
 import com.eighthlight.fabrial.utils.HttpLineReader;
-import com.eighthlight.fabrial.utils.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,7 @@ public class RequestReader {
     this.is = is;
   }
 
-  private static RequestBuilder withRequestLine(String requestLine) throws RequestParsingException {
+  private static RequestBuilder builderWithRequestLine(String requestLine) throws RequestParsingException {
     if (requestLine.isEmpty()) {
       throw new RequestParsingException("Request is empty.");
     } else if (requestLine.startsWith(" ")) {
@@ -40,27 +39,21 @@ public class RequestReader {
     }
   }
 
-  public Request readRequest() throws RequestParsingException {
+  public Optional<Request> readRequest() throws RequestParsingException {
     try {
       // must pass the reader through each step, otherwise the first reader
       // will consume the entire stream
       var lineReader = new HttpLineReader(is);
-      return Result
-          .attempt(() -> {
-            var firstLine = lineReader.readLine();
-            return Optional.ofNullable(firstLine)
-                           .orElseThrow(() -> new RequestParsingException("Request is empty"));
-          })
-          .flatMapAttempt(RequestReader::withRequestLine)
-          .flatMapAttempt(b -> {
-            var headerReader = new HttpHeaderReader(is);
-            var headers = headerReader.readHeaders();
-            return b.withHeaders(headers);
-          })
-          .map(b -> {
-            return b.withBody(is).build();
-          })
-          .orElseThrow();
+      var firstLine = lineReader.readLine();
+      if (firstLine == null || firstLine.isEmpty()) {
+        return Optional.empty();
+      }
+      return Optional.of(
+          RequestReader.builderWithRequestLine(firstLine)
+                       .withHeaders(new HttpHeaderReader(is).readHeaders())
+                       .withBody(is)
+                       .build()
+      );
     } catch (Exception e) {
       throw new RequestParsingException(e);
     }

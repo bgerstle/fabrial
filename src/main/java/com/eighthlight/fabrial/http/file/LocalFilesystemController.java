@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.toIntExact;
 
@@ -39,17 +40,22 @@ public class LocalFilesystemController implements FileHttpResponder.FileControll
 
   @Override
   public List<String> getDirectoryContents(String relPathStr) {
-    return Optional
-        .ofNullable(absolutePathInBaseDir(relPathStr).toFile().listFiles())
-        .map(Arrays::asList)
-        .map(List::stream)
-        .map(s -> s.map(File::getPath)
-                   .map(Paths::get)
-                   .map(baseDirPath::relativize)
-                   .map(Path::toString)
-                   .toArray(String[]::new))
-        .map(Arrays::asList)
-        .orElse(null);
+    var baseDir = absolutePathInBaseDir(relPathStr);
+    if (!baseDir.toFile().isDirectory()) {
+      // TODO: throw exception
+      return null;
+    }
+    var files = baseDir.toFile().listFiles();
+    if (files == null) {
+      return null;
+    }
+    return Arrays.stream(files)
+                 .map(File::getPath)
+                 .map(Paths::get)
+                 .map(Path::toAbsolutePath)
+                 .map(baseDir::relativize)
+                 .map(Path::toString)
+                 .collect(Collectors.toList());
   }
 
   @Override

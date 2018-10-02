@@ -37,6 +37,7 @@ dependencies {
     testCompile('org.quicktheories:quicktheories:0.25')
     testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.0')
     testCompile group: 'commons-io', name: 'commons-io', version: '2.6'
+    testCompile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '3.13.0'
 }
 
 test {
@@ -75,11 +76,15 @@ task testAcceptance(dependsOn: 'jar', type: Test) {
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
 
-
-
     useJUnitPlatform {
         includeTags 'acceptance'
         includeEngines 'junit-jupiter'
     }
+
+    systemProperties([
+        "webdriver.chrome.driver": System.getenv("CHROMEDRIVER") ?: "/usr/local/bin/chromedriver"
+    ])
+
+    outputs.upToDateWhen { false }
 }
 testAcceptance.dependsOn tasks.fatJar

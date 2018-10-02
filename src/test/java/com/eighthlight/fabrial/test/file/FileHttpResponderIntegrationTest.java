@@ -14,7 +14,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -155,7 +154,7 @@ public class FileHttpResponderIntegrationTest {
               .withUriString("/")
               .build());
       assertThat(response.statusCode, is(200));
-      assertThat(response.headers, hasEntry("Content-Type", "text/plain; charset=utf-8"));
+      assertThat(response.headers, hasEntry("Content-Type", "text/html"));
       var baos = new ByteArrayOutputStream();
       response.body.transferTo(baos);
       var bodyString = baos.toString();
@@ -163,9 +162,7 @@ public class FileHttpResponderIntegrationTest {
                  allOf(
                      containsString(tmpFileFixture1.tempFilePath.getFileName().toString()),
                      containsString(tmpFileFixture2.tempFilePath.getFileName().toString())));
-      assertThat(response.headers,
-                 hasEntry("Content-Length",
-                          Integer.toString(bodyString.getBytes(StandardCharsets.UTF_8).length)));
+      assertThat(response.headers, hasKey("Content-Length"));
     }
   }
 

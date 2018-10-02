@@ -17,8 +17,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.toIntExact;
 
@@ -136,10 +138,7 @@ public class FileHttpResponder implements HttpResponder {
           }
 
           builder.withHeader("Content-Length", Integer.toString(range.length()));
-          builder.withHeader("Content-Range",
-                             range.toString() + "/" + sizeInt);
-
-          // TODO: wrap w/ try/catch for index out of bounds and return invalid range
+          builder.withHeader("Content-Range", range.toString() + "/" + sizeInt);
           builder.withBody(fileController.getFileContents(request.uri.getPath(),
                                                           range.first,
                                                           range.length()));
@@ -160,7 +159,7 @@ public class FileHttpResponder implements HttpResponder {
       return builder.withStatusCode(404).build();
     } catch (IOException e) {
       logger.warn("Failed to get contents of file for {}",
-                   StructuredArguments.kv("request", request));
+                  StructuredArguments.kv("request", request));
       // Some other exception, wrap in 500
       return builder.withStatusCode(500).withReason(e.getMessage()).build();
     }
@@ -182,24 +181,25 @@ public class FileHttpResponder implements HttpResponder {
   }
 
   private Response buildGetDirectoryResponse(Request request, ResponseBuilder builder) {
-    var contents =
+    var list =
         fileController.getDirectoryContents(request.uri.getPath())
                       .stream()
                       .sorted()
-                      .reduce((p1, p2) -> p1 + "," + p2)
-                      .orElse("");
+                      .map(filename ->  {
+                        var absPath = Paths.get("/", request.uri.getPath(), filename).toString();
+                        return "<li><a href=\"" + absPath + "\">" + filename + "</a></li>";
+                      })
+                      .collect(Collectors.joining("\n"));
 
-    if (contents.isEmpty()) {
-      return builder.withHeader("Content-Length", "0")
-                    .withStatusCode(200)
-                    .build();
+    if (list.isEmpty()) {
+      return builder.withHeader("Content-Length", "0").withStatusCode(200).build();
     }
 
-    var charset = StandardCharsets.UTF_8;
-    var contentBytes = contents.getBytes(charset);
+    var body = String.join("\n", "<ul>", list, "</ul>");
+    var contentBytes = body.getBytes(StandardCharsets.UTF_8);
     return builder.withStatusCode(200)
                   .withHeader("Content-Length", Integer.toString(contentBytes.length))
-                  .withHeader("Content-Type", "text/plain; charset=" + charset.name().toLowerCase())
+                  .withHeader("Content-Type", "text/html")
                   .withBody(new ByteArrayInputStream(contentBytes))
                   .build();
   }
