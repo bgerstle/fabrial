@@ -22,7 +22,7 @@ import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.integers;
 import static org.quicktheories.generators.SourceDSL.strings;
 
-public class HttpResponseTesting {
+public class ResponseTest {
   static Gen<Integer> invalidStatuses() {
     return oneOf(integers().between(Integer.MIN_VALUE, 99),
                  integers().between(1000, Integer.MAX_VALUE));
