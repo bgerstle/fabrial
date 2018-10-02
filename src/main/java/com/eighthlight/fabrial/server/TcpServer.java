@@ -70,12 +70,12 @@ public class TcpServer implements Closeable {
   public void start() throws IOException {
     assert !serverSocket.isPresent();
     ServerSocket socket = new ServerSocket(config.port);
-    logger.info("Server started on " + config.port);
-    logger.info("Serving files from " + config.directoryPath);
     this.serverSocket = Optional.of(socket);
     Thread acceptThread = new Thread(this::acceptConnections);
     this.acceptThread = Optional.of(acceptThread);
     acceptThread.start();
+    logger.info("Server started on " + config.port);
+    logger.info("Serving files from " + config.directoryPath);
   }
 
   private void acceptConnections() {
