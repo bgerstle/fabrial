@@ -1,14 +1,11 @@
 package com.eighthlight.fabrial.http.request;
 
 import com.eighthlight.fabrial.utils.HttpLineReader;
-import com.eighthlight.fabrial.utils.Result;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
