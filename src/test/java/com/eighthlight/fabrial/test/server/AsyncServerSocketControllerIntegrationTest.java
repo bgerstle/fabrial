@@ -26,6 +26,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
       controller.bindServer(port);
+      controller.forEachConnection(c -> {});
       clientFixture.client.connect(250, 3, 100);
     }
   }
