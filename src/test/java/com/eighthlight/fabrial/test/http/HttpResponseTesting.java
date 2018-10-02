@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Tuple4;
 import org.quicktheories.core.Gen;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,11 +14,13 @@ import java.util.Optional;
 import static com.eighthlight.fabrial.test.http.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.Generate.oneOf;
 import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.integers;
+import static org.quicktheories.generators.SourceDSL.strings;
 
 public class HttpResponseTesting {
   static Gen<Integer> invalidStatuses() {
@@ -28,6 +31,14 @@ public class HttpResponseTesting {
   // characters outside ascii code points
   static Gen<String> invalidReasons() {
     return nonAsciiStrings();
+  }
+
+  private static ResponseBuilder builderWithFields(Tuple4<Integer, String, Optional<String>, Optional<Map<String, String>>> fields) {
+    var builder = new ResponseBuilder().withStatusCode(fields._1)
+                                .withVersion(fields._2);
+    fields._3.ifPresent(builder::withReason);
+    fields._4.ifPresent(builder::withHeaders);
+    return builder;
   }
 
   static Gen<Tuple4<Integer, String, Optional<String>, Optional<Map<String, String>>>>
@@ -43,10 +54,7 @@ public class HttpResponseTesting {
   void constructsWithValidInput() {
     qt().forAll(responseFields())
         .checkAssert((fields) -> {
-          var builder = new ResponseBuilder().withStatusCode(fields._1)
-                                             .withVersion(fields._2);
-          fields._3.ifPresent(builder::withReason);
-          fields._4.ifPresent(builder::withHeaders);
+          var builder = builderWithFields(fields);
           Response resp = builder.build();
           assertThat(resp.statusCode, equalTo(fields._1));
           assertThat(resp.version, equalTo(fields._2));
@@ -59,24 +67,43 @@ public class HttpResponseTesting {
   void responseEquality() {
     qt().forAll(responseFields())
         .checkAssert((fields) -> {
-          var builder = new ResponseBuilder().withStatusCode(fields._1)
-                                             .withVersion(fields._2);
-          fields._3.ifPresent(builder::withReason);
-          fields._4.ifPresent(builder::withHeaders);
+          var builder = builderWithFields(fields);
           var r1 = builder.build();
           var r2 = builder.build();
           assertThat(r1, equalTo(r2));
           assertThat(r1.hashCode(), equalTo(r2.hashCode()));
         });
   }
-    qt().forAll(httpVersions(), statusCodes(), responseReasons(32).toOptionals(30))
-        .checkAssert((v, s, r) -> {
-          var builder = new ResponseBuilder().withVersion(v).withStatusCode(s);
-          builder = r.map(builder::withReason).orElse(builder);
-          var r1 = builder.build();
-          var r2 = builder.build();
+
+  @Test
+  void responseEqualityIgnoresBody() {
+    var optBodyGen = strings().allPossible()
+                              .ofLength(3)
+                              .toOptionals(50)
+                              .map(os -> os.map(String::getBytes)
+                                           .map(ByteArrayInputStream::new));
+    qt().forAll(responseFields(), optBodyGen, optBodyGen)
+        .checkAssert((fields, b1, b2) -> {
+          var respBuilder1 = builderWithFields(fields);
+          b1.ifPresent(respBuilder1::withBody);
+          var respBuilder2 = builderWithFields(fields);
+          b2.ifPresent(respBuilder2::withBody);
+          var r1 = respBuilder1.build();
+          var r2 = respBuilder2.build();
           assertThat(r1, equalTo(r2));
           assertThat(r1.hashCode(), equalTo(r2.hashCode()));
+        });
+  }
+
+  @Test
+  void responseInequality() {
+    qt().forAll(responseFields(), responseFields())
+        .assuming((f1, f2) -> !f1.equals(f2))
+        .checkAssert((f1, f2) -> {
+          var r1 = builderWithFields(f1).build();
+          var r2 = builderWithFields(f2).build();
+          assertThat(r1, not(equalTo(r2)));
+          assertThat(r1.hashCode(), not(equalTo(r2.hashCode())));
         });
   }
 
