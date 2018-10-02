@@ -28,6 +28,23 @@ public class TcpServerTest {
     server.close();
   }
 
+  @Test
+  void closesAfterStarting() throws IOException {
+    var mockController = new MockSocketController();
+    var server = new TcpServer(
+        new ServerConfig(ServerConfig.DEFAULT_PORT,
+                         ServerConfig.DEFAULT_READ_TIMEOUT,
+                         ServerConfig.DEFAULT_DIRECTORY_PATH)
+        , new EchoConnectionHandler(),
+        mockController);
+    server.start();
+    assertThat(server.isClosed(), is(false));
+    assertThat(mockController.isClosed(), is(false));
+    server.close();
+    assertThat(server.isClosed(), is(true));
+    assertThat(mockController.isClosed(), is(true));
+  }
+
   @ParameterizedTest
   @ValueSource(ints = {8080, 9000, 80})
   void startBindsOnExpectedPort(int port) throws IOException {

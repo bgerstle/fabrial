@@ -68,5 +68,10 @@ public class AsyncServerSocketController implements SocketController {
       return;
     }
     socket.close();
+    try {
+      acceptThread.join(10000);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 }
