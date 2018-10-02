@@ -92,8 +92,7 @@ public class TcpServer implements Closeable {
         if (SocketException.class.isInstance(e) && e.getMessage().equals("Socket closed")) {
           logger.trace("Server socket closed");
         } else {
-          logger.warn("Exception while accepting new connection",
-                     e);
+          logger.warn("Exception while accepting new connection", e);
         }
       }
     }
