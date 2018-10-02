@@ -68,6 +68,10 @@ public class AsyncServerSocketController implements SocketController {
       return;
     }
     socket.close();
+
+    // The socket won't truly be closed until we get out of the "accept"
+    // call, resulting in "address already in use" errors on subsequent
+    // start/bind calls.
     try {
       acceptThread.join(10000);
     } catch (InterruptedException e) {
