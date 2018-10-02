@@ -37,15 +37,6 @@ public class HttpHeaderReader {
   private static final Pattern HEADER_LINE_PATTERN =
       Pattern.compile("([!#$%&'*+-.\\^_'|~0-9a-zA-Z]+): *(.*?) *");
 
-  // Invoke a scanner method reference, wrapping any thrown exceptions and returning null on error.
-  private static <ArgType, RetType> RetType scanSafely(Function<ArgType, RetType> scanf, ArgType arg) {
-    return Result.attempt(() -> Optional.ofNullable(scanf.apply(arg)))
-                 .toOptional()
-                 // extract nested optional, defaulting to "empty" if an error occurred
-                 .orElse(Optional.empty())
-                 .orElse(null);
-  }
-
   private final HttpLineReader reader;
 
   public HttpHeaderReader(InputStream inputStream) {
