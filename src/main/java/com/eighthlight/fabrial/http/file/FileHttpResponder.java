@@ -138,10 +138,7 @@ public class FileHttpResponder implements HttpResponder {
           }
 
           builder.withHeader("Content-Length", Integer.toString(range.length()));
-          builder.withHeader("Content-Range",
-                             range.toString() + "/" + sizeInt);
-
-          // TODO: wrap w/ try/catch for index out of bounds and return invalid range
+          builder.withHeader("Content-Range", range.toString() + "/" + sizeInt);
           builder.withBody(fileController.getFileContents(request.uri.getPath(),
                                                           range.first,
                                                           range.length()));
@@ -189,24 +186,17 @@ public class FileHttpResponder implements HttpResponder {
                       .stream()
                       .sorted()
                       .map(filename ->  {
-                        var absPath = Paths.get("/",
-                                                request.uri.getPath(),
-                                                filename)
-                                           .toString();
+                        var absPath = Paths.get("/", request.uri.getPath(), filename).toString();
                         return "<li><a href=\"" + absPath + "\">" + filename + "</a></li>";
                       })
                       .collect(Collectors.joining("\n"));
 
     if (list.isEmpty()) {
-      return builder.withHeader("Content-Length", "0")
-                    .withStatusCode(200)
-                    .build();
+      return builder.withHeader("Content-Length", "0").withStatusCode(200).build();
     }
 
     var body = String.join("\n", "<ul>", list, "</ul>");
-
-    var charset = StandardCharsets.UTF_8;
-    var contentBytes = body.getBytes(charset);
+    var contentBytes = body.getBytes(StandardCharsets.UTF_8);
     return builder.withStatusCode(200)
                   .withHeader("Content-Length", Integer.toString(contentBytes.length))
                   .withHeader("Content-Type", "text/html")
