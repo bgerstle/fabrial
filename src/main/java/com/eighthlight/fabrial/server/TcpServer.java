@@ -89,7 +89,7 @@ public class TcpServer implements Closeable {
         Socket clientConnection = serverSocket.accept();
         connectionHandlerExecutor.execute(() -> handleConnection(clientConnection));
       } catch (IOException e) {
-        if (SocketException.class.isInstance(e) && e.getMessage().equals("Socket closed")) {
+        if (e instanceof SocketException && e.getMessage().equals("Socket closed")) {
           logger.trace("Server socket closed");
         } else {
           logger.warn("Exception while accepting new connection", e);
