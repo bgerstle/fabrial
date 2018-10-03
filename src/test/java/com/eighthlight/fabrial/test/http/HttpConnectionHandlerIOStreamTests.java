@@ -15,7 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Set;
+import java.util.List;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -38,7 +38,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
     return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(200).build();
   }
 
-  HttpConnectionHandler handler = new HttpConnectionHandler(Set.of(this), null);
+  HttpConnectionHandler handler = new HttpConnectionHandler(List.of(this), null);
 
   String sendRequest(Request req) throws Throwable {
     ByteArrayOutputStream reqOs = new ByteArrayOutputStream();

@@ -1,8 +1,11 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpConnectionHandler;
+import com.eighthlight.fabrial.http.HttpResponder;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.message.request.Request;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
+import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.test.http.client.ResponseReader;
 import com.eighthlight.fabrial.test.http.request.RequestWriter;
@@ -13,9 +16,9 @@ import org.quicktheories.core.Gen;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -38,7 +41,8 @@ public class HttpConnectionHandlerTests {
 
   public static Gen<List<MockResponder>> mockResponderLists() {
     return lists().of(mockResponders())
-                  .ofSizeBetween(1, 10);
+                  .ofSizeBetween(1, 10)
+                  .map(rs -> rs.stream().distinct().collect(Collectors.toList()));
   }
 
   @Test
@@ -60,7 +64,7 @@ public class HttpConnectionHandlerTests {
             var delegatedRequest = new CompletableFuture<Request>();
 
             HttpConnectionHandler handler =
-                new HttpConnectionHandler(Set.of(mockResponder), delegatedRequest::complete);
+                new HttpConnectionHandler(List.of(mockResponder), delegatedRequest::complete);
 
             var responseBaos = new ByteArrayOutputStream();
             handler.handle(serializdRequestStream, responseBaos);
@@ -76,7 +80,7 @@ public class HttpConnectionHandlerTests {
 
   @Test
   void respondsWithMatchingResponder() {
-    qt().forAll(mockResponderLists().map(Set::copyOf))
+    qt().forAll(mockResponderLists())
         .checkAssert(rs -> {
           HttpConnectionHandler handler = new HttpConnectionHandler(rs, null);
           rs.forEach(r -> {
@@ -91,7 +95,7 @@ public class HttpConnectionHandlerTests {
 
   @Test
   void responds404WhenNoResponderFound() {
-    qt().forAll(mockResponderLists().map(Set::copyOf), http11Requests())
+    qt().forAll(mockResponderLists(), http11Requests())
         .assuming((responders, req) ->
                       responders.stream().noneMatch(r -> r.matches(req))
         )
@@ -104,6 +108,36 @@ public class HttpConnectionHandlerTests {
 
   @Test
   void throwsWhenRespondersEmpty() {
-    assertThrows(AssertionError.class, () -> new HttpConnectionHandler(Set.of(), null));
+    assertThrows(AssertionError.class, () -> new HttpConnectionHandler(List.of(), null));
+  }
+
+  @Test
+  void respondsToFirstMatchingResponder() {
+    qt().forAll(mockResponders())
+        .checkAssert(mockResponder -> {
+          var badResponder = new HttpResponder() {
+            @Override
+            public boolean matches(Request request) {
+              return mockResponder.matches(request);
+            }
+
+            @Override
+            public Response getResponse(Request request) {
+              throw new AssertionError("Should not be called");
+            }
+          };
+
+          var handler = new HttpConnectionHandler(List.of(
+              mockResponder,
+              badResponder
+          ), null);
+
+          assertThat(handler.responseTo(new RequestBuilder()
+                                            .withVersion(HttpVersion.ONE_ONE)
+                                            .withMethod(mockResponder.targetMethod)
+                                            .withUri(mockResponder.targetURI)
+                                            .build()),
+                     equalTo(mockResponder.response));
+        });
   }
 }

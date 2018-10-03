@@ -16,7 +16,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class HttpConnectionHandler implements ConnectionHandler {
@@ -25,11 +24,11 @@ public class HttpConnectionHandler implements ConnectionHandler {
   // ???: if this changes, probably need to also "match" the request version somehow?
   private static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
-  private final Set<? extends HttpResponder> responders;
+  private final List<? extends HttpResponder> responders;
 
   private final Consumer<Request> requestDelegate;
 
-  public HttpConnectionHandler(List<HttpResponder> responders, Consumer<Request> requestDelegate) {
+  public <T extends HttpResponder> HttpConnectionHandler(List<T> responders, Consumer<Request> requestDelegate) {
     this.requestDelegate = Optional.ofNullable(requestDelegate).orElse(r -> {});
     assert !responders.isEmpty();
     this.responders = responders;

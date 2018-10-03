@@ -11,8 +11,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TcpServer implements Closeable {
@@ -30,7 +30,7 @@ public class TcpServer implements Closeable {
   public TcpServer(ServerConfig config) {
     this(config,
          new HttpConnectionHandler(
-             Set.of(
+             List.of(
                  new FileHttpResponder(
                      new LocalFilesystemController(config.directoryPath)
                  )), null),
