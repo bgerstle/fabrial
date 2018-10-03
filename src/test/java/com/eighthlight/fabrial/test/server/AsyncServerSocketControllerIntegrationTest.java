@@ -3,7 +3,7 @@ package com.eighthlight.fabrial.test.server;
 import com.eighthlight.fabrial.server.AsyncServerSocketController;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.test.client.TcpClient;
-import com.eighthlight.fabrial.test.http.TcpClientFixture;
+import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
