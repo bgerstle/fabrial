@@ -1,8 +1,8 @@
 package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.server.ServerConfig;
-import com.eighthlight.fabrial.test.http.TcpClientFixture;
-import com.eighthlight.fabrial.test.http.TcpServerFixture;
+import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
+import com.eighthlight.fabrial.test.fixtures.TcpServerFixture;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 

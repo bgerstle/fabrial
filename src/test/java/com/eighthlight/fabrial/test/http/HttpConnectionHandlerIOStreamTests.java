@@ -7,6 +7,7 @@ import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import com.eighthlight.fabrial.http.HttpResponder;
+import com.eighthlight.fabrial.test.http.request.RequestWriter;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
