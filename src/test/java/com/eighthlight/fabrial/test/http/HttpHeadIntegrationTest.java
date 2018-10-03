@@ -1,22 +1,19 @@
-package com.eighthlight.fabrial.test.server;
+package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.request.RequestBuilder;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
-import com.eighthlight.fabrial.test.client.TcpClient;
 import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
 import com.eighthlight.fabrial.test.fixtures.TcpServerFixture;
 import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
-import com.eighthlight.fabrial.test.http.request.RequestWriter;
+import com.eighthlight.fabrial.test.http.client.HttpClient;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.nio.file.Paths;
 
 import static com.eighthlight.fabrial.http.HttpVersion.ONE_ONE;
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class HttpHeadIntegrationTest {
@@ -30,20 +27,18 @@ public class HttpHeadIntegrationTest {
         TcpClientFixture clientFixture =
             new TcpClientFixture(serverFixture.server.config.port)) {
       TcpServer server = serverFixture.server;
-      TcpClient client = clientFixture.client;
       server.start();
-      client.connect();
-      new RequestWriter(client.getOutputStream())
-          .writeRequest(
-              new RequestBuilder()
-                  .withVersion(ONE_ONE)
-                  .withMethod(Method.HEAD)
-                  .withUriString(tempFileFixture.tempFilePath.getFileName().toString())
-                  .build());
-      String response =
-          new BufferedReader(new InputStreamReader((client.getInputStream())))
-              .readLine();
-      assertThat(response, containsString("200"));
+      clientFixture.client.connect();
+
+      HttpClient client = new HttpClient(clientFixture.client);
+      var response =
+        client.send(
+            new RequestBuilder()
+                .withVersion(ONE_ONE)
+                .withMethod(Method.HEAD)
+                .withUriString(tempFileFixture.tempFilePath.getFileName().toString())
+                .build()).get();
+      assertThat(response.statusCode, equalTo(200));
     }
   }
 }

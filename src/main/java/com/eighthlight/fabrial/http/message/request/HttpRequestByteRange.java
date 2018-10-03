@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http.request;
+package com.eighthlight.fabrial.http.message.request;
 
 import java.util.Objects;
 import java.util.Optional;

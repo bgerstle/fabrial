@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http.response;
+package com.eighthlight.fabrial.http.message;
 
 import java.io.BufferedWriter;
 import java.io.IOException;

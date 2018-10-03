@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http.response;
+package com.eighthlight.fabrial.http.message.response;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 

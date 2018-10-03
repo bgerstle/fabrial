@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http.request;
+package com.eighthlight.fabrial.http.message;
 
 import com.eighthlight.fabrial.utils.HttpLineReader;
 

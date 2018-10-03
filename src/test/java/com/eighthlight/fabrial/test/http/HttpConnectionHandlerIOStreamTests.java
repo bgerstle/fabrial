@@ -4,10 +4,10 @@ import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import com.eighthlight.fabrial.http.HttpResponder;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.request.Request;
-import com.eighthlight.fabrial.http.request.RequestBuilder;
-import com.eighthlight.fabrial.http.response.Response;
-import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.message.request.Request;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
+import com.eighthlight.fabrial.http.message.response.Response;
+import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.test.http.request.RequestWriter;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +74,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
                            .withVersion (version)
                            .withMethod(Method.HEAD)
                            .withUriString("/test").build()),
-        equalTo("HTTP/" + version + " 200 " + CRLF));
+        equalTo("HTTP/" + version + " 200 " + CRLF + CRLF));
   }
 
   @Test
@@ -101,7 +101,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
                            .withMethod(Method.HEAD)
                            .withUriString("/foobarbuz")
                            .build()),
-        equalTo("HTTP/" + version + " 404 " + CRLF));
+        equalTo("HTTP/" + version + " 404 " + CRLF + CRLF));
   }
 
   @Test

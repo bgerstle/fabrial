@@ -2,9 +2,9 @@ package com.eighthlight.fabrial.test.http.request;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.request.RequestBuilder;
-import com.eighthlight.fabrial.http.request.RequestParsingException;
-import com.eighthlight.fabrial.http.request.RequestReader;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
+import com.eighthlight.fabrial.http.message.MessageReaderException;
+import com.eighthlight.fabrial.http.message.request.RequestReader;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 
@@ -60,7 +60,7 @@ public class HttpRequestLineParsingTests {
           Object req;
           try {
             req = new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest().get();
-          } catch (RequestParsingException e) {
+          } catch (MessageReaderException e) {
             req = e;
           }
           assertThat(req,
@@ -84,7 +84,7 @@ public class HttpRequestLineParsingTests {
                   version.orElse("")
               );
 
-          assertThrows(RequestParsingException.class, () -> {
+          assertThrows(MessageReaderException.class, () -> {
             new RequestReader(is).readRequest().get();
           });
         });
@@ -94,7 +94,7 @@ public class HttpRequestLineParsingTests {
   void throwsWithBadTargets() {
     qt().forAll(invalidMethods(), invalidUris(), httpVersions())
         .checkAssert((m, u, v) -> {
-          assertThrows(RequestParsingException.class, () -> {
+          assertThrows(MessageReaderException.class, () -> {
             new RequestReader(requestLineFromComponents(m, u, v)).readRequest().get();
           });
         });
@@ -104,7 +104,7 @@ public class HttpRequestLineParsingTests {
   void throwsWithBadVersions() {
     qt().forAll(methods(), requestTargets(), invalidVersions())
         .checkAssert((m, u, v) -> {
-          assertThrows(RequestParsingException.class, () -> {
+          assertThrows(MessageReaderException.class, () -> {
             new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest().get();
           });
         });
@@ -127,7 +127,7 @@ public class HttpRequestLineParsingTests {
   @Test
   void leadingWhitespaceCausesError() throws Exception {
     InputStream is = new ByteArrayInputStream((" GET / HTTP/1.1" + CRLF).getBytes(StandardCharsets.UTF_8));
-    assertThrows(RequestParsingException.class, () -> {
+    assertThrows(MessageReaderException.class, () -> {
       new RequestReader(is).readRequest().get();
     });
   }

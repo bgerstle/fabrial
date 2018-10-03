@@ -1,6 +1,6 @@
-package com.eighthlight.fabrial.test.http.responder;
+package com.eighthlight.fabrial.test.http.response;
 
-import com.eighthlight.fabrial.http.response.HttpHeaderWriter;
+import com.eighthlight.fabrial.http.message.HttpHeaderWriter;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;

@@ -1,9 +1,9 @@
-package com.eighthlight.fabrial.test.http.responder;
+package com.eighthlight.fabrial.test.http.response;
 
 import com.eighthlight.fabrial.http.HttpVersion;
-import com.eighthlight.fabrial.http.response.HttpStatusLineWriter;
-import com.eighthlight.fabrial.http.response.Response;
-import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.message.response.HttpStatusLineWriter;
+import com.eighthlight.fabrial.http.message.response.Response;
+import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 

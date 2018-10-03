@@ -2,9 +2,9 @@ package com.eighthlight.fabrial.test.http.request;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.request.Request;
-import com.eighthlight.fabrial.http.request.RequestBuilder;
-import com.eighthlight.fabrial.http.request.RequestReader;
+import com.eighthlight.fabrial.http.message.request.Request;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
+import com.eighthlight.fabrial.http.message.request.RequestReader;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 

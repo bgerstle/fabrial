@@ -59,19 +59,23 @@ public class TcpClient implements AutoCloseable {
   }
 
   public boolean isClosed() {
+    assert socket != null;
     return socket.isClosed();
   }
 
   public OutputStream getOutputStream() throws IOException {
+    assert socket != null;
     return socket.getOutputStream();
   }
 
   public InputStream getInputStream() throws IOException {
+    assert socket != null;
     return socket.getInputStream();
   }
 
   @Override
   public void close() throws IOException {
+    assert socket != null;
     socket.close();
   }
 }

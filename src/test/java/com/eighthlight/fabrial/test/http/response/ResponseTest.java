@@ -1,7 +1,7 @@
-package com.eighthlight.fabrial.test.http.responder;
+package com.eighthlight.fabrial.test.http.response;
 
-import com.eighthlight.fabrial.http.response.Response;
-import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.message.response.Response;
+import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Tuple4;
 import org.quicktheories.core.Gen;
@@ -103,7 +103,6 @@ public class ResponseTest {
           var r1 = builderWithFields(f1).build();
           var r2 = builderWithFields(f2).build();
           assertThat(r1, not(equalTo(r2)));
-          assertThat(r1.hashCode(), not(equalTo(r2.hashCode())));
         });
   }
 

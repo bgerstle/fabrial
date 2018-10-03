@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test.http.server;
+package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.server.ConnectionHandler;
 
