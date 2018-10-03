@@ -28,7 +28,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
 
   private final Consumer<Request> requestDelegate;
 
-  public <T extends HttpResponder> HttpConnectionHandler(List<T> responders, Consumer<Request> requestDelegate) {
+  public HttpConnectionHandler(List<? extends HttpResponder> responders, Consumer<Request> requestDelegate) {
     this.requestDelegate = Optional.ofNullable(requestDelegate).orElse(r -> {});
     assert !responders.isEmpty();
     this.responders = responders;
