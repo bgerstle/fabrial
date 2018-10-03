@@ -1,12 +1,13 @@
 package com.eighthlight.fabrial.test.http;
 
-import com.eighthlight.fabrial.http.*;
+import com.eighthlight.fabrial.http.HttpConnectionHandler;
+import com.eighthlight.fabrial.http.HttpResponder;
+import com.eighthlight.fabrial.http.HttpVersion;
+import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.request.Request;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
-import com.eighthlight.fabrial.http.HttpConnectionHandler;
-import com.eighthlight.fabrial.http.HttpResponder;
 import com.eighthlight.fabrial.test.http.request.RequestWriter;
 import org.junit.jupiter.api.Test;
 

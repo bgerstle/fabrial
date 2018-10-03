@@ -6,8 +6,8 @@ import com.eighthlight.fabrial.utils.Result;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AppProcessFixture implements AutoCloseable {
   public final Process appProcess;

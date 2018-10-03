@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.test.http.request;
 
-import com.eighthlight.fabrial.http.*;
+import com.eighthlight.fabrial.http.HttpVersion;
+import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.http.request.RequestParsingException;
 import com.eighthlight.fabrial.http.request.RequestReader;
@@ -20,9 +21,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
-import static org.quicktheories.generators.Generate.constant;
-import static org.quicktheories.generators.Generate.oneOf;
-import static org.quicktheories.generators.Generate.pick;
+import static org.quicktheories.generators.Generate.*;
 
 public class HttpRequestLineParsingTests {
   public static Gen<String> invalidMethods() {

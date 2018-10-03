@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
-import static com.eighthlight.fabrial.test.gen.ArbitraryStrings.alphanumeric;
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.*;
+import static com.eighthlight.fabrial.test.gen.ArbitraryStrings.alphanumeric;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

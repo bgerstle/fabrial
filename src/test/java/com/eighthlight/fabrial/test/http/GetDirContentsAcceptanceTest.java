@@ -1,11 +1,11 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.server.ServerConfig;
+import com.eighthlight.fabrial.test.fixtures.TcpServerFixture;
 import com.eighthlight.fabrial.test.fixtures.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
 import com.eighthlight.fabrial.test.html.FileServerPage;
 import com.eighthlight.fabrial.test.html.WebDriverFixture;
-import com.eighthlight.fabrial.test.fixtures.TcpServerFixture;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebElement;

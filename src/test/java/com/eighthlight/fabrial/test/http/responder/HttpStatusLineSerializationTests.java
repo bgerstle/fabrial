@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.http.responder;
 
-import com.eighthlight.fabrial.http.response.HttpStatusLineWriter;
 import com.eighthlight.fabrial.http.HttpVersion;
+import com.eighthlight.fabrial.http.response.HttpStatusLineWriter;
 import com.eighthlight.fabrial.http.response.Response;
 import com.eighthlight.fabrial.http.response.ResponseBuilder;
 import com.eighthlight.fabrial.utils.Result;
