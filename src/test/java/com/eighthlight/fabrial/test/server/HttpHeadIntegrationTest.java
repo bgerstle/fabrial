@@ -5,10 +5,10 @@ import com.eighthlight.fabrial.http.request.RequestBuilder;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
 import com.eighthlight.fabrial.test.client.TcpClient;
-import com.eighthlight.fabrial.test.file.TempFileFixture;
-import com.eighthlight.fabrial.test.http.RequestWriter;
-import com.eighthlight.fabrial.test.http.TcpClientFixture;
-import com.eighthlight.fabrial.test.http.TcpServerFixture;
+import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
+import com.eighthlight.fabrial.test.http.request.RequestWriter;
+import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
+import com.eighthlight.fabrial.test.fixtures.TcpServerFixture;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;

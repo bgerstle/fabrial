@@ -5,6 +5,8 @@ import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.file.LocalFilesystemController;
 import com.eighthlight.fabrial.http.request.RequestBuilder;
+import com.eighthlight.fabrial.test.fixtures.TempDirectoryFixture;
+import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.eighthlight.fabrial.test.http.ArbitraryHttp.paths;
+import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.paths;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
