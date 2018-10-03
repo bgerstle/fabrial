@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.http;
 
-import com.eighthlight.fabrial.http.message.request.Request;
 import com.eighthlight.fabrial.http.message.MessageReaderException;
+import com.eighthlight.fabrial.http.message.request.Request;
 import com.eighthlight.fabrial.http.message.request.RequestReader;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class HttpConnectionHandler implements ConnectionHandler {
   private static final Logger logger = LoggerFactory.getLogger(HttpConnectionHandler.class.getName());
@@ -24,12 +25,15 @@ public class HttpConnectionHandler implements ConnectionHandler {
   // ???: if this changes, probably need to also "match" the request version somehow?
   private static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
 
-  public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders) {
+  private final Set<? extends HttpResponder> responders;
+
+  private final Consumer<Request> requestDelgate;
+
+  public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders, Consumer<Request> requestDelgate) {
+    this.requestDelgate = Optional.ofNullable(requestDelgate).orElse(r -> {});
     assert !responders.isEmpty();
     this.responders = responders;
   }
-
-  private final Set<? extends HttpResponder> responders;
 
   @Override
   public void handle(InputStream is, OutputStream os) throws Throwable {
@@ -47,8 +51,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
               new ResponseBuilder()
                   .withVersion(HttpVersion.ONE_ONE)
                   .withStatusCode(400)
-                  .build()
-          );
+                  .build());
       return;
     }
 

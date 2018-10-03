@@ -33,7 +33,7 @@ public class TcpServer implements Closeable {
              Set.of(
                  new FileHttpResponder(
                      new LocalFilesystemController(config.directoryPath)
-                 ))),
+                 )), null),
          new AsyncServerSocketController(config.readTimeout));
   }
 

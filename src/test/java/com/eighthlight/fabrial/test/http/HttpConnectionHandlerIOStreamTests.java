@@ -38,7 +38,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
     return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(200).build();
   }
 
-  HttpConnectionHandler handler = new HttpConnectionHandler(Set.of(this));
+  HttpConnectionHandler handler = new HttpConnectionHandler(Set.of(this), null);
 
   String sendRequest(Request req) throws Throwable {
     ByteArrayOutputStream reqOs = new ByteArrayOutputStream();
