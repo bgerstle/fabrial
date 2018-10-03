@@ -1,4 +1,6 @@
-package com.eighthlight.fabrial.http.response;
+package com.eighthlight.fabrial.http.message.response;
+
+import com.eighthlight.fabrial.http.message.HttpHeaderWriter;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -18,7 +20,7 @@ public class ResponseWriter {
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os));
     /*
       write the response according to RFC7230 section 3
-      HTTP-message   = start-line
+      HTTP-message   = status-line
                       *( header-field CRLF )
                       CRLF
                       [ message-body ]
@@ -28,8 +30,8 @@ public class ResponseWriter {
                                                  response.reason);
     if (!response.headers.isEmpty()) {
       new HttpHeaderWriter(os).writeFields(response.headers);
-      writer.write(CRLF);
     }
+    writer.write(CRLF);
     writer.flush();
     if (response.body != null) {
       response.body.transferTo(os);

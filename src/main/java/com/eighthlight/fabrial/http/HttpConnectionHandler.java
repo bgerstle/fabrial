@@ -1,11 +1,11 @@
 package com.eighthlight.fabrial.http;
 
-import com.eighthlight.fabrial.http.request.Request;
-import com.eighthlight.fabrial.http.request.RequestParsingException;
-import com.eighthlight.fabrial.http.request.RequestReader;
-import com.eighthlight.fabrial.http.response.Response;
-import com.eighthlight.fabrial.http.response.ResponseBuilder;
-import com.eighthlight.fabrial.http.response.ResponseWriter;
+import com.eighthlight.fabrial.http.message.request.Request;
+import com.eighthlight.fabrial.http.message.MessageReaderException;
+import com.eighthlight.fabrial.http.message.request.RequestReader;
+import com.eighthlight.fabrial.http.message.response.Response;
+import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.message.response.ResponseWriter;
 import com.eighthlight.fabrial.server.ConnectionHandler;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
     } catch (NoSuchElementException e) {
       logger.trace("Skipping empty line.");
       return;
-    } catch (RequestParsingException e) {
+    } catch (MessageReaderException e) {
       logger.info("Failed to parse request, responding with 400", e);
       new ResponseWriter(os)
           .writeResponse(

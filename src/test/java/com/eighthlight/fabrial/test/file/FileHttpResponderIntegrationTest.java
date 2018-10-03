@@ -4,7 +4,7 @@ import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.file.LocalFilesystemController;
-import com.eighthlight.fabrial.http.request.RequestBuilder;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.test.fixtures.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
 import com.eighthlight.fabrial.utils.Result;

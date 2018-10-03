@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.http.request;
 
-import com.eighthlight.fabrial.http.request.Request;
+import com.eighthlight.fabrial.http.message.request.Request;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -27,6 +27,7 @@ public class RequestWriter {
     writer.flush();
     if (request.body != null) {
       request.body.transferTo(os);
+      os.flush();
     }
   }
 

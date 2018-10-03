@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.http.request;
+package com.eighthlight.fabrial.http.message.request;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;

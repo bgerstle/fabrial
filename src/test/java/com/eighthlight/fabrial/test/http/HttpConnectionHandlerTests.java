@@ -4,9 +4,9 @@ import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import com.eighthlight.fabrial.http.HttpResponder;
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.request.Request;
-import com.eighthlight.fabrial.http.response.Response;
-import com.eighthlight.fabrial.http.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.message.request.Request;
+import com.eighthlight.fabrial.http.message.response.Response;
+import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 

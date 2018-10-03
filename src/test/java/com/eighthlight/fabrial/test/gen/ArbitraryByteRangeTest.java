@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.gen;
 
-import com.eighthlight.fabrial.http.request.HttpRequestByteRange;
+import com.eighthlight.fabrial.http.message.request.HttpRequestByteRange;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Pair;

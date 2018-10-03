@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.http.request;
 
-import com.eighthlight.fabrial.http.request.HttpRequestByteRange;
+import com.eighthlight.fabrial.http.message.request.HttpRequestByteRange;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;

@@ -2,8 +2,8 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.request.Request;
-import com.eighthlight.fabrial.http.request.RequestBuilder;
+import com.eighthlight.fabrial.http.message.request.Request;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.test.fixtures.*;
 import com.eighthlight.fabrial.test.http.request.RequestWriter;
 import com.eighthlight.fabrial.utils.Result;

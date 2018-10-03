@@ -1,9 +1,10 @@
-package com.eighthlight.fabrial.test.http.responder;
+package com.eighthlight.fabrial.test.http.response;
 
 import com.eighthlight.fabrial.http.HttpVersion;
-import com.eighthlight.fabrial.http.response.Response;
-import com.eighthlight.fabrial.http.response.ResponseBuilder;
-import com.eighthlight.fabrial.http.response.ResponseWriter;
+import com.eighthlight.fabrial.http.message.response.Response;
+import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
+import com.eighthlight.fabrial.http.message.response.ResponseWriter;
+import com.eighthlight.fabrial.test.http.client.ResponseReader;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
@@ -11,19 +12,14 @@ import org.quicktheories.core.Gen;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.*;
 import static com.eighthlight.fabrial.test.gen.ArbitraryStrings.alphanumeric;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.maps;
 import static org.quicktheories.generators.SourceDSL.strings;
@@ -34,9 +30,12 @@ public class ResponseWriterTests {
         .allPossible()
         .ofLengthBetween(0, length)
         .map(s -> {
-          return Result.attempt(() ->
-                                    new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8))
-          ).orElseAssert();
+          return Result.attempt(() -> {
+            var chars = s.codePoints().toArray();
+            var bytes = ByteBuffer.allocate(chars.length * 4);
+            bytes.asIntBuffer().put(chars);
+            return new ByteArrayInputStream(bytes.array());
+          }).orElseAssert();
         });
   }
 
@@ -52,7 +51,7 @@ public class ResponseWriterTests {
                                    statusCode,
                                    reason.orElse(null),
                                    headers.orElse(null),
-                                   body.orElse(null));
+                                   body.orElse(new ByteArrayInputStream(new byte[0])));
              });
   }
 
@@ -100,7 +99,7 @@ public class ResponseWriterTests {
   }
 
   @Test
-  void responseWithHeadersAndBody() throws IOException {
+  void responseWithHeadersAndBody() throws Exception {
     var os = new ByteArrayOutputStream();
     var response = new ResponseBuilder()
         .withStatusCode(200)
@@ -108,23 +107,17 @@ public class ResponseWriterTests {
         .withHeader("Content-Length", "3")
         .withBodyFromString("foo")
         .build();
+
     new ResponseWriter(os).writeResponse(response);
-    var responseLines = os.toString().split(CRLF);
-    assertThat(responseLines.length, is(4));
-    assertThat(responseLines[0],
-               is("HTTP/"
-                  + response.version
-                  + " "
-                  + response.statusCode
-                  + " "
-                  + Optional.ofNullable(response.reason).orElse("")));
-    assertThat(responseLines[1],
-               is("Content-Length: 3"));
-    // must have an extra empty line between headers & body
-    assertThat(responseLines[2], is(""));
-    assertThat(responseLines[3],
-               is("foo"));
+    var serializedResponseBytes = os.toByteArray();
+    var is = new ByteArrayInputStream(serializedResponseBytes);
+    var parsedResponse = new ResponseReader(is).read();
+    assertThat(parsedResponse.isPresent(), is(true));
+    assertThat(parsedResponse.get(), is(response));
+    assertThat(new String(parsedResponse.get().body.readAllBytes()), is("foo"));
+
     os.close();
+    is.close();
   }
 
   @Test
@@ -132,51 +125,17 @@ public class ResponseWriterTests {
     qt().forAll(responses()).checkAssert((response) -> {
       try (var os = new ByteArrayOutputStream()) {
         Result.attempt(() -> new ResponseWriter(os).writeResponse(response)).orElseAssert();
-        var responseLines = os.toString().split(CRLF);
-        assertThat(responseLines[0],
-                   is("HTTP/"
-                      + response.version
-                      + " "
-                      + response.statusCode
-                      + " "
-                      + Optional.ofNullable(response.reason).orElse("")));
-
-        if (response.headers == null && response.body == null) {
-          assertThat(responseLines.length, equalTo(1));
-          return;
+        os.flush();
+        var serializedResponseBytes = os.toByteArray();
+        try (var is = new ByteArrayInputStream(serializedResponseBytes)) {
+          var parsedResponse = Result.attempt(new ResponseReader(is)::read).orElseAssert();
+          assertThat(parsedResponse.isPresent(), is(true));
+          assertThat(parsedResponse.get(), is(response));
+          response.body.reset();
+          var expectedBytes = response.body.readAllBytes();
+          var actualBytes = parsedResponse.get().body.readAllBytes();
+          assertThat(actualBytes, is(expectedBytes));
         }
-
-        List<String> otherLines =
-            Arrays.asList(responseLines).subList(1, responseLines.length);
-
-        List<String> headerLines = otherLines.subList(0, response.headers.size());
-
-        assertThat(headerLines.isEmpty(), equalTo(response.headers.isEmpty()));
-        response.headers.entrySet()
-                        .stream()
-                        .map(e -> e.getKey() + ": " + e.getValue())
-                        .forEach(s -> assertThat(headerLines, hasItem(s)));
-
-        List<String> bodyLines = otherLines.subList(response.headers.size(), otherLines.size());
-
-        Optional<String> expectedBody =
-            Optional.ofNullable(response.body)
-                    .map(is -> Result
-                        .attempt(() -> {
-                          is.reset();
-                          var bodyAOS = new ByteArrayOutputStream();
-                          is.transferTo(bodyAOS);
-                          return bodyAOS.toString(StandardCharsets.UTF_8);
-                        })
-                        .orElseAssert()
-                    );
-
-        if (!expectedBody.isPresent() || expectedBody.get().length() == 0) {
-          assertThat(bodyLines, hasSize(0));
-        } else {
-          assertThat(bodyLines.stream().reduce(String::concat), equalTo(expectedBody));
-        }
-
       } catch (IOException e) {
         throw new AssertionError(e);
       }

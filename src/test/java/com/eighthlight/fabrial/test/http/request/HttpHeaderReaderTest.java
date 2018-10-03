@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.http.request;
 
-import com.eighthlight.fabrial.http.request.HttpHeaderReader;
+import com.eighthlight.fabrial.http.message.HttpHeaderReader;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 

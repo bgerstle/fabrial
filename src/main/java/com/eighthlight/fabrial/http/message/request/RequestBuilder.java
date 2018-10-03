@@ -1,35 +1,17 @@
-package com.eighthlight.fabrial.http.request;
+package com.eighthlight.fabrial.http.message.request;
 
 import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.message.AbstractMessageBuilder;
 
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
-public class RequestBuilder {
-  public String version;
+public class RequestBuilder extends AbstractMessageBuilder<RequestBuilder, Request> {
   public Method method;
   public URI uri;
-  public InputStream body;
-  public Map<String, String> headers;
 
   public RequestBuilder() {}
-
-  // Set version from a string with the format "HTTP/X.Y"
-  public RequestBuilder withPrefixedVersion(String prefixedVersion) {
-    String[] versionComponents = prefixedVersion.split("/");
-    if (versionComponents.length < 2) {
-      throw new IllegalArgumentException("Expected 'HTTP/X.Y', got: " + prefixedVersion);
-    }
-    return withVersion(versionComponents[1]);
-  }
-
-  public RequestBuilder withVersion(String version) {
-    this.version = version;
-    return this;
-  }
 
   public RequestBuilder withMethod(Method method) {
     this.method = method;
@@ -56,16 +38,7 @@ public class RequestBuilder {
     return this;
   }
 
-  public RequestBuilder withHeaders(Map<String, String> headers) {
-    this.headers = Map.copyOf(headers);
-    return this;
-  }
-
-  public RequestBuilder withBody(InputStream body) {
-    this.body = body;
-    return this;
-  }
-
+  @Override
   public Request build() {
     try {
       return new Request(version, method, uri, headers, body);

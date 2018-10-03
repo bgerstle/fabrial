@@ -1,23 +1,21 @@
-package com.eighthlight.fabrial.http.response;
+package com.eighthlight.fabrial.http.message.response;
+
+import com.eighthlight.fabrial.http.message.AbstractMessageBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Builder object for @link Response instances.
  */
-public class ResponseBuilder {
+public class ResponseBuilder extends AbstractMessageBuilder<ResponseBuilder, Response> {
   private String version;
   private int statusCode;
   private String reason;
-  private HashMap<String, String> headers;
-  private InputStream body;
 
   public ResponseBuilder() {
-    headers = new HashMap<String, String>();
+    super();
   }
 
   public ResponseBuilder withVersion(String version) {
@@ -35,9 +33,9 @@ public class ResponseBuilder {
     return this;
   }
 
+  @Override
   public ResponseBuilder withHeaders(Map<String, String> headers) {
-    this.headers = Optional.ofNullable(headers).map(HashMap::new).orElse(null);
-    return this;
+    return (ResponseBuilder)super.withHeaders(headers);
   }
 
   public ResponseBuilder withHeader(String name, String value) {
@@ -50,11 +48,12 @@ public class ResponseBuilder {
     return this;
   }
 
-  public ResponseBuilder withBody(InputStream os) {
-    this.body = os;
-    return this;
+  @Override
+  public ResponseBuilder withBody(InputStream is) {
+    return (ResponseBuilder)super.withBody(is);
   }
 
+  @Override
   public Response build() {
     return new Response(version, statusCode, reason, headers, body);
   }
