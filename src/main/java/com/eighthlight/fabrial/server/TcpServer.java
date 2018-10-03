@@ -56,10 +56,9 @@ public class TcpServer implements Closeable {
    * @throws IOException If the underlying socket couldn't bind successfully.
    */
   public void start() throws IOException {
-    socketController.bindServer(config.port);
+    socketController.start(config.port, this::handleConnection);
     logger.info("Server started on " + config.port);
     logger.info("Serving files from " + config.directoryPath);
-    socketController.forEachConnection(this::handleConnection);
   }
 
 

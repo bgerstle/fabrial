@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 public interface SocketController extends AutoCloseable, CloseStateSupplier {
-  public void bindServer(int port) throws IOException;
-  public void forEachConnection(Consumer<ClientConnection> consumer);
+  public void start(
+      int bindPort,
+      Consumer<ClientConnection> connectionHandler
+  ) throws IOException;
 
   @Override
   public void close() throws IOException;

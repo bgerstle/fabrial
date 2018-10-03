@@ -1,19 +1,18 @@
 package com.eighthlight.fabrial.test.server;
 
 import com.eighthlight.fabrial.server.AsyncServerSocketController;
-import com.eighthlight.fabrial.server.ClientConnection;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.test.client.TcpClient;
 import com.eighthlight.fabrial.test.http.TcpClientFixture;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -25,8 +24,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var port = 8080;
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
-      controller.bindServer(port);
-      controller.forEachConnection(c -> {});
+      controller.start(port, c -> {});
       clientFixture.client.connect(250, 3, 100);
     }
   }
@@ -36,8 +34,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var port = 8080;
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
-      controller.bindServer(port);
-      controller.forEachConnection(conn -> {
+      controller.start(port, conn -> {
         try {
           conn.getInputStream().transferTo(conn.getOutputStream());
         } catch (IOException e) {
@@ -64,8 +61,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var futureReadTimeout = new CompletableFuture<IOException>();
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(100)) {
-      controller.bindServer(port);
-      controller.forEachConnection(conn -> {
+      controller.start(port, conn -> {
         try {
           conn.getInputStream().transferTo(conn.getOutputStream());
         } catch (IOException e) {
@@ -87,36 +83,50 @@ public class AsyncServerSocketControllerIntegrationTest {
   void handlesConnectionAfterError() throws IOException {
     var port = 8080;
     try (var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
-      var results = new ArrayList<Object>(2);
-      results.add(new IOException("error"));
-      results.add("foo");
+      final var results =
+          Collections.synchronizedList(new ArrayList<>(2));
 
-      controller.bindServer(port);
-      controller.forEachConnection(new Consumer<ClientConnection>() {
-        @Override
-        public void accept(ClientConnection conn) {
-          var result = results.get(0);
-          results.remove(0);
-          if (result instanceof Exception) {
-            throw new RuntimeException((IOException)result);
+      controller.start(port, (conn) -> {
+        try {
+          var bufferedReader =
+              new BufferedReader(new InputStreamReader(conn.getInputStream()));
+          var input = bufferedReader.readLine();
+          if (input.equals("crash")) {
+            throw new RuntimeException(input);
           } else {
-            try {
-              conn.getOutputStream().write(((String) result).getBytes());
-            } catch (IOException e) {
-              throw new AssertionError(e);
-            }
+            var writer =
+                new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+            writer.write(input);
+            writer.newLine();
+            writer.flush();
           }
+        } catch (IOException e) {
+          throw new AssertionError(e);
         }
       });
 
-      TcpClient client = null;
-      for (int i = 0; i < results.size(); i++) {
-        client = new TcpClient(new InetSocketAddress(port));;
-        client.connect(100, 3, 100);
+      try (TcpClient crashClient = new TcpClient(new InetSocketAddress(port))) {
+        crashClient.connect(250, 3, 100);
+        var os = crashClient.getOutputStream();
+        os.write("crash\n".getBytes());
+        os.flush();
       }
-      var byteBuffer = ByteBuffer.allocate(3);
-      client.getInputStream().read(byteBuffer.array());
-      assertThat(byteBuffer.array(), equalTo("foo".getBytes()));
+
+      try (TcpClient okClient = new TcpClient(new InetSocketAddress(port))) {
+        okClient.connect(250, 3, 100);
+        var writer =
+            new BufferedWriter(new OutputStreamWriter(okClient.getOutputStream()));
+        var request = "foo";
+        writer.write(request);
+        writer.newLine();
+        writer.flush();
+
+        var reader =
+            new BufferedReader(new InputStreamReader(okClient.getInputStream()));
+        var response = reader.readLine();
+
+        assertThat(response, equalTo(request));
+      }
     }
   }
 }

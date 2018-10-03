@@ -13,13 +13,8 @@ class MockSocketController
   public Consumer<ClientConnection> consumer;
 
   @Override
-  public void bindServer(int port) throws IOException {
-    boundPort = port;
-    isClosed = false;
-  }
-
-  @Override
-  public void forEachConnection(Consumer<ClientConnection> consumer) {
+  public void start(int port, Consumer<ClientConnection> consumer) throws IOException {
+    this.boundPort = port;
     this.consumer = consumer;
   }
 }

@@ -22,19 +22,17 @@ public class AsyncServerSocketController implements SocketController {
 
   public AsyncServerSocketController(int readTimeout) {
     this.readTimeout = readTimeout;
-    this.connectionHandlerExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    this.connectionHandlerExecutor =
+        Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
   }
 
-  @Override
-  public void bindServer(int port) throws IOException {
+  public void start(int port,
+                    Consumer<ClientConnection> consumer) throws IOException {
     socket = new ServerSocket(port);
-  }
-
-  @Override
-  public void forEachConnection(Consumer<ClientConnection> consumer) {
     acceptThread = new Thread(() -> acceptConnections(consumer));
     acceptThread.start();
   }
+
 
   private void acceptConnections(Consumer<ClientConnection> consumer) {
     assert Thread.currentThread().equals(acceptThread);
@@ -45,7 +43,13 @@ public class AsyncServerSocketController implements SocketController {
         var clientSocket = socket.accept();
         clientSocket.setSoTimeout(readTimeout);
         var clientConnection = new ClientSocketConnection(clientSocket);
-        connectionHandlerExecutor.execute(() -> consumer.accept(clientConnection));
+        connectionHandlerExecutor.execute(() -> {
+          try {
+            consumer.accept(clientConnection);
+          } catch (Throwable t) {
+            logger.warn("Connection handler error", t);
+          }
+        });
       } catch (IOException e) {
         if (e instanceof SocketException && e.getMessage().equals("Socket closed")) {
           logger.trace("Server socket closed");

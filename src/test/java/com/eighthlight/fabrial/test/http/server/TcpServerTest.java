@@ -1,5 +1,6 @@
 package com.eighthlight.fabrial.test.http.server;
 
+import com.eighthlight.fabrial.server.ClientConnection;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -111,7 +113,7 @@ public class TcpServerTest {
         , new EchoConnectionHandler(),
         new MockSocketController() {
           @Override
-          public void bindServer(int port) throws IOException {
+          public void start(int port, Consumer<ClientConnection> handler) throws IOException {
             throw new IOException("test bind error");
           }
         });
