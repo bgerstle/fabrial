@@ -8,6 +8,7 @@ import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,22 @@ import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
 
 public class AccessLogResponderTest {
+  @Test
+  void respondsWithEmptyBodyWhenLogIsEmpty() throws IOException {
+    var logger = new AccessLogger();
+    var responder = new AccessLogResponder(logger);
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.GET)
+            .withUriString("/logs")
+            .build());
+
+    assertThat(response.statusCode, equalTo(200));
+    assertThat(response.body.readAllBytes(), equalTo(new byte[0]));
+  }
+
   @Test
   void respondsWithBodyContainingFormattedLog() {
     qt().forAll(lists().of(requests()).ofSizeBetween(1, 100))
