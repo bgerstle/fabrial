@@ -1,8 +1,5 @@
-package com.eighthlight.fabrial.http.message.request;
+package com.eighthlight.fabrial.http.message;
 
-import com.eighthlight.fabrial.http.message.HttpHeaderReader;
-import com.eighthlight.fabrial.http.message.HttpMessageBuilder;
-import com.eighthlight.fabrial.http.message.MessageReaderException;
 import com.eighthlight.fabrial.utils.CheckedFunction;
 import com.eighthlight.fabrial.utils.HttpLineReader;
 

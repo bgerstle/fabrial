@@ -1,5 +1,6 @@
 package com.eighthlight.fabrial.http.message.request;
 
+import com.eighthlight.fabrial.http.message.MessageReader;
 import com.eighthlight.fabrial.http.message.MessageReaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.http.client;
 
 import com.eighthlight.fabrial.http.message.MessageReaderException;
-import com.eighthlight.fabrial.http.message.request.MessageReader;
+import com.eighthlight.fabrial.http.message.MessageReader;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 
