@@ -27,10 +27,10 @@ public class HttpConnectionHandler implements ConnectionHandler {
 
   private final Set<? extends HttpResponder> responders;
 
-  private final Consumer<Request> requestDelgate;
+  private final Consumer<Request> requestDelegate;
 
-  public <T extends HttpResponder> HttpConnectionHandler(Set<T> responders, Consumer<Request> requestDelgate) {
-    this.requestDelgate = Optional.ofNullable(requestDelgate).orElse(r -> {});
+  public HttpConnectionHandler(List<HttpResponder> responders, Consumer<Request> requestDelegate) {
+    this.requestDelegate = Optional.ofNullable(requestDelegate).orElse(r -> {});
     assert !responders.isEmpty();
     this.responders = responders;
   }
@@ -56,7 +56,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
     }
 
     logger.info("Handling request {}", StructuredArguments.kv("request", request));
-    requestDelgate.accept(request);
+    requestDelegate.accept(request);
     Response response = responseTo(request);
     logger.info("Writing response {}", StructuredArguments.kv("response", response));
     new ResponseWriter(os).writeResponse(response);
