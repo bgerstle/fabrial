@@ -63,13 +63,12 @@ public class Response {
     return statusCode == response.statusCode &&
            Objects.equals(version, response.version) &&
            Objects.equals(reason, response.reason) &&
-           Objects.equals(headers, response.headers) &&
-           Objects.equals(body, response.body);
+           Objects.equals(headers, response.headers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(version, statusCode, reason, headers, body);
+    return Objects.hash(version, statusCode, reason, headers);
   }
 
   @Override
