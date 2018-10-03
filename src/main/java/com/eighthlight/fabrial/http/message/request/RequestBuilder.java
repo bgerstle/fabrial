@@ -42,7 +42,7 @@ public class RequestBuilder extends AbstractMessageBuilder<RequestBuilder, Reque
   public Request build() {
     try {
       return new Request(version, method, uri, headers, body);
-    } catch (NoSuchElementException e) {
+    } catch (NoSuchElementException|NullPointerException e) {
       throw new IllegalArgumentException(e);
     }
   }

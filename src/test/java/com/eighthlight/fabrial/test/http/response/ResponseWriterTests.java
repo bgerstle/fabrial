@@ -13,9 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Optional;
 
-import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.*;
 import static com.eighthlight.fabrial.test.gen.ArbitraryStrings.alphanumeric;
 import static org.hamcrest.CoreMatchers.is;
@@ -56,27 +54,25 @@ public class ResponseWriterTests {
   }
 
   @Test
-  void responseWithoutHeadersOrBody() throws IOException {
+  void responseWithoutHeadersOrBody() throws Exception {
     var os = new ByteArrayOutputStream();
     var response = new ResponseBuilder()
         .withStatusCode(200)
         .withVersion(HttpVersion.ONE_ONE)
         .build();
     new ResponseWriter(os).writeResponse(response);
-    var responseLines = os.toString().split(CRLF);
-    assertThat(responseLines.length, is(1));
-    assertThat(responseLines[0],
-               is("HTTP/"
-                  + response.version
-                  + " "
-                  + response.statusCode
-                  + " "
-                  + Optional.ofNullable(response.reason).orElse("")));
+    var serializedResponseBytes = os.toByteArray();
+    var is = new ByteArrayInputStream(serializedResponseBytes);
+    var parsedResponse = new ResponseReader(is).read();
+    assertThat(parsedResponse.isPresent(), is(true));
+    assertThat(parsedResponse.get(), is(response));
+    assertThat(parsedResponse.get().body.readAllBytes(), is(new byte[0]));
     os.close();
+    is.close();
   }
 
   @Test
-  void responseWithHeadersWithoutBody() throws IOException {
+  void responseWithHeadersWithoutBody() throws Exception {
     var os = new ByteArrayOutputStream();
     var response = new ResponseBuilder()
         .withStatusCode(200)
@@ -84,18 +80,14 @@ public class ResponseWriterTests {
         .withHeader("Content-Length", "0")
         .build();
     new ResponseWriter(os).writeResponse(response);
-    var responseLines = os.toString().split(CRLF);
-    assertThat(responseLines.length, is(2));
-    assertThat(responseLines[0],
-               is("HTTP/"
-                  + response.version
-                  + " "
-                  + response.statusCode
-                  + " "
-                  + Optional.ofNullable(response.reason).orElse("")));
-    assertThat(responseLines[1],
-               is("Content-Length: 0"));
+    var serializedResponseBytes = os.toByteArray();
+    var is = new ByteArrayInputStream(serializedResponseBytes);
+    var parsedResponse = new ResponseReader(is).read();
+    assertThat(parsedResponse.isPresent(), is(true));
+    assertThat(parsedResponse.get(), is(response));
+    assertThat(parsedResponse.get().body.readAllBytes(), is(new byte[0]));
     os.close();
+    is.close();
   }
 
   @Test
