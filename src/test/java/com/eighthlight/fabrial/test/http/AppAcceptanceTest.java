@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test.server;
+package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;

@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test.server;
+package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.server.AsyncServerSocketController;
 import com.eighthlight.fabrial.server.ServerConfig;
