@@ -54,25 +54,32 @@ public class AccessLogIntegrationTest {
             ServerConfig.DEFAULT_READ_TIMEOUT,
             ServerConfig.DEFAULT_DIRECTORY_PATH
         ))) {
+
+      serverFixture.server.start();
+
       var methods = List.of(Method.GET, Method.PUT, Method.POST);
       methods
           .stream()
           .map(m -> new Request(HttpVersion.ONE_ONE, m, Result.attempt(() -> new URI("/")).orElseAssert()))
           .forEach(r -> {
-            try (var client = new HttpClient(new TcpClient(new InetSocketAddress(serverFixture.server.config.port)))) {
-              client.send(r);
+            try (var client = new TcpClient(new InetSocketAddress(serverFixture.server.config.port))) {
+              client.connect();
+              new HttpClient(client).send(r);
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
           });
 
-      try (var client = new HttpClient(new TcpClient(new InetSocketAddress(serverFixture.server.config.port)))) {
+      try (var client = new TcpClient(new InetSocketAddress(serverFixture.server.config.port))) {
+        client.connect();
         var response =
-            client.send(new RequestBuilder()
-                            .withVersion(HttpVersion.ONE_ONE)
-                            .withUriString("/logs")
-                            .build())
-                  .get();
+            new HttpClient(client)
+                .send(new RequestBuilder()
+                          .withVersion(HttpVersion.ONE_ONE)
+                          .withMethod(Method.GET)
+                          .withUriString("/logs")
+                          .build())
+                .get();
         assertThat(response.statusCode, equalTo(200));
         var bodyReader = new BufferedReader(new InputStreamReader(response.body));
         methods.forEach(m -> {

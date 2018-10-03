@@ -1,5 +1,7 @@
 package com.eighthlight.fabrial.server;
 
+import com.eighthlight.fabrial.http.AccessLogResponder;
+import com.eighthlight.fabrial.http.AccessLogger;
 import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.file.LocalFilesystemController;
@@ -28,12 +30,16 @@ public class TcpServer implements Closeable {
   private final SocketController socketController;
 
   public TcpServer(ServerConfig config) {
+    this(config, new AccessLogger());
+  }
+
+  public TcpServer(ServerConfig config, AccessLogger accessLogger) {
     this(config,
          new HttpConnectionHandler(
              List.of(
-                 new FileHttpResponder(
-                     new LocalFilesystemController(config.directoryPath)
-                 )), null),
+                 new AccessLogResponder(accessLogger),
+                 new FileHttpResponder(new LocalFilesystemController(config.directoryPath))),
+             accessLogger::log),
          new AsyncServerSocketController(config.readTimeout));
   }
 
