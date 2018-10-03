@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public abstract class AbstractMessageBuilder<T extends AbstractMessageBuilder<T, B>, B>
-    implements HttpMessageBuilder<T, B> {
+public abstract class AbstractMessageBuilder<Self extends AbstractMessageBuilder<Self, MessageT>, MessageT>
+    implements HttpMessageBuilder<Self, MessageT> {
   protected String version;
   protected InputStream body;
   protected Map<String, String> headers;
@@ -16,28 +16,34 @@ public abstract class AbstractMessageBuilder<T extends AbstractMessageBuilder<T,
   }
 
   // Set version from a string with the format "HTTP/X.Y"
-  public T withPrefixedVersion(String prefixedVersion) {
+  public Self withPrefixedVersion(String prefixedVersion) {
     String[] versionComponents = prefixedVersion.split("/");
     if (versionComponents.length < 2) {
       throw new IllegalArgumentException("Expected 'HTTP/X.Y', got: " + prefixedVersion);
     }
-    return (T)withVersion(versionComponents[1]);
+    return withVersion(versionComponents[1]);
   }
 
-  public T withVersion(String version) {
+  public Self withVersion(String version) {
     this.version = version;
-    return (T)this;
+    @SuppressWarnings("unchecked")
+    Self result = (Self)this;
+    return result;
   }
 
   @Override
-  public T withHeaders(Map<String, String> headers) {
+  public Self withHeaders(Map<String, String> headers) {
     this.headers = Optional.ofNullable(headers).map(HashMap::new).orElse(null);
-    return (T)this;
+    @SuppressWarnings("unchecked")
+    Self result = (Self)this;
+    return result;
   }
 
   @Override
-  public T withBody(InputStream body) {
+  public Self withBody(InputStream body) {
     this.body = body;
-    return (T)this;
+    @SuppressWarnings("unchecked")
+    Self result = (Self)this;
+    return result;
   }
 }

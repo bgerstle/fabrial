@@ -3,8 +3,13 @@ package com.eighthlight.fabrial.http.message;
 import java.io.InputStream;
 import java.util.Map;
 
-public interface HttpMessageBuilder<T extends HttpMessageBuilder<T, B>, B> {
-  T withHeaders(Map<String, String>headers);
-  T withBody(InputStream body);
-  B build();
+/**
+ * Common interface for building HTTP messages.
+ * @param <Self> The type of builder (should always be self).
+ * @param <MessageT>The type of message the builder constructs.
+ */
+public interface HttpMessageBuilder<Self extends HttpMessageBuilder<Self, MessageT>, MessageT> {
+  Self withHeaders(Map<String, String>headers);
+  Self withBody(InputStream body);
+  MessageT build();
 }

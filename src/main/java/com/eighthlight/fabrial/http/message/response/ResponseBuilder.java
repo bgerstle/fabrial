@@ -3,8 +3,6 @@ package com.eighthlight.fabrial.http.message.response;
 import com.eighthlight.fabrial.http.message.AbstractMessageBuilder;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Map;
 
 /**
  * Builder object for @link Response instances.
@@ -33,11 +31,6 @@ public class ResponseBuilder extends AbstractMessageBuilder<ResponseBuilder, Res
     return this;
   }
 
-  @Override
-  public ResponseBuilder withHeaders(Map<String, String> headers) {
-    return (ResponseBuilder)super.withHeaders(headers);
-  }
-
   public ResponseBuilder withHeader(String name, String value) {
     headers.put(name, value);
     return this;
@@ -46,11 +39,6 @@ public class ResponseBuilder extends AbstractMessageBuilder<ResponseBuilder, Res
   public ResponseBuilder withBodyFromString(String bodyStr) {
     this.body = new ByteArrayInputStream(bodyStr.getBytes());
     return this;
-  }
-
-  @Override
-  public ResponseBuilder withBody(InputStream is) {
-    return (ResponseBuilder)super.withBody(is);
   }
 
   @Override
