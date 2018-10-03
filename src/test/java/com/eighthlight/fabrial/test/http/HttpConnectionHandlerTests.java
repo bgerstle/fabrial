@@ -15,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -68,7 +69,7 @@ public class HttpConnectionHandlerTests {
                 new ResponseReader(new ByteArrayInputStream(responseBaos.toByteArray())).read().get();
             assertThat(actualResponse, equalTo(expectedResponse));
 
-//            assertThat(delegatedRequest.get(10, TimeUnit.MILLISECONDS), equalTo(r));
+            assertThat(delegatedRequest.get(10, TimeUnit.MILLISECONDS), equalTo(r));
           }).orElseAssert();
         });
   }

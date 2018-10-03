@@ -56,6 +56,7 @@ public class HttpConnectionHandler implements ConnectionHandler {
     }
 
     logger.info("Handling request {}", StructuredArguments.kv("request", request));
+    requestDelgate.accept(request);
     Response response = responseTo(request);
     logger.info("Writing response {}", StructuredArguments.kv("response", response));
     new ResponseWriter(os).writeResponse(response);
