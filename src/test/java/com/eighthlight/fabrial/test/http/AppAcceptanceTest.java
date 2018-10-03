@@ -2,24 +2,21 @@ package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
-import com.eighthlight.fabrial.http.message.request.Request;
 import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.test.fixtures.AppProcessFixture;
 import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
 import com.eighthlight.fabrial.test.fixtures.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
 import com.eighthlight.fabrial.test.http.client.HttpClient;
-import com.eighthlight.fabrial.test.http.request.RequestWriter;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.file.Path;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -30,37 +27,6 @@ import static org.hamcrest.core.AllOf.allOf;
 
 @Tag("acceptance")
 public class AppAcceptanceTest {
-  private static final Logger logger = LoggerFactory.getLogger(AppAcceptanceTest.class);
-
-  private static List<String> sendRequest(Request request, int port) throws IOException {
-    try (TcpClientFixture clientFixture = new TcpClientFixture(port)) {
-      clientFixture.client.connect(1000, 3, 1000);
-      OutputStream os = clientFixture.client.getOutputStream();
-      InputStream is = clientFixture.client.getInputStream();
-      new RequestWriter(os).writeRequest(request);
-      return Arrays.asList(new BufferedReader(new InputStreamReader((is))).lines().toArray(String[]::new));
-    }
-  }
-
-  private static List<String> responseToRequestForFileInDir(Method method,
-                                                            Path dir,
-                                                            Path path,
-                                                            int port) {
-    String relPathStr =
-        Paths.get("/",
-                  dir.toAbsolutePath().relativize(path).toString())
-             .toString();
-    return Result.attempt(() -> {
-      // TEMP: need to recreate client for each file until multiple requests per conn is supported
-      return sendRequest(new RequestBuilder()
-                             .withUriString(relPathStr)
-                             .withVersion(HttpVersion.ONE_ONE)
-                             .withMethod(method)
-                             .build(),
-                         port);
-    }).orElseAssert();
-  }
-
   @Test
   void getExistingFile() throws IOException {
     int testPort = 8082;
