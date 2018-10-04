@@ -17,12 +17,12 @@ import static org.quicktheories.QuickTheory.qt;
 
 public class BasicAuthDecodeTest {
   @Test
-  void fromAuthHeaderEmptyIfFieldMissing() throws Exception {
+  void decodeEmptyIfFieldMissing() throws Exception {
     assertThat(BasicAuth.decode(Map.of()), equalTo(Optional.empty()));
   }
 
   @Test
-  void fromAuthHeaderThrowsIfBasicPrefixMissing() {
+  void decodeThrowsIfBasicPrefixMissing() {
     var authHeader = Map.of(
         "Authorization",
         "user:pass");
@@ -34,7 +34,7 @@ public class BasicAuthDecodeTest {
   }
 
   @Test
-  void fromAuthHeaderThrowsIfCredentialsEmpty() {
+  void decodeThrowsIfCredentialsEmpty() {
     var authHeader = Map.of(
         "Authorization",
         "Basic ");
@@ -46,7 +46,7 @@ public class BasicAuthDecodeTest {
   }
 
   @Test
-  void fromAuthHeaderThrowsIfCredentialsJustWhitespace() {
+  void decodeThrowsIfCredentialsJustWhitespace() {
     var authHeader = Map.of(
         "Authorization",
         "Basic    ");
@@ -59,7 +59,7 @@ public class BasicAuthDecodeTest {
   }
 
   @Test
-  void fromAuthHeaderThrowsIfCredentialsMissingUser() {
+  void decodeThrowsIfCredentialsMissingUser() {
     var authHeader = Map.of(
         "Authorization",
         "Basic " + Base64.getEncoder().encodeToString(":password".getBytes()));
@@ -74,7 +74,7 @@ public class BasicAuthDecodeTest {
   }
 
   @Test
-  void fromAuthHeaderThrowsIfCredentialsMissingPassword() {
+  void decodeThrowsIfCredentialsMissingPassword() {
     var authHeader = Map.of(
         "Authorization",
         "Basic " + Base64.getEncoder().encodeToString("user:".getBytes()));
@@ -89,7 +89,7 @@ public class BasicAuthDecodeTest {
   }
 
   @Test
-  void fromAuthHeaderThrowsIfCredentialsMissingColon() {
+  void decodeThrowsIfCredentialsMissingColon() {
     var authHeader = Map.of(
         "Authorization",
         "Basic " + Base64.getEncoder().encodeToString("userpassword".getBytes()));
@@ -104,7 +104,7 @@ public class BasicAuthDecodeTest {
   }
 
   @Test
-  void fromAuthHeaderThrowsIfDecodingFails() {
+  void decodeThrowsIfDecodingFails() {
     // '!' is an illegal base64 character
     var authHeader = Map.of("Authorization", "Basic " + "!!!!!");
     var result = Result.attempt(() -> BasicAuth.decode(authHeader));
@@ -119,7 +119,7 @@ public class BasicAuthDecodeTest {
   }
 
   @Test
-  void fromAuthHeaderAcceptsBase64EncodedUsernameAndPassword() {
+  void decodeAcceptsBase64EncodedUsernameAndPassword() {
     qt().forAll(alphanumeric(32),
                 alphanumeric(32))
         .checkAssert((user, pass) -> {
