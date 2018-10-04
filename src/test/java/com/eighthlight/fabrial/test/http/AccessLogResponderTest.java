@@ -12,15 +12,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.requests;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
@@ -40,6 +39,26 @@ public class AccessLogResponderTest {
 
     assertThat(response.statusCode, equalTo(401));
     assertThat(response.headers, hasEntry("WWW-Authenticate", "Basic realm=\"default\""));
+    assertThat(response.body, is(nullValue()));
+  }
+
+  @Test
+  void respondsWith401ToGetWithInvalidCredentials() {
+    var logger = new AccessLogger();
+    var responder = new AccessLogResponder(logger);
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.GET)
+            .withHeaders(Map.of(
+                "Authorization", "Basic abcdef"
+            ))
+            .withUriString("/logs")
+            .build());
+
+    assertThat(response.statusCode, equalTo(401));
+    assertThat(response.headers, not(hasEntry("WWW-Authenticate", "Basic realm=\"default\"")));
     assertThat(response.body, is(nullValue()));
   }
 

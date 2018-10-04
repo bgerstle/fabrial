@@ -91,7 +91,11 @@ public class Result<V, E extends Throwable> {
   }
 
   public V orElseThrow() throws E {
-    return Optional.ofNullable(value).orElseThrow(() -> error);
+    return orElseThrowAs(e -> e);
+  }
+
+  public <E2 extends Throwable> V orElseThrowAs(Function<E, E2> emapper) throws E2 {
+    return Optional.ofNullable(value).orElseThrow(() -> emapper.apply(error));
   }
 
   public V orElseAssert() {

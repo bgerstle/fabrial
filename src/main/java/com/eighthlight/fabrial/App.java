@@ -1,5 +1,6 @@
 package com.eighthlight.fabrial;
 
+import com.eighthlight.fabrial.server.AdminCredentials;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -21,7 +22,7 @@ public class App {
   public static Optional<ServerConfig> parseConfig(String[] args) {
     // TODO run project name
     ArgumentParser parser = ArgumentParsers.newFor("fabrial").build()
-        .description("Minimal HTTP file server.");
+                                           .description("Minimal HTTP file server.");
 
     parser.addArgument("-p")
           .type(Integer.class)
@@ -54,7 +55,8 @@ public class App {
 
       return Optional.of(new ServerConfig(port,
                                           ServerConfig.DEFAULT_READ_TIMEOUT,
-                                          directoryPath));
+                                          directoryPath,
+                                          AdminCredentials.fromEnvironment(System.getenv())));
     } catch (ArgumentParserException e) {
       parser.handleError(e);
       return Optional.empty();

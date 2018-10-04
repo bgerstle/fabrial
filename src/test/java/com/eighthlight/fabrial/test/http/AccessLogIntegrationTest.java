@@ -29,8 +29,7 @@ public class AccessLogIntegrationTest {
         var serverFixture = new TcpServerFixture(new ServerConfig(
             ServerConfig.DEFAULT_PORT,
             ServerConfig.DEFAULT_READ_TIMEOUT,
-            ServerConfig.DEFAULT_DIRECTORY_PATH
-        ));
+            ServerConfig.DEFAULT_DIRECTORY_PATH));
         var clientFixture = new TcpClientFixture(ServerConfig.DEFAULT_PORT)) {
       serverFixture.server.start();
       clientFixture.client.connect();
@@ -52,8 +51,7 @@ public class AccessLogIntegrationTest {
         var serverFixture = new TcpServerFixture(new ServerConfig(
             ServerConfig.DEFAULT_PORT,
             ServerConfig.DEFAULT_READ_TIMEOUT,
-            ServerConfig.DEFAULT_DIRECTORY_PATH
-        ))) {
+            ServerConfig.DEFAULT_DIRECTORY_PATH))) {
 
       serverFixture.server.start();
 
