@@ -99,7 +99,7 @@ public class Result<V, E extends Throwable> {
   }
 
   public V orElseAssert() {
-    return Optional.ofNullable(value).orElseThrow(() -> new AssertionError(error));
+    return orElseThrowAs(AssertionError::new);
   }
 
   public Optional<V> toOptional() {
