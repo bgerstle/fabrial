@@ -9,7 +9,7 @@ import com.eighthlight.fabrial.test.http.request.RequestWriter;
 import java.io.IOException;
 import java.util.Optional;
 
-public class HttpClient {
+public class HttpClient implements AutoCloseable {
   private final TcpClient client;
 
   public HttpClient(TcpClient client) {
@@ -19,5 +19,10 @@ public class HttpClient {
   public Optional<Response> send(Request request) throws IOException, MessageReaderException {
     new RequestWriter(client.getOutputStream()).writeRequest(request);
     return new ResponseReader(client.getInputStream()).read();
+  }
+
+  @Override
+  public void close() throws Exception {
+    client.close();
   }
 }

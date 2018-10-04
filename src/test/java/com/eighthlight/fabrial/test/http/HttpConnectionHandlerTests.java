@@ -3,74 +3,32 @@ package com.eighthlight.fabrial.test.http;
 import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import com.eighthlight.fabrial.http.HttpResponder;
 import com.eighthlight.fabrial.http.HttpVersion;
-import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.message.request.Request;
+import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
+import com.eighthlight.fabrial.test.http.client.ResponseReader;
+import com.eighthlight.fabrial.test.http.request.RequestWriter;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 
-import java.net.URI;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
+import static org.quicktheories.generators.Generate.constant;
 import static org.quicktheories.generators.SourceDSL.lists;
 
 public class HttpConnectionHandlerTests {
-  public static class MockResponder implements HttpResponder {
-    public final URI targetURI;
-    public final Method targetMethod;
-    public final Response response;
-
-    public MockResponder(URI targetURI, Method targetMethod, Response response) {
-      this.targetURI = targetURI;
-      this.targetMethod = targetMethod;
-      this.response = response;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-      MockResponder that = (MockResponder) o;
-      // intentionally excluding response
-      return Objects.equals(targetURI, that.targetURI) &&
-             Objects.equals(targetMethod, that.targetMethod);
-    }
-
-    @Override
-    public String toString() {
-      return "MockResponder{" +
-             "targetURI=" + targetURI +
-             ", targetMethod=" + targetMethod +
-             ", response=" + response +
-             '}';
-    }
-
-    @Override
-    public int hashCode() {
-      // intentionally excluding response
-      return Objects.hash(targetURI, targetMethod);
-    }
-
-    @Override
-    public boolean matches(Request request) {
-      return request.uri.equals(targetURI) && request.method.equals(targetMethod);
-    }
-
-    @Override
-    public Response getResponse(Request request) {
-      return response;
-    }
-  }
 
   public static Gen<MockResponder> mockResponders() {
     return methods().zip(requestTargets(), statusCodes(), (method, uri, statusCode) ->
@@ -83,32 +41,66 @@ public class HttpConnectionHandlerTests {
 
   public static Gen<List<MockResponder>> mockResponderLists() {
     return lists().of(mockResponders())
-                  .ofSizeBetween(1, 10);
+                  .ofSizeBetween(1, 10)
+                  .map(rs -> rs.stream().distinct().collect(Collectors.toList()));
+  }
+
+  @Test
+  void passesRequestToHandler() {
+    qt().forAll(requests(methods(), requestTargets(), constant(HttpVersion.ONE_ONE)))
+        .checkAssert(r -> {
+          Result.attempt(() -> {
+            var baos = new ByteArrayOutputStream();
+            new RequestWriter(baos).writeRequest(r);
+            var serializdRequestStream = new ByteArrayInputStream(baos.toByteArray());
+
+
+            var expectedResponse = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE)
+                                                        .withStatusCode(200)
+                                                        .build();
+
+            var mockResponder = new MockResponder(r.uri, r.method, expectedResponse);
+
+            var delegatedRequest = new CompletableFuture<Request>();
+
+            HttpConnectionHandler handler =
+                new HttpConnectionHandler(List.of(mockResponder), delegatedRequest::complete);
+
+            var responseBaos = new ByteArrayOutputStream();
+            handler.handle(serializdRequestStream, responseBaos);
+
+            var actualResponse =
+                new ResponseReader(new ByteArrayInputStream(responseBaos.toByteArray())).read().get();
+            assertThat(actualResponse, equalTo(expectedResponse));
+
+            assertThat(delegatedRequest.get(10, TimeUnit.MILLISECONDS), equalTo(r));
+          }).orElseAssert();
+        });
   }
 
   @Test
   void respondsWithMatchingResponder() {
-    qt().forAll(mockResponderLists().map(Set::copyOf))
+    qt().forAll(mockResponderLists())
         .checkAssert(rs -> {
-          HttpConnectionHandler handler = new HttpConnectionHandler(rs);
-          rs.forEach(r ->
-                         assertThat(
-                             handler.responseTo(new Request(HttpVersion.ONE_ONE,
-                                                            r.targetMethod,
-                                                            r.targetURI)),
-                             equalTo(r.response)
-                         ));
+          HttpConnectionHandler handler = new HttpConnectionHandler(rs, null);
+          rs.forEach(r -> {
+            assertThat(
+                handler.responseTo(new Request(HttpVersion.ONE_ONE,
+                                               r.targetMethod,
+                                               r.targetURI)),
+                equalTo(r.response));
+          });
         });
   }
 
   @Test
   void responds404WhenNoResponderFound() {
-    qt().forAll(mockResponderLists().map(Set::copyOf), http11Requests())
+    qt().forAll(mockResponderLists(), http11Requests())
         .assuming((responders, req) ->
                       responders.stream().noneMatch(r -> r.matches(req))
         )
         .checkAssert((rs, req) -> {
-          HttpConnectionHandler handler = new HttpConnectionHandler(rs);
+          HttpConnectionHandler handler = new HttpConnectionHandler(rs, null);
           assertThat(handler.responseTo(req),
                      equalTo(new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(404).build()));
         });
@@ -116,6 +108,36 @@ public class HttpConnectionHandlerTests {
 
   @Test
   void throwsWhenRespondersEmpty() {
-    assertThrows(AssertionError.class, () -> new HttpConnectionHandler(Set.of()));
+    assertThrows(AssertionError.class, () -> new HttpConnectionHandler(List.of(), null));
+  }
+
+  @Test
+  void respondsToFirstMatchingResponder() {
+    qt().forAll(mockResponders())
+        .checkAssert(mockResponder -> {
+          var badResponder = new HttpResponder() {
+            @Override
+            public boolean matches(Request request) {
+              return mockResponder.matches(request);
+            }
+
+            @Override
+            public Response getResponse(Request request) {
+              throw new AssertionError("Should not be called");
+            }
+          };
+
+          var handler = new HttpConnectionHandler(List.of(
+              mockResponder,
+              badResponder
+          ), null);
+
+          assertThat(handler.responseTo(new RequestBuilder()
+                                            .withVersion(HttpVersion.ONE_ONE)
+                                            .withMethod(mockResponder.targetMethod)
+                                            .withUri(mockResponder.targetURI)
+                                            .build()),
+                     equalTo(mockResponder.response));
+        });
   }
 }
