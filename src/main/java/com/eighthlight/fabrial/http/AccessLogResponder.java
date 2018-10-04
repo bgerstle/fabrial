@@ -11,6 +11,15 @@ import java.util.stream.Collectors;
 public class AccessLogResponder implements HttpResponder {
   private final AccessLogger accessLogger;
 
+  private static final String allowedMethods = String.join(",",
+                                                           Method.GET.name(),
+                                                           Method.HEAD.name(),
+                                                           Method.OPTIONS.name());
+
+  private static String formatRequestLog(RequestLog log) {
+    return String.join(" ", log.method.name(), log.uri.getPath(), log.version);
+  }
+
   public AccessLogResponder(AccessLogger accessLogger) {
     this.accessLogger = accessLogger;
   }
@@ -29,7 +38,7 @@ public class AccessLogResponder implements HttpResponder {
     } else if (request.method.equals(Method.OPTIONS)) {
       return new ResponseBuilder().withVersion(request.version)
                                   .withStatusCode(200)
-                                  .withHeader("Allow", String.join(",", Method.GET.name(), Method.HEAD.name(), Method.OPTIONS.name()))
+                                  .withHeader("Allow", allowedMethods)
                                   .build();
     } else if (!request.method.equals(Method.GET)) {
       return new ResponseBuilder()
@@ -42,12 +51,10 @@ public class AccessLogResponder implements HttpResponder {
         accessLogger
             .loggedRequests()
             .stream()
-            .map(r -> String.join(" ",
-                                  r.method.name(),
-                                  r.uri.getPath().toString(),
-                                  r.version))
+            .map(AccessLogResponder::formatRequestLog)
             .collect(Collectors.joining("\n"))
             .getBytes();
+
     return new ResponseBuilder()
         .withVersion(request.version)
         .withStatusCode(200)
