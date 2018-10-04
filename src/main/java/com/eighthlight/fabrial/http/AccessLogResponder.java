@@ -56,13 +56,7 @@ public class AccessLogResponder implements HttpResponder {
   }
 
   private Response getLogs(Request request) {
-    if (!request.headers.containsKey("Authorization")) {
-      return new ResponseBuilder()
-          .withVersion(HttpVersion.ONE_ONE)
-          .withStatusCode(401)
-          .withHeader("WWW-Authenticate", "Basic realm=\"default\"")
-          .build();
-    }
+
 
     var body =
         accessLogger
