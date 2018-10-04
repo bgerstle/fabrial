@@ -6,6 +6,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * TEMP: This is naive in that it's unbounded and memory-based, meaning that after enough requests
+ * it will cause the server to crash due to OOM. To be "production ready", this would at the very least
+ * read/write to a file instead with the `loggedRequests` method being replaced by a sort of `tail`
+ * method that returns the last N logs.
+ */
 public class AccessLogger {
   private final List<RequestLog> logs;
 
