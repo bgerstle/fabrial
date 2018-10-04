@@ -37,7 +37,7 @@ public class TcpServer implements Closeable {
     this(config,
          new HttpConnectionHandler(
              List.of(
-                 new AccessLogResponder(accessLogger, AdminCredentials.fromEnvironment(System.getenv())),
+                 new AccessLogResponder(accessLogger, config.adminCredential),
                  new FileHttpResponder(new LocalFilesystemController(config.directoryPath))),
              accessLogger::log),
          new AsyncServerSocketController(config.readTimeout));
