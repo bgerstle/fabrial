@@ -10,7 +10,7 @@ public class Credential {
     if (username == null || username.isEmpty()) {
       throw new IllegalArgumentException("Credential username must be non-empty string");
     }
-    if (password== null || password.isEmpty()) {
+    if (password == null || password.isEmpty()) {
       throw new IllegalArgumentException("Credential password must be non-empty string");
     }
     this.username = username;
