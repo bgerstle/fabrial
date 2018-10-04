@@ -10,7 +10,7 @@ import static com.eighthlight.fabrial.server.AdminCredentials.fromEnvironment;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class AdminCredentialsFromEnvTest {
+public class CredentialsFromEnvTest {
   @Test
   void buildableFromEnvVars() {
     var credsMap = Map.of("ADMIN_USERNAME", "user", "ADMIN_PASSWORD", "password");

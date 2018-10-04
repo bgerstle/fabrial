@@ -2,16 +2,16 @@ package com.eighthlight.fabrial.server;
 
 import java.util.Objects;
 
-public class AdminCredential {
+public class Credential {
   public final String username;
   public final String password;
 
-  public AdminCredential(String username, String password) {
+  public Credential(String username, String password) {
     if (username == null || username.isEmpty()) {
-      throw new IllegalArgumentException("AdminCredential username must be non-empty string");
+      throw new IllegalArgumentException("Credential username must be non-empty string");
     }
     if (password== null || password.isEmpty()) {
-      throw new IllegalArgumentException("AdminCredential password must be non-empty string");
+      throw new IllegalArgumentException("Credential password must be non-empty string");
     }
     this.username = username;
     this.password = password;
@@ -23,7 +23,7 @@ public class AdminCredential {
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
-    AdminCredential that = (AdminCredential) o;
+    Credential that = (Credential) o;
     return Objects.equals(username, that.username) &&
            Objects.equals(password, that.password);
   }
@@ -35,6 +35,6 @@ public class AdminCredential {
 
   @Override
   public String toString() {
-    return "AdminCredential{*}";
+    return "Credential{*}";
   }
 }

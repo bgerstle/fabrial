@@ -1,6 +1,8 @@
 package com.eighthlight.fabrial.test.server;
 
-import com.eighthlight.fabrial.server.AuthorizationParsingException;
+import com.eighthlight.fabrial.http.auth.AuthorizationParsingException;
+import com.eighthlight.fabrial.http.auth.BasicAuth;
+import com.eighthlight.fabrial.server.Credential;
 import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
@@ -8,16 +10,15 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.eighthlight.fabrial.server.AdminCredentials.fromRequestHeaders;
 import static com.eighthlight.fabrial.test.gen.ArbitraryStrings.alphanumeric;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.quicktheories.QuickTheory.qt;
 
-public class AdminCredentialsFromHeaderTest {
+public class BasicAuthDecodeTest {
   @Test
   void fromAuthHeaderEmptyIfFieldMissing() throws Exception {
-    assertThat(fromRequestHeaders(Map.of()), equalTo(Optional.empty()));
+    assertThat(BasicAuth.decode(Map.of()), equalTo(Optional.empty()));
   }
 
   @Test
@@ -26,7 +27,7 @@ public class AdminCredentialsFromHeaderTest {
         "Authorization",
         "user:pass");
     AuthorizationParsingException result =
-        (AuthorizationParsingException) Result.attempt(() -> fromRequestHeaders(authHeader))
+        (AuthorizationParsingException) Result.attempt(() -> BasicAuth.decode(authHeader))
                                               .getEither();
     assertThat(result, instanceOf(AuthorizationParsingException.class));
     assertThat(result.getMessage(), equalTo(AuthorizationParsingException.failedToMatch().getMessage()));
@@ -38,7 +39,7 @@ public class AdminCredentialsFromHeaderTest {
         "Authorization",
         "Basic ");
     AuthorizationParsingException result =
-        (AuthorizationParsingException) Result.attempt(() -> fromRequestHeaders(authHeader))
+        (AuthorizationParsingException) Result.attempt(() -> BasicAuth.decode(authHeader))
                                               .getEither();
     assertThat(result, instanceOf(AuthorizationParsingException.class));
     assertThat(result.getMessage(), equalTo(AuthorizationParsingException.failedToMatch().getMessage()));
@@ -49,7 +50,7 @@ public class AdminCredentialsFromHeaderTest {
     var authHeader = Map.of(
         "Authorization",
         "Basic    ");
-    var result = Result.attempt(() -> fromRequestHeaders(authHeader));
+    var result = Result.attempt(() -> BasicAuth.decode(authHeader));
     assertThat(result.getError().isPresent(), is(true));
     Exception e = result.getError().get();
     assertThat(e, instanceOf(AuthorizationParsingException.class));
@@ -62,7 +63,7 @@ public class AdminCredentialsFromHeaderTest {
     var authHeader = Map.of(
         "Authorization",
         "Basic " + Base64.getEncoder().encodeToString(":password".getBytes()));
-    var result = Result.attempt(() -> fromRequestHeaders(authHeader));
+    var result = Result.attempt(() -> BasicAuth.decode(authHeader));
     assertThat(result.getError().isPresent(), is(true));
     Exception e = result.getError().get();
     assertThat(e, instanceOf(AuthorizationParsingException.class));
@@ -77,7 +78,7 @@ public class AdminCredentialsFromHeaderTest {
     var authHeader = Map.of(
         "Authorization",
         "Basic " + Base64.getEncoder().encodeToString("user:".getBytes()));
-    var result = Result.attempt(() -> fromRequestHeaders(authHeader));
+    var result = Result.attempt(() -> BasicAuth.decode(authHeader));
     assertThat(result.getError().isPresent(), is(true));
     Exception e = result.getError().get();
     assertThat(e, instanceOf(AuthorizationParsingException.class));
@@ -93,7 +94,7 @@ public class AdminCredentialsFromHeaderTest {
         "Authorization",
         "Basic " + Base64.getEncoder().encodeToString("userpassword".getBytes()));
 
-    var result = Result.attempt(() -> fromRequestHeaders(authHeader));
+    var result = Result.attempt(() -> BasicAuth.decode(authHeader));
     assertThat(result.getError().isPresent(), is(true));
     Exception e = result.getError().get();
     assertThat(e, instanceOf(AuthorizationParsingException.class));
@@ -106,7 +107,7 @@ public class AdminCredentialsFromHeaderTest {
   void fromAuthHeaderThrowsIfDecodingFails() {
     // '!' is an illegal base64 character
     var authHeader = Map.of("Authorization", "Basic " + "!!!!!");
-    var result = Result.attempt(() -> fromRequestHeaders(authHeader));
+    var result = Result.attempt(() -> BasicAuth.decode(authHeader));
     assertThat(result.getError().isPresent(), is(true));
     Exception e = result.getError().get();
     assertThat(e, instanceOf(AuthorizationParsingException.class));
@@ -122,16 +123,12 @@ public class AdminCredentialsFromHeaderTest {
     qt().forAll(alphanumeric(32),
                 alphanumeric(32))
         .checkAssert((user, pass) -> {
-          var userPass = user + ":" + pass;
-          var encodedStr = Base64.getEncoder().encodeToString(userPass.getBytes());
-          var authHeader = Map.of("Authorization", "Basic " + encodedStr);
-
-          var creds = Result.attempt(() -> fromRequestHeaders(authHeader))
-                            .orElseAssert();
-
-          assertThat(creds.isPresent(), equalTo(true));
-          assertThat(creds.get().username, equalTo(user));
-          assertThat(creds.get().password, equalTo(pass));
+          var expectedCredential = new Credential(user, pass);
+          var actualCredential =
+              Result.attempt(() -> BasicAuth.decode(BasicAuth.encode(expectedCredential)))
+                    .orElseAssert();
+          assertThat(actualCredential.isPresent(), equalTo(true));
+          assertThat(actualCredential, equalTo(expectedCredential));
         });
   }
 }

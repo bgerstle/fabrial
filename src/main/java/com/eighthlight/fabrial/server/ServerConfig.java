@@ -8,7 +8,7 @@ public class ServerConfig {
   public final int port;
   public final int readTimeout;
   public final Path directoryPath;
-  public final Optional<AdminCredential> adminCredentials;
+  public final Optional<Credential> adminCredentials;
 
   public static final int DEFAULT_PORT = 8080;
   public static final int DEFAULT_READ_TIMEOUT = 10000;
@@ -23,7 +23,7 @@ public class ServerConfig {
   public ServerConfig(int port,
                       int readTimeout,
                       Path directoryPath,
-                      Optional<AdminCredential> adminCredentials) {
+                      Optional<Credential> adminCredentials) {
     this.port = port;
     this.readTimeout = readTimeout;
     this.directoryPath = directoryPath;

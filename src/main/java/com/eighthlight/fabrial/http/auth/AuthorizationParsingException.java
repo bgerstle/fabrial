@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.server;
+package com.eighthlight.fabrial.http.auth;
 
 public class AuthorizationParsingException extends Exception {
   private AuthorizationParsingException() {
