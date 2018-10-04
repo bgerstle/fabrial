@@ -118,7 +118,7 @@ public class AccessLogResponderTest {
               new String(Result.attempt(response.body::readAllBytes).orElseAssert()).split("\n"));
           var expectedBodyLines =
               rs.stream()
-                .map(r -> String.join(" ",
+                .map(r -> String.format("%s %s HTTP/%s",
                                       r.method.name(),
                                       r.uri.getPath().toString(),
                                       r.version))

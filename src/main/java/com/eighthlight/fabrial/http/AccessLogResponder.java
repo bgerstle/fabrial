@@ -24,8 +24,8 @@ public class AccessLogResponder implements HttpResponder {
                                                            Method.HEAD.name(),
                                                            Method.OPTIONS.name());
 
-  private static String formatRequestLog(RequestLog log) {
-    return String.join(" ", log.method.name(), log.uri.getPath(), log.version);
+  public static String formatRequestLog(RequestLog log) {
+    return String.format("%s %s HTTP/%s", log.method.name(), log.uri.getPath(), log.version);
   }
 
   public AccessLogResponder(AccessLogger accessLogger, Optional<Credential> adminCredential) {
