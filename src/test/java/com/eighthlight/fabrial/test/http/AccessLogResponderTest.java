@@ -16,9 +16,11 @@ import java.util.stream.Collectors;
 
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.requests;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
@@ -38,7 +40,7 @@ public class AccessLogResponderTest {
 
     assertThat(response.statusCode, equalTo(401));
     assertThat(response.headers, hasEntry("WWW-Authenticate", "Basic realm=\"default\""));
-    assertThat(response.body.readAllBytes(), equalTo(new byte[0]));
+    assertThat(response.body, is(nullValue()));
   }
 
   @Test

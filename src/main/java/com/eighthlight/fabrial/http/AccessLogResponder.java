@@ -31,19 +31,36 @@ public class AccessLogResponder implements HttpResponder {
 
   @Override
   public Response getResponse(Request request) {
-    if (request.method.equals(Method.HEAD)) {
-      return new ResponseBuilder().withVersion(request.version)
-                                  .withStatusCode(200)
-                                  .build();
-    } else if (request.method.equals(Method.OPTIONS)) {
-      return new ResponseBuilder().withVersion(request.version)
-                                  .withStatusCode(200)
-                                  .withHeader("Allow", allowedMethods)
-                                  .build();
-    } else if (!request.method.equals(Method.GET)) {
+    switch (request.method) {
+      case HEAD: {
+        return new ResponseBuilder().withVersion(request.version)
+                                    .withStatusCode(200)
+                                    .build();
+      }
+      case OPTIONS: {
+        return new ResponseBuilder().withVersion(request.version)
+                                    .withStatusCode(200)
+                                    .withHeader("Allow", allowedMethods)
+                                    .build();
+      }
+      case GET: {
+        return getLogs(request);
+      }
+      default: {
+        return new ResponseBuilder()
+            .withVersion(request.version)
+            .withStatusCode(405)
+            .build();
+      }
+    }
+  }
+
+  private Response getLogs(Request request) {
+    if (!request.headers.containsKey("Authorization")) {
       return new ResponseBuilder()
-          .withVersion(request.version)
-          .withStatusCode(405)
+          .withVersion(HttpVersion.ONE_ONE)
+          .withStatusCode(401)
+          .withHeader("WWW-Authenticate", "Basic realm=\"default\"")
           .build();
     }
 
