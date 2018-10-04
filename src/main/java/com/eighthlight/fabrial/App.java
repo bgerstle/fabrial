@@ -1,6 +1,5 @@
 package com.eighthlight.fabrial;
 
-import com.eighthlight.fabrial.server.AdminCredentials;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -15,6 +14,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+
+import static com.eighthlight.fabrial.server.AdminCredentials.fromEnvironment;
 
 public class App {
   static final Logger logger = LoggerFactory.getLogger(App.class);
@@ -56,7 +57,7 @@ public class App {
       return Optional.of(new ServerConfig(port,
                                           ServerConfig.DEFAULT_READ_TIMEOUT,
                                           directoryPath,
-                                          AdminCredentials.fromEnvironment(System.getenv())));
+                                          fromEnvironment(System.getenv())));
     } catch (ArgumentParserException e) {
       parser.handleError(e);
       return Optional.empty();
