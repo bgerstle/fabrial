@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.eighthlight.fabrial.server.AdminCredentials.PASSWORD_ENV_VAR;
+import static com.eighthlight.fabrial.server.AdminCredentials.USER_ENV_VAR;
 import static com.eighthlight.fabrial.server.AdminCredentials.fromEnvironment;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -13,18 +15,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class CredentialsFromEnvTest {
   @Test
   void buildableFromEnvVars() {
-    var credsMap = Map.of("ADMIN_USER", "user", "ADMIN_PASSWORD", "password");
+    var credsMap = Map.of(USER_ENV_VAR, "user", PASSWORD_ENV_VAR, "password");
     var creds = fromEnvironment(credsMap);
     assertThat(creds.isPresent(), equalTo(true));
-    assertThat(creds.get().username, equalTo(credsMap.get("ADMIN_USERNAME")));
-    assertThat(creds.get().password, equalTo(credsMap.get("ADMIN_PASSWORD")));
+    assertThat(creds.get().username, equalTo(credsMap.get(USER_ENV_VAR)));
+    assertThat(creds.get().password, equalTo(credsMap.get(PASSWORD_ENV_VAR)));
   }
 
   @Test
   void fromEnvIsEmptyIfEitherVarIsMissing() {
     List.of(
-        Map.of("ADMIN_USERNAME", "user"),
-        Map.of("ADMIN_PASSWORD", "password")
+        Map.of(USER_ENV_VAR, "user"),
+        Map.of(PASSWORD_ENV_VAR, "password")
     ).forEach(credsMap -> {
       assertThat(fromEnvironment(credsMap), equalTo(Optional.empty()));
     });
