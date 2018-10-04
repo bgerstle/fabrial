@@ -19,10 +19,28 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.collection.IsMapContaining.hasEntry;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.lists;
 
 public class AccessLogResponderTest {
+  @Test
+  void respondsWith401ToGetWithoutCredentials() throws IOException {
+    var logger = new AccessLogger();
+    var responder = new AccessLogResponder(logger);
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.GET)
+            .withUriString("/logs")
+            .build());
+
+    assertThat(response.statusCode, equalTo(401));
+    assertThat(response.headers, hasEntry("WWW-Authenticate", "Basic realm=\"default\""));
+    assertThat(response.body.readAllBytes(), equalTo(new byte[0]));
+  }
+
   @Test
   void respondsWithEmptyBodyWhenLogIsEmpty() throws IOException {
     var logger = new AccessLogger();
