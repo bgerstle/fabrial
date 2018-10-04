@@ -128,7 +128,7 @@ public class BasicAuthDecodeTest {
               Result.attempt(() -> BasicAuth.decode(BasicAuth.encode(expectedCredential)))
                     .orElseAssert();
           assertThat(actualCredential.isPresent(), equalTo(true));
-          assertThat(actualCredential, equalTo(expectedCredential));
+          assertThat(actualCredential.get(), equalTo(expectedCredential));
         });
   }
 }

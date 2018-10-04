@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class CredentialsFromEnvTest {
   @Test
   void buildableFromEnvVars() {
-    var credsMap = Map.of("ADMIN_USERNAME", "user", "ADMIN_PASSWORD", "password");
+    var credsMap = Map.of("ADMIN_USER", "user", "ADMIN_PASSWORD", "password");
     var creds = fromEnvironment(credsMap);
     assertThat(creds.isPresent(), equalTo(true));
     assertThat(creds.get().username, equalTo(credsMap.get("ADMIN_USERNAME")));
