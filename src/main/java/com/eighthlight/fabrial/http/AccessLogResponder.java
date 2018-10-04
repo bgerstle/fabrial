@@ -22,12 +22,22 @@ public class AccessLogResponder implements HttpResponder {
 
   @Override
   public Response getResponse(Request request) {
-    if (!request.method.equals(Method.GET)) {
+    if (request.method.equals(Method.HEAD)) {
+      return new ResponseBuilder().withVersion(request.version)
+                                  .withStatusCode(200)
+                                  .build();
+    } else if (request.method.equals(Method.OPTIONS)) {
+      return new ResponseBuilder().withVersion(request.version)
+                                  .withStatusCode(200)
+                                  .withHeader("Allow", String.join(",", Method.GET.name(), Method.HEAD.name(), Method.OPTIONS.name()))
+                                  .build();
+    } else if (!request.method.equals(Method.GET)) {
       return new ResponseBuilder()
           .withVersion(request.version)
           .withStatusCode(405)
           .build();
     }
+
     var body =
         accessLogger
             .loggedRequests()
