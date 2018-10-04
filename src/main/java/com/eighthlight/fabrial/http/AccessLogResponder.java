@@ -3,13 +3,21 @@ package com.eighthlight.fabrial.http;
 import com.eighthlight.fabrial.http.message.request.Request;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
+import com.eighthlight.fabrial.server.BasicAuthResponder;
+import com.eighthlight.fabrial.server.Credential;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AccessLogResponder implements HttpResponder {
+  private static final Logger logger = LoggerFactory.getLogger(AccessLogResponder.class);
+
   private final AccessLogger accessLogger;
+  private final Optional<Credential> adminCredential;
 
   private static final String allowedMethods = String.join(",",
                                                            Method.GET.name(),
@@ -20,8 +28,12 @@ public class AccessLogResponder implements HttpResponder {
     return String.join(" ", log.method.name(), log.uri.getPath(), log.version);
   }
 
-  public AccessLogResponder(AccessLogger accessLogger) {
+  public AccessLogResponder(AccessLogger accessLogger, Optional<Credential> adminCredential) {
+    if (!adminCredential.isPresent()) {
+      logger.warn("Auth disabled for /logs endpoint");
+    }
     this.accessLogger = accessLogger;
+    this.adminCredential = adminCredential;
   }
 
   @Override
@@ -56,8 +68,16 @@ public class AccessLogResponder implements HttpResponder {
   }
 
   private Response getLogs(Request request) {
+    if (!adminCredential.isPresent()) {
+      return logsResponse(request);
+    }
+    return new BasicAuthResponder().withExpectedCredential(adminCredential.get())
+                                   .withAuthorizedResponder(this::logsResponse)
+                                   .check(request);
 
+  }
 
+  private Response logsResponse(Request request) {
     var body =
         accessLogger
             .loggedRequests()
