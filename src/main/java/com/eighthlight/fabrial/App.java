@@ -15,13 +15,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import static com.eighthlight.fabrial.server.AdminCredentials.fromEnvironment;
+
 public class App {
   static final Logger logger = LoggerFactory.getLogger(App.class);
 
   public static Optional<ServerConfig> parseConfig(String[] args) {
     // TODO run project name
     ArgumentParser parser = ArgumentParsers.newFor("fabrial").build()
-        .description("Minimal HTTP file server.");
+                                           .description("Minimal HTTP file server.");
 
     parser.addArgument("-p")
           .type(Integer.class)
@@ -54,7 +56,8 @@ public class App {
 
       return Optional.of(new ServerConfig(port,
                                           ServerConfig.DEFAULT_READ_TIMEOUT,
-                                          directoryPath));
+                                          directoryPath,
+                                          fromEnvironment(System.getenv())));
     } catch (ArgumentParserException e) {
       parser.handleError(e);
       return Optional.empty();
