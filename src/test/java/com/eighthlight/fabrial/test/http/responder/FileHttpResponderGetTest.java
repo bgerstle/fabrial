@@ -141,6 +141,6 @@ public class FileHttpResponderGetTest {
             .build());
     assertThat(response.statusCode, is(416));
     assertThat(response.reason, containsString("Last position cannot be less than the first"));
-    assertThat(response.headers, hasEntry("Content-Range", "*/" + child.data.length));
+    assertThat(response.headers, hasEntry("Content-Range", "bytes */" + child.data.length));
   }
 }
