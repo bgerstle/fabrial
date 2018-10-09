@@ -131,7 +131,7 @@ public class FileHttpResponder implements HttpResponder {
           } catch (HttpRequestByteRange.ParsingException e) {
             // return early with unsatisfiable range response
             return builder.withStatusCode(416)
-                          .withHeader("Content-Range", "*/" + sizeInt)
+                          .withHeader("Content-Range", "bytes */" + sizeInt)
                           .withReason(e.getMessage())
                           .build();
           }

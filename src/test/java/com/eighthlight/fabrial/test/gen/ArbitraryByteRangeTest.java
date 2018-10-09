@@ -81,18 +81,15 @@ public class ArbitraryByteRangeTest {
 
   @Test
   void parsesRangesWithValidLastPosition() {
-    qt().forAll(fileSizeAndPosition())
-        .assuming(p -> p._2 > 0)
-        .checkAssert(p -> {
-          var size = p._1;
-          var suffixLength = p._2;
+    qt().forAll(integers().allPositive(), integers().allPositive())
+        .checkAssert((size, suffixLength) -> {
           var rangeHeader = String.format("bytes=-%d", suffixLength);
           var range = Result
               .attempt(() -> HttpRequestByteRange.parseFromHeader(rangeHeader, size))
               .orElseAssert();
-          assertThat(range.first, is(size - suffixLength));
+          assertThat(range.first, is(Integer.max(0, size-suffixLength)));
           assertThat(range.last, is(size - 1));
-          assertThat(range.length(), is(suffixLength));
+          assertThat(range.length(), is(Integer.min(suffixLength, size)));
         });
   }
 
