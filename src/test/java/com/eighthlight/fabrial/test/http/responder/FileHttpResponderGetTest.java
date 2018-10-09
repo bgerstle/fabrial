@@ -121,7 +121,7 @@ public class FileHttpResponderGetTest {
   }
 
   @Test
-  void respondsToInvalidRangeWith416() {
+  void respondsToInvalidToFromRangeWith416() {
     var mockFC = new MockFileController();
     var responder = new FileHttpResponder(mockFC);
 
@@ -142,5 +142,33 @@ public class FileHttpResponderGetTest {
     assertThat(response.statusCode, is(416));
     assertThat(response.reason, containsString("Last position cannot be less than the first"));
     assertThat(response.headers, hasEntry("Content-Range", "bytes */" + child.data.length));
+  }
+
+  @Test
+  void respondsToSuffixLongerThanFileWithEntireFile() throws Exception {
+    var mockFC = new MockFileController();
+    var responder = new FileHttpResponder(mockFC);
+
+    mockFC.root = new MockDirectory("foo");
+
+    var child = new MockFile("bar");
+    mockFC.root.children.add(child);
+    child.data = "foo".getBytes();
+    child.type = "text/plain";
+
+    var response = responder.getResponse(
+        new RequestBuilder()
+            .withVersion(HttpVersion.ONE_ONE)
+            .withMethod(Method.GET)
+            .withHeaders(Map.of("Range", "bytes=-" + (child.data.length + 1)))
+            .withUriString(child.name)
+            .build());
+    assertThat(response.statusCode, is(206));
+    assertThat(response.headers, hasEntry("Content-Length", Integer.toString(child.data.length)));
+    assertThat(response.headers, hasEntry("Content-Type", child.type));
+    assertThat(response.headers, hasEntry("Content-Range", "bytes 0-" + (child.data.length - 2) + "/" + child.data.length));
+    assertThat(response.body, is(not(nullValue())));
+    assertThat(new String(response.body.readAllBytes()),
+               is(new String(child.data)));
   }
 }

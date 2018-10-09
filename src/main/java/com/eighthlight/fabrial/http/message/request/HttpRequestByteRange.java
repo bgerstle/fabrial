@@ -73,15 +73,14 @@ public class HttpRequestByteRange {
 
     try {
       var first = parseRangeComponent(matcher.group(2));
-
-      // wrap last to max index, see RFC 7233 section 2.1:
-      // "if the last-byte value...is greater than or equal to the length...of the data, the byte range
-      // is interpreted as the remainder of the representation"
-      var last = parseRangeComponent(matcher.group(3)).map(l -> Integer.min(l, fileSize - 1));
+      var last = parseRangeComponent(matcher.group(3));
 
       if (first.isPresent() && last.isPresent()) {
         // return range w/ desired first & last positions (e.g. "0-5")
-        return new HttpRequestByteRange(first.get(), last.get());
+        // wrap last to max index, see RFC 7233 section 2.1:
+        // "if the last-byte value...is greater than or equal to the length...of the data, the byte range
+        // is interpreted as the remainder of the representation"
+        return new HttpRequestByteRange(first.get(), Integer.min(last.get(), fileSize - 1));
       } else if (first.isPresent()) {
         // return range from desired first position to end of file (e.g. "5-")
         return new HttpRequestByteRange(first.get(), fileSize - 1);
@@ -90,7 +89,11 @@ public class HttpRequestByteRange {
           throw new ParsingException("Suffix range of '-0' is invalid.");
         }
         // return range for the desired trailing bytes of a file (e.g. "-5")
-        return new HttpRequestByteRange(fileSize - last.get(), fileSize - 1);
+        // wrap suffix length to file size see RFC 7233 section 2.1:
+        // "If the selected representation is shorter than the specified
+        //   suffix-length, the entire representation is used."
+        var suffixLength = Integer.min (last.get(), fileSize);
+        return new HttpRequestByteRange(fileSize - suffixLength, fileSize - 1);
       } else {
         throw new ParsingException("Ranges must have at least one component: X-Y, X-, or -Y.");
       }
