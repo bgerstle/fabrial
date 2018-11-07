@@ -67,7 +67,7 @@ public class HttpConnectionHandlerTests {
                 new HttpConnectionHandler(List.of(mockResponder), delegatedRequest::complete);
 
             var responseBaos = new ByteArrayOutputStream();
-            handler.handle(serializdRequestStream, responseBaos);
+            handler.handleConnectionStreams(serializdRequestStream, responseBaos);
 
             var actualResponse =
                 new ResponseReader(new ByteArrayInputStream(responseBaos.toByteArray())).read().get();

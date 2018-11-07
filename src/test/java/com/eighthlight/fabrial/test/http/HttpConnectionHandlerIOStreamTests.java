@@ -61,7 +61,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
     ByteArrayInputStream is = new ByteArrayInputStream(request);
     ByteArrayOutputStream respOs = new ByteArrayOutputStream();
     try {
-      handler.handle(is, respOs);
+      handler.handleConnectionStreams(is, respOs);
     } catch (Throwable t) {
       throw new RuntimeException(t);
     }

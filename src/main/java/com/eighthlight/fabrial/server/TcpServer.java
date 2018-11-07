@@ -79,7 +79,7 @@ public class TcpServer implements Closeable {
 
       try (InputStream is = connection.getInputStream();
           OutputStream os = connection.getOutputStream()) {
-        handler.handle(is, os);
+        handler.handleConnectionStreams(is, os);
       } catch(Throwable t) {
         logger.warn("Connection handler exception", t);
       }

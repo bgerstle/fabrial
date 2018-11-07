@@ -11,6 +11,7 @@ import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -35,30 +36,43 @@ public class HttpConnectionHandler implements ConnectionHandler {
   }
 
   @Override
-  public void handle(InputStream is, OutputStream os) throws Throwable {
-    // TODO: handle multiple requests on one connection
-    Request request;
-    try {
-      request = new RequestReader(is).readRequest().get();
-    } catch (NoSuchElementException e) {
-      logger.trace("Skipping empty line.");
-      return;
-    } catch (MessageReaderException e) {
-      logger.info("Failed to parse request, responding with 400", e);
-      new ResponseWriter(os)
-          .writeResponse(
-              new ResponseBuilder()
-                  .withVersion(HttpVersion.ONE_ONE)
-                  .withStatusCode(400)
-                  .build());
-      return;
-    }
+  public void handleConnectionStreams(InputStream is, OutputStream os) throws Throwable {
+    var reader = new RequestReader(is);
+    var writer = new ResponseWriter(os);
 
-    logger.info("Handling request {}", StructuredArguments.kv("request", request));
-    requestDelegate.accept(request);
-    Response response = responseTo(request);
-    logger.info("Writing response {}", StructuredArguments.kv("response", response));
-    new ResponseWriter(os).writeResponse(response);
+    while (true) {
+      Request request;
+      try {
+        request = reader.readRequest().get();
+      } catch (NoSuchElementException e) {
+        logger.trace("Encountered empty line, done reading requests");
+        break;
+      } catch (MessageReaderException e) {
+        if (e.getCause() instanceof IOException) {
+          logger.info("Done reading requests due to socket error", e);
+          break;
+        }
+        logger.info("Failed to parse request, responding with 400", e);
+        new ResponseWriter(os)
+            .writeResponse(
+                new ResponseBuilder()
+                    .withVersion(HttpVersion.ONE_ONE)
+                    .withStatusCode(400)
+                    .build());
+        continue;
+      }
+
+      logger.info("Handling request {}", StructuredArguments.kv("request", request));
+      requestDelegate.accept(request);
+      Response response = responseTo(request);
+      logger.info("Writing response {}", StructuredArguments.kv("response", response));
+      writer.writeResponse(response);
+
+      if (!request.headers.getOrDefault("Connection", "").equals("Keep-Alive")) {
+        logger.trace("No keep-alive header present, done parsing requests");
+        break;
+      }
+    }
   }
 
   public Response responseTo(Request request) {

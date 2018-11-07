@@ -7,7 +7,7 @@ import java.io.OutputStream;
 
 class EchoConnectionHandler implements ConnectionHandler {
   @Override
-  public void handle(InputStream is, OutputStream os) throws Throwable {
+  public void handleConnectionStreams(InputStream is, OutputStream os) throws Throwable {
     is.transferTo(os);
   }
 }
