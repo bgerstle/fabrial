@@ -11,19 +11,19 @@ import java.util.Optional;
 
 public class Request {
   public final String version;
-  public final Method method;
+  public final String method;
   public final URI uri;
   public final Map<String, String> headers;
   public final InputStream body;
 
   public Request(String version,
-                 Method method,
+                 String method,
                  URI uri) {
     this(version, method, uri, null, null);
   }
 
   public Request(String version,
-                 Method method,
+                 String method,
                  URI uri,
                  Map<String, String> headers,
                  InputStream body) {
@@ -47,6 +47,7 @@ public class Request {
            '}';
   }
 
+
   @Override
   public boolean equals(Object o) {
     if (this == o)
@@ -55,7 +56,7 @@ public class Request {
       return false;
     Request request = (Request) o;
     return Objects.equals(version, request.version) &&
-           method == request.method &&
+           Objects.equals(method, request.method) &&
            Objects.equals(uri, request.uri) &&
            Objects.equals(headers, request.headers);
   }

@@ -31,7 +31,7 @@ public class ArbitraryHttp {
   public static Gen<Request> requests(Gen<Method> methods,
                                       Gen<URI> uris,
                                       Gen<String> versions) {
-    return versions.zip(methods, uris, (v, m, u) -> new Request(v, m, u));
+    return versions.zip(methods, uris, (v, m, u) -> new Request(v, m.name(), u));
   }
 
   // !!!: all of these "length" args are rough approximations. proper DSL necessary

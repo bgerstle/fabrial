@@ -30,9 +30,9 @@ public class AccessLoggerTest {
   void returnsLoggedRequests() throws Exception {
     var accessLogger = new AccessLogger();
     var requests = List.of(
-        new Request(HttpVersion.ONE_ONE, Method.GET, new URI("/")),
+        new Request(HttpVersion.ONE_ONE, Method.GET.name(), new URI("/")),
         new Request(HttpVersion.TWO_ZERO,
-                    Method.PUT,
+                    Method.PUT.name(),
                     new URI("/foo"),
                     Map.of("foo", "bar"),
                     null));

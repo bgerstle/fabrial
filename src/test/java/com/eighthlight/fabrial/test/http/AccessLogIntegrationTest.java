@@ -20,6 +20,8 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -83,7 +85,11 @@ public class AccessLogIntegrationTest {
 
       serverFixture.server.start();
 
-      var methods = List.of(Method.GET, Method.PUT, Method.POST);
+      List<String> methods =
+          Stream.of(Method.GET, Method.PUT, Method.POST)
+                .map(Method::name)
+                .collect(Collectors.toList());
+
       methods
           .stream()
           .map(m -> new Request(HttpVersion.ONE_ONE, m, Result.attempt(() -> new URI("/")).orElseAssert()))
@@ -110,7 +116,7 @@ public class AccessLogIntegrationTest {
         var bodyReader = new BufferedReader(new InputStreamReader(response.body));
         methods.forEach(m -> {
           var line = Result.attempt(bodyReader::readLine).orElseAssert();
-          assertThat(line, containsString(m.name()));
+          assertThat(line, containsString(m));
         });
       }
     }

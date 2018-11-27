@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -88,7 +89,7 @@ public class AccessLogResponderTest {
     assertThat(response.statusCode, equalTo(200));
     assertThat(response.headers, hasKey("Allow"));
     var allowHeaderField = response.headers.get("Allow");
-    var allowedMethods =
+    List<Method> allowedMethods =
         Arrays.stream(allowHeaderField.split(", *"))
         .map(Method::valueOf)
         .collect(Collectors.toList());
@@ -119,8 +120,8 @@ public class AccessLogResponderTest {
           var expectedBodyLines =
               rs.stream()
                 .map(r -> String.format("%s %s HTTP/%s",
-                                      r.method.name(),
-                                      r.uri.getPath().toString(),
+                                      r.method,
+                                      r.uri.getPath(),
                                       r.version))
                 .collect(Collectors.toList());
 

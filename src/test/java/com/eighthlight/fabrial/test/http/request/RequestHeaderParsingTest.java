@@ -20,14 +20,14 @@ public class RequestHeaderParsingTest {
         .as((req, headers) -> {
           return new RequestBuilder()
               .withVersion(req.version)
-              .withMethod(req.method)
+              .withMethodValue(req.method)
               .withUri(req.uri)
               .withHeaders(headers)
               .build();
         })
         .checkAssert((request) -> {
           var requestLine = HttpRequestLineParsingTests.concatRequestLineComponents(
-              request.method.name(),
+              request.method,
               request.uri.toString(),
               request.version);
           var headerLines =

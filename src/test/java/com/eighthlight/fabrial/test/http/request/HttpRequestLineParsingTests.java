@@ -2,9 +2,11 @@ package com.eighthlight.fabrial.test.http.request;
 
 import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
+import com.eighthlight.fabrial.http.message.request.Request;
 import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.http.message.MessageReaderException;
 import com.eighthlight.fabrial.http.message.request.RequestReader;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 
@@ -22,14 +24,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.Generate.*;
+import static org.quicktheories.generators.SourceDSL.strings;
 
 public class HttpRequestLineParsingTests {
-  public static Gen<String> invalidMethods() {
-    return oneOf(constant("FOO"), constant("BAR"), constant("BAZ"));
+  public static Gen<String> unspecifiedMethods() {
+    return strings().betweenCodePoints('A', 'Z')
+                    .ofLengthBetween(1, 10)
+                    .assuming(s -> !Result.attempt(() -> Method.valueOf(s)).getValue().isPresent());
   }
 
   public static Gen<String> invalidUris() {
-    return nonAsciiStrings();
+    // Schemes are not allowed to contain arbitrary characters, but Java's URI allows
+    // non-ascii in places that the grammar doesn't permit.
+    return nonAsciiStrings().map(s -> s + "://").assuming(uriString -> {
+      return Result.attempt(() -> new URI(uriString)).getError().isPresent();
+    });
   }
 
   public static Gen<String> invalidVersions() {
@@ -57,14 +66,36 @@ public class HttpRequestLineParsingTests {
   void requestsWithoutHeadersOrBody() {
     qt().forAll(methods(), requestTargets(), httpVersions())
         .checkAssert((m, u, v) -> {
-          Object req;
-          try {
-            req = new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest().get();
-          } catch (MessageReaderException e) {
-            req = e;
-          }
-          assertThat(req,
-                     equalTo(new RequestBuilder().withVersion(v).withMethod(m).withUri(u).build()));
+          Result<Request, Exception> req = Result.attempt(() ->
+            new RequestReader(requestLineFromComponents(m.name(), u.toString(), v)).readRequest().get()
+          );
+          assertThat(req.getError(), equalTo(Optional.empty()));
+          assertThat(req.getValue(),
+                     equalTo(Optional.of(new RequestBuilder()
+                                             .withVersion(v)
+                                             .withMethod(m)
+                                             .withUri(u)
+                                             .build())));
+        });
+  }
+
+  @Test
+  void requestsWithUnspecifiedMethods() {
+    qt().forAll(unspecifiedMethods(), requestTargets(), httpVersions())
+        .checkAssert((m, u, v) -> {
+          Result<Request, Exception> req =
+              Result.attempt(() -> {
+                return new RequestReader(requestLineFromComponents(m, u.toString(), v))
+                    .readRequest()
+                    .get();
+              });
+          assertThat(req.getError(), equalTo(Optional.empty()));
+          assertThat(req.getValue(),
+                     equalTo(Optional.of(new RequestBuilder()
+                                             .withVersion(v)
+                                             .withMethodValue(m)
+                                             .withUri(u)
+                                             .build())));
         });
   }
 
@@ -92,10 +123,10 @@ public class HttpRequestLineParsingTests {
 
   @Test
   void throwsWithBadTargets() {
-    qt().forAll(invalidMethods(), invalidUris(), httpVersions())
+    qt().forAll(methods(), invalidUris(), httpVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(MessageReaderException.class, () -> {
-            new RequestReader(requestLineFromComponents(m, u, v)).readRequest().get();
+            new RequestReader(requestLineFromComponents(m.name(), u, v)).readRequest().get();
           });
         });
   }

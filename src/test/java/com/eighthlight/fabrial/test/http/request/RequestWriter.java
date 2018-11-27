@@ -32,7 +32,7 @@ public class RequestWriter {
   }
 
   public void writeRequestLine(Request request) throws IOException {
-    List<String> requestLineComponents = List.of(request.method.name(),
+    List<String> requestLineComponents = List.of(request.method,
                                                  request.uri.toString(),
                                                  "HTTP/" + request.version);
     writer.write(String.join(" ", requestLineComponents));

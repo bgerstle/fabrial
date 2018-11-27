@@ -70,13 +70,25 @@ public class FileHttpResponder implements HttpResponder {
   @Override
   public Response getResponse(Request request) {
     final var builder = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE);
+
+    Optional<Method> methodResult =
+        Result.attempt(() -> Method.valueOf(request.method)).getValue();
+
+    if (!methodResult.isPresent()) {
+      return builder
+          .withStatusCode(501).withReason("'" + request.method + "' is not a supported method.")
+          .build();
+    }
+
+    Method method = methodResult.get();
+
     // bail early if file doesn't exist and this isn't an OPTIONS request
     if (!fileController.fileExistsAtPath(request.uri.getPath())
-        && (request.method != Method.OPTIONS
-            && request.method != Method.PUT)) {
+        && (method != Method.OPTIONS
+            && method != Method.PUT)) {
       return builder.withStatusCode(404).build();
     }
-    switch (request.method) {
+    switch (method) {
       case HEAD: {
         return buildReadFileResponse(request, builder);
       }
@@ -114,7 +126,7 @@ public class FileHttpResponder implements HttpResponder {
     try {
       var sizeStr = Long.toString(size);
 
-      if (request.method.equals(Method.HEAD)) {
+      if (request.method.equals(Method.HEAD.name())) {
         builder.withHeader("Content-Length", sizeStr);
         builder.withHeader("Accept-Ranges", "bytes=0-" + Long.toString(size - 1));
       } else {
