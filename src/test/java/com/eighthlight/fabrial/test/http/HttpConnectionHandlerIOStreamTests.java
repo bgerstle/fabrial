@@ -9,6 +9,7 @@ import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.test.http.request.RequestWriter;
+import com.eighthlight.fabrial.utils.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -18,11 +19,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static com.eighthlight.fabrial.http.HttpConstants.CRLF;
+import static com.eighthlight.fabrial.test.http.request.HttpRequestLineParsingTests.unspecifiedMethods;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.StringStartsWith.startsWith;
+import static org.quicktheories.QuickTheory.qt;
 
 public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
   @Override
@@ -32,7 +35,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
 
   @Override
   public Response getResponse(Request request) {
-    if (!request.method.equals(Method.HEAD)) {
+    if (!request.method.equals(Method.HEAD.name())) {
       return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(501).build();
     }
     return new ResponseBuilder().withVersion(HttpVersion.ONE_ONE).withStatusCode(200).build();
@@ -90,6 +93,27 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
             startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
             endsWith(CRLF)
         ));
+  }
+
+  @Test
+  void responds501ToUnregisteredHTTPMethods() throws Throwable {
+    qt().forAll(unspecifiedMethods()).checkAssert(unspecifiedMethod -> {
+      String version = HttpVersion.ONE_ONE;
+      Result<String, Throwable> response = Result.attempt(() -> {
+        return sendRequest(new RequestBuilder()
+                        .withVersion (version)
+                        .withMethodValue(unspecifiedMethod)
+                        .withUriString("/test")
+                        .build());
+      });
+
+      assertThat(
+          response.getValue().orElse(null),
+          allOf(
+              startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
+              endsWith(CRLF)
+          ));
+    });
   }
 
   @Test

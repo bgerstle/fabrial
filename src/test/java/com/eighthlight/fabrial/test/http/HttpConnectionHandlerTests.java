@@ -33,7 +33,7 @@ public class HttpConnectionHandlerTests {
   public static Gen<MockResponder> mockResponders() {
     return methods().zip(requestTargets(), statusCodes(), (method, uri, statusCode) ->
         new MockResponder(uri,
-                          method,
+                          method.name(),
                           new ResponseBuilder().withVersion(HttpVersion.ONE_ONE)
                                                .withStatusCode(statusCode).build())
     );
@@ -134,7 +134,7 @@ public class HttpConnectionHandlerTests {
 
           assertThat(handler.responseTo(new RequestBuilder()
                                             .withVersion(HttpVersion.ONE_ONE)
-                                            .withMethod(mockResponder.targetMethod)
+                                            .withMethodValue(mockResponder.targetMethod)
                                             .withUri(mockResponder.targetURI)
                                             .build()),
                      equalTo(mockResponder.response));

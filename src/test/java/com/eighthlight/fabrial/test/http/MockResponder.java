@@ -10,10 +10,10 @@ import java.util.Objects;
 
 public class MockResponder implements HttpResponder {
   public final URI targetURI;
-  public final Method targetMethod;
+  public final String targetMethod;
   public final Response response;
 
-  public MockResponder(URI targetURI, Method targetMethod, Response response) {
+  public MockResponder(URI targetURI, String targetMethod, Response response) {
     this.targetURI = targetURI;
     this.targetMethod = targetMethod;
     this.response = response;

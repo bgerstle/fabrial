@@ -8,18 +8,18 @@ import java.net.URISyntaxException;
 import java.util.NoSuchElementException;
 
 public class RequestBuilder extends AbstractMessageBuilder<RequestBuilder, Request> {
-  public Method method;
+  public String method;
   public URI uri;
 
   public RequestBuilder() {}
 
   public RequestBuilder withMethod(Method method) {
-    this.method = method;
-    return this;
+    return withMethodValue(method.name());
   }
 
   public RequestBuilder withMethodValue(String methodStr) {
-    return withMethod(Method.valueOf(methodStr));
+    this.method = methodStr;
+    return this;
   }
 
   public RequestBuilder withUriString(String uriString) {

@@ -76,7 +76,7 @@ public class RequestBodyParsingTest {
           // reassemble request w/ headers & body
           final var request = new RequestBuilder()
               .withVersion(emptyRequest.version)
-              .withMethod(emptyRequest.method)
+              .withMethodValue(emptyRequest.method)
               .withUri(emptyRequest.uri)
               .withBody(new ByteArrayInputStream(bodyData))
               .withHeaders(headersWithBodyFields)

@@ -6,11 +6,11 @@ import java.util.Objects;
 
 public class RequestLog {
   public final String version;
-  public final Method method;
+  public final String method;
   public final URI uri;
   public final Map<String, String> headers;
 
-  public RequestLog(String version, Method method, URI uri, Map<String, String> headers) {
+  public RequestLog(String version, String method, URI uri, Map<String, String> headers) {
     this.version = version;
     this.method = method;
     this.uri = uri;

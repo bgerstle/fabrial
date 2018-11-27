@@ -5,6 +5,7 @@ import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.server.BasicAuthResponder;
 import com.eighthlight.fabrial.server.Credential;
+import com.eighthlight.fabrial.utils.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class AccessLogResponder implements HttpResponder {
                                                            Method.OPTIONS.name());
 
   public static String formatRequestLog(RequestLog log) {
-    return String.format("%s %s HTTP/%s", log.method.name(), log.uri.getPath(), log.version);
+    return String.format("%s %s HTTP/%s", log.method, log.uri.getPath(), log.version);
   }
 
   public AccessLogResponder(AccessLogger accessLogger, Optional<Credential> adminCredential) {
@@ -43,7 +44,13 @@ public class AccessLogResponder implements HttpResponder {
 
   @Override
   public Response getResponse(Request request) {
-    switch (request.method) {
+    Optional<Method> methodResult = Result.attempt(() -> Method.valueOf(request.method)).getValue();
+    if (!methodResult.isPresent()) {
+      return new Response(HttpVersion.ONE_ONE, 501, null, null, null);
+    }
+    Method method = methodResult.get();
+
+    switch (method) {
       case HEAD: {
         return new ResponseBuilder().withVersion(request.version)
                                     .withStatusCode(200)
