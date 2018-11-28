@@ -12,7 +12,15 @@ public abstract class AbstractMessageBuilder<Self extends AbstractMessageBuilder
   protected Map<String, String> headers;
 
   public AbstractMessageBuilder() {
-    headers = new HashMap<>();
+    this(null, null, null);
+  }
+
+  public AbstractMessageBuilder(String version, Map<String, String> headers, InputStream body) {
+    this.version = version;
+    this.headers = Optional.ofNullable(headers)
+                           .map(HashMap::new)
+                           .orElseGet(HashMap::new);
+    this.body = body;
   }
 
   // Set version from a string with the format "HTTP/X.Y"

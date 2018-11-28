@@ -25,7 +25,7 @@ public class MessageReader<MessageT, BuilderT extends HttpMessageBuilder<Builder
     try {
       var lineReader = new HttpLineReader(is);
       var firstLine = lineReader.readLine();
-      if (firstLine == null || firstLine.isEmpty()) {
+      if (firstLine.isEmpty()) {
         return Optional.empty();
       }
       return Optional.of(

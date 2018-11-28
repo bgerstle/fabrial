@@ -14,16 +14,18 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class HttpConnectionHandler implements ConnectionHandler {
   private static final Logger logger = LoggerFactory.getLogger(HttpConnectionHandler.class.getName());
 
   // ???: if this changes, probably need to also "match" the request version somehow?
-  private static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE);
+  public static final List<String> SUPPORTED_HTTP_VERSIONS = List.of(HttpVersion.ONE_ONE, HttpVersion.ONE_ZERO);
 
   private final List<? extends HttpResponder> responders;
 
@@ -41,35 +43,55 @@ public class HttpConnectionHandler implements ConnectionHandler {
     var writer = new ResponseWriter(os);
 
     while (true) {
-      Request request;
+      Boolean shouldClose = false;
+      Request request = null;
+      Response response = null;
+
       try {
         request = reader.readRequest().get();
       } catch (NoSuchElementException e) {
         logger.trace("Encountered empty line, done reading requests");
+        shouldClose = true;
         break;
       } catch (MessageReaderException e) {
         if (e.getCause() instanceof IOException) {
           logger.info("Done reading requests due to socket error", e);
+          // Don't bother writing response
           break;
+        } else {
+          logger.info("Failed to parse request, responding with 400", e);
+          response = new ResponseBuilder()
+              .withVersion(HttpVersion.ONE_ONE)
+              .withStatusCode(400)
+              .build();
         }
-        logger.info("Failed to parse request, responding with 400", e);
-        new ResponseWriter(os)
-            .writeResponse(
-                new ResponseBuilder()
-                    .withVersion(HttpVersion.ONE_ONE)
-                    .withStatusCode(400)
-                    .build());
-        continue;
       }
 
-      logger.info("Handling request {}", StructuredArguments.kv("request", request));
-      requestDelegate.accept(request);
-      Response response = responseTo(request);
+      if (response == null) {
+        String connectionHeader = request.headers.getOrDefault("Connection", "");
+
+        shouldClose |=
+            (request.version.equals(HttpVersion.ONE_ZERO) && !connectionHeader.equalsIgnoreCase("keep-alive"))
+            || connectionHeader.equalsIgnoreCase("close");
+
+        logger.info("Handling request {}", StructuredArguments.kv("request", request));
+        requestDelegate.accept(request);
+
+        response = responseTo(request);
+      }
+
+      assert(response != null);
+
+      response =
+          new ResponseBuilder(response)
+          .withHeader("Connection", shouldClose ? "close" : "keep-alive")
+          .build();
+
+
       logger.info("Writing response {}", StructuredArguments.kv("response", response));
       writer.writeResponse(response);
 
-      if (!request.headers.getOrDefault("Connection", "").equals("Keep-Alive")) {
-        logger.trace("No keep-alive header present, done parsing requests");
+      if (shouldClose) {
         break;
       }
     }

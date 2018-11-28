@@ -15,7 +15,10 @@ import org.quicktheories.core.Gen;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -26,9 +29,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.Generate.constant;
+import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.lists;
 
 public class HttpConnectionHandlerTests {
+  public static Gen<String> supportedHttpVersions() {
+    return pick(HttpConnectionHandler.SUPPORTED_HTTP_VERSIONS);
+  }
 
   public static Gen<MockResponder> mockResponders() {
     return methods().zip(requestTargets(), statusCodes(), (method, uri, statusCode) ->
@@ -45,35 +52,43 @@ public class HttpConnectionHandlerTests {
                   .map(rs -> rs.stream().distinct().collect(Collectors.toList()));
   }
 
+  // Return response or throw an assertion if an error was encountered while handling the request.
+  private Response handle(Request request, HttpConnectionHandler handler) {
+    var requestWriteStream = new ByteArrayOutputStream();
+    Result.attempt(() -> new RequestWriter(requestWriteStream).writeRequest(request)).orElseAssert();
+    var requestInputStream = new ByteArrayInputStream(requestWriteStream.toByteArray());
+
+    var responseOutputStream = new ByteArrayOutputStream();
+
+    Result.attempt(() -> handler.handleConnectionStreams(requestInputStream, responseOutputStream))
+          .orElseAssert();
+
+    var serializedResponse = new ByteArrayInputStream(responseOutputStream.toByteArray());
+
+    return Result.attempt(() -> new ResponseReader(serializedResponse).read().get()).orElseAssert();
+  }
+
   @Test
   void passesRequestToHandler() {
-    qt().forAll(requests(methods(), requestTargets(), constant(HttpVersion.ONE_ONE)))
-        .checkAssert(r -> {
+    qt().forAll(requests(methods(), requestTargets(), supportedHttpVersions()))
+        .checkAssert(request -> {
           Result.attempt(() -> {
-            var baos = new ByteArrayOutputStream();
-            new RequestWriter(baos).writeRequest(r);
-            var serializdRequestStream = new ByteArrayInputStream(baos.toByteArray());
-
-
-            var expectedResponse = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE)
+            var expectedResponse = new ResponseBuilder().withVersion(request.version)
                                                         .withStatusCode(200)
                                                         .build();
 
-            var mockResponder = new MockResponder(r.uri, r.method, expectedResponse);
+            var mockResponder = new MockResponder(request.uri, request.method, expectedResponse);
 
             var delegatedRequest = new CompletableFuture<Request>();
 
             HttpConnectionHandler handler =
                 new HttpConnectionHandler(List.of(mockResponder), delegatedRequest::complete);
 
-            var responseBaos = new ByteArrayOutputStream();
-            handler.handleConnectionStreams(serializdRequestStream, responseBaos);
+            var actualResponse = handle(request, handler);
 
-            var actualResponse =
-                new ResponseReader(new ByteArrayInputStream(responseBaos.toByteArray())).read().get();
-            assertThat(actualResponse, equalTo(expectedResponse));
+            assertThat(actualResponse.statusCode, equalTo(expectedResponse.statusCode));
 
-            assertThat(delegatedRequest.get(10, TimeUnit.MILLISECONDS), equalTo(r));
+            assertThat(delegatedRequest.get(10, TimeUnit.MILLISECONDS), equalTo(request));
           }).orElseAssert();
         });
   }
@@ -138,6 +153,119 @@ public class HttpConnectionHandlerTests {
                                             .withUri(mockResponder.targetURI)
                                             .build()),
                      equalTo(mockResponder.response));
+        });
+  }
+
+  @Test
+  void addsConnectionCloseHeaderToHttpOneZeroRequestsWithoutKeepalive() {
+    qt().forAll(mockResponders())
+        .checkAssert(responder -> {
+          HttpConnectionHandler handler =
+              new HttpConnectionHandler(Arrays.asList(responder), null);
+
+          var request = new Request(HttpVersion.ONE_ZERO,
+                                    responder.targetMethod,
+                                    responder.targetURI);
+
+          var response = handle(request, handler);
+
+          var expectedResponse =
+              new ResponseBuilder(responder.getResponse(request))
+                  .withHeader("Connection", "close")
+                  .build();
+
+          assertThat(response, equalTo(expectedResponse));
+        });
+  }
+
+  @Test
+  void addsKeepAliveHeaderToOneZeroRequestsWithKeepAlive() {
+    qt().forAll(mockResponders(), pick(Arrays.asList("keep-alive", "Keep-Alive")))
+        .checkAssert((responder, keepalive) -> {
+          HttpConnectionHandler handler =
+              new HttpConnectionHandler(Arrays.asList(responder), null);
+
+          var request = new Request(HttpVersion.ONE_ZERO,
+                                    responder.targetMethod,
+                                    responder.targetURI,
+                                    // checks for keep alive w/o case sensitivity
+                                    Map.of("Connection", keepalive),
+                                    null);
+
+          var response = handle(request, handler);
+
+          var expectedResponse =
+              new ResponseBuilder(responder.getResponse(request))
+                  .withHeader("Connection", "keep-alive")
+                  .build();
+
+          assertThat(response, equalTo(expectedResponse));
+        });
+  }
+
+  @Test
+  void assumesHttpOneOneIsKeepAlive() {
+    qt().forAll(mockResponders())
+        .checkAssert((responder) -> {
+          HttpConnectionHandler handler =
+              new HttpConnectionHandler(Arrays.asList(responder), null);
+
+          var request = new Request(HttpVersion.ONE_ONE,
+                                    responder.targetMethod,
+                                    responder.targetURI);
+
+          var response = handle(request, handler);
+
+          var expectedResponse =
+              new ResponseBuilder(responder.getResponse(request))
+                  .withHeader("Connection", "keep-alive")
+                  .build();
+
+          assertThat(response, equalTo(expectedResponse));
+        });
+  }
+
+  @Test
+  void addsCloseResponseHeaderToRequestsWithClose() {
+    qt().forAll(mockResponders(), supportedHttpVersions(), pick(List.of("close", "Close")))
+        .checkAssert((responder, httpVersion, closeHeaderValue) -> {
+          HttpConnectionHandler handler =
+              new HttpConnectionHandler(Arrays.asList(responder), null);
+
+          var request = new Request(httpVersion,
+                                    responder.targetMethod,
+                                    responder.targetURI,
+                                    Map.of("Connection", closeHeaderValue),
+                                    null);
+
+          var response = handle(request, handler);
+
+          var expectedResponse =
+              new ResponseBuilder(responder.getResponse(request))
+                  .withHeader("Connection", "close")
+                  .build();
+
+          assertThat(response, equalTo(expectedResponse));
+        });
+  }
+
+  @Test
+  void repsonds501ToUnsupportedHttpVersions() {
+    qt().forAll(mockResponders(),
+                pick(Arrays.asList(HttpVersion.ZERO_NINE, HttpVersion.TWO_ZERO)))
+        .checkAssert((responder, httpVersion) -> {
+          HttpConnectionHandler handler =
+              new HttpConnectionHandler(Arrays.asList(responder), null);
+
+          var request = new Request(httpVersion,
+                                    responder.targetMethod,
+                                    responder.targetURI,
+                                    Map.of("Connection", "close"),
+                                    null);
+
+          var response = handle(request, handler);
+
+          assertThat(response.statusCode, equalTo(501));
         });
   }
 }

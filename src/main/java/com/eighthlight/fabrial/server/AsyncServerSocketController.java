@@ -1,11 +1,13 @@
 package com.eighthlight.fabrial.server;
 
+import com.eighthlight.fabrial.utils.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -23,7 +25,9 @@ public class AsyncServerSocketController implements SocketController {
   public AsyncServerSocketController(int readTimeout) {
     this.readTimeout = readTimeout;
     this.connectionHandlerExecutor =
-        Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        Executors.newFixedThreadPool(Optional.ofNullable(System.getProperty("maxConnections"))
+                                             .flatMap(c -> Result.attempt(() -> Integer.parseInt(c)).getValue())
+                                             .orElse(Runtime.getRuntime().availableProcessors()));
   }
 
   public void start(int port,

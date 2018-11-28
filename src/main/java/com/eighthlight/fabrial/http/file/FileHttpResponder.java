@@ -69,7 +69,7 @@ public class FileHttpResponder implements HttpResponder {
 
   @Override
   public Response getResponse(Request request) {
-    final var builder = new ResponseBuilder().withVersion(HttpVersion.ONE_ONE);
+    final var builder = new ResponseBuilder().withVersion(request.version);
 
     Optional<Method> methodResult =
         Result.attempt(() -> Method.valueOf(request.method)).getValue();

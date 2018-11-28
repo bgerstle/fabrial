@@ -11,7 +11,13 @@ public class RequestBuilder extends AbstractMessageBuilder<RequestBuilder, Reque
   public String method;
   public URI uri;
 
-  public RequestBuilder() {}
+  public RequestBuilder() { super(); }
+
+  public RequestBuilder(Request request) {
+    super(request.version, request.headers, request.body);
+    this.method = request.method;
+    this.uri = request.uri;
+  }
 
   public RequestBuilder withMethod(Method method) {
     return withMethodValue(method.name());
