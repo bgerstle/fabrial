@@ -18,7 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -28,7 +27,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.quicktheories.QuickTheory.qt;
-import static org.quicktheories.generators.Generate.constant;
 import static org.quicktheories.generators.Generate.pick;
 import static org.quicktheories.generators.SourceDSL.lists;
 
@@ -54,8 +52,15 @@ public class HttpConnectionHandlerTests {
 
   // Return response or throw an assertion if an error was encountered while handling the request.
   private Response handle(Request request, HttpConnectionHandler handler) {
+    return handle(List.of(request), handler).get(0);
+  }
+
+  private List<Response> handle(List<Request> requests, HttpConnectionHandler handler) {
     var requestWriteStream = new ByteArrayOutputStream();
-    Result.attempt(() -> new RequestWriter(requestWriteStream).writeRequest(request)).orElseAssert();
+    var requestWriter = new RequestWriter(requestWriteStream);
+
+    requests.forEach(r -> Result.attempt(() -> requestWriter.writeRequest(r)).orElseAssert());
+
     var requestInputStream = new ByteArrayInputStream(requestWriteStream.toByteArray());
 
     var responseOutputStream = new ByteArrayOutputStream();
@@ -63,9 +68,13 @@ public class HttpConnectionHandlerTests {
     Result.attempt(() -> handler.handleConnectionStreams(requestInputStream, responseOutputStream))
           .orElseAssert();
 
-    var serializedResponse = new ByteArrayInputStream(responseOutputStream.toByteArray());
+    var serializedResponses = new ByteArrayInputStream(responseOutputStream.toByteArray());
+    var responseReader = new ResponseReader(serializedResponses);
 
-    return Result.attempt(() -> new ResponseReader(serializedResponse).read().get()).orElseAssert();
+    // read response for each request
+    return requests.stream()
+                   .map(_unused -> Result.attempt(() -> responseReader.read().get()).orElseAssert())
+                   .collect(Collectors.toList());
   }
 
   @Test
@@ -266,6 +275,31 @@ public class HttpConnectionHandlerTests {
           var response = handle(request, handler);
 
           assertThat(response.statusCode, equalTo(501));
+        });
+  }
+
+  @Test
+  void handlesMultipleRequests() {
+    qt().forAll(mockResponderLists())
+        .checkAssert((responders) -> {
+          HttpConnectionHandler handler =
+              new HttpConnectionHandler(responders, null);
+
+          var requests =
+              responders
+                  .stream()
+                  .map(r -> new Request(HttpVersion.ONE_ONE, r.targetMethod, r.targetURI))
+                  .collect(Collectors.toList());
+
+          var responses = handle(requests, handler);
+
+          var responseStatusCodes =
+              responses.stream().map(r -> r.statusCode).collect(Collectors.toList());
+
+          var expectedStatusCodes =
+              responders.stream().map(r -> r.response.statusCode).collect(Collectors.toList());
+
+          assertThat(responseStatusCodes, equalTo(expectedStatusCodes));
         });
   }
 }
