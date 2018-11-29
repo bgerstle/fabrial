@@ -21,6 +21,7 @@ class MockSocketController
   @Override
   public void start(int port, int maxConnections, Consumer<ClientConnection> consumer) throws IOException {
     this.boundPort = port;
+    this.maxConnections = maxConnections;
     this.consumer = consumer;
   }
 }
