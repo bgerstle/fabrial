@@ -90,7 +90,7 @@ public class TcpServerConnectionIntegrationTest {
   @Test
   void peakConnectionCountEqualsNumberOfSimultaneousClients() throws IOException {
     qt().withExamples(10).withShrinkCycles(0)
-        .forAll(integers().between(1, 500)).checkAssert((clientCount) -> {
+        .forAll(integers().between(1, 50)).checkAssert((clientCount) -> {
       Result.attempt(() -> {
         try (TcpServerFixture serverFixture =
             new TcpServerFixture(new ServerConfig(0,
