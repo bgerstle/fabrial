@@ -44,7 +44,9 @@ test {
     useJUnitPlatform {
         excludeTags 'acceptance'
     }
-
+    systemProperties([
+            "rootLevel": System.getenv("LOGLEVEL") ?: "TRACE"
+    ])
 }
 
 mainClassName = 'com.eighthlight.fabrial.App'
@@ -82,9 +84,9 @@ task testAcceptance(dependsOn: 'jar', type: Test) {
     }
 
     systemProperties([
-        "webdriver.chrome.driver": System.getenv("CHROMEDRIVER") ?: "/usr/local/bin/chromedriver"
+        "webdriver.chrome.driver": System.getenv("CHROMEDRIVER") ?: "/usr/local/bin/chromedriver",
+        "rootLevel": System.getenv("LOGLEVEL") ?: "TRACE"
     ])
-
     outputs.upToDateWhen { false }
 }
 testAcceptance.dependsOn tasks.fatJar

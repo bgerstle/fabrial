@@ -16,5 +16,5 @@ cache:
 jdk:
   - openjdk11
 script:
-  - ./gradlew check -i
-  - CHROMEDRIVER=/usr/lib/chromium-browser/chromedriver ./gradlew testAcceptance -i
+  - LOGLEVEL=error ./gradlew check -i
+  - LOGLEVEL=error CHROMEDRIVER=/usr/lib/chromium-browser/chromedriver ./gradlew testAcceptance -i
