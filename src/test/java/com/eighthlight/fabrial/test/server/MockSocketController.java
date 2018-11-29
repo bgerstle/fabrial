@@ -13,6 +13,11 @@ class MockSocketController
   public Consumer<ClientConnection> consumer;
 
   @Override
+  public int getPort() {
+    return boundPort;
+  }
+
+  @Override
   public void start(int port, Consumer<ClientConnection> consumer) throws IOException {
     this.boundPort = port;
     this.consumer = consumer;

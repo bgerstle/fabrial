@@ -11,8 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.Math.*;
 
 public class AsyncServerSocketController implements SocketController {
   private static final Logger logger =
@@ -31,15 +30,7 @@ public class AsyncServerSocketController implements SocketController {
                                  .flatMap(c -> Result.attempt(() -> Integer.parseInt(c)).getValue())
                                  .orElse(Runtime.getRuntime().availableProcessors());
 
-    var coreSize = min(Runtime.getRuntime().availableProcessors(), maxConnections);
-    var maxSize = max(coreSize, maxConnections);
-
-    this.connectionHandlerExecutor =
-        new ThreadPoolExecutor(coreSize,
-                               maxSize,
-                               10,
-                               TimeUnit.SECONDS,
-                               new SynchronousQueue<>());
+    connectionHandlerExecutor = Executors.newFixedThreadPool(maxConnections);
   }
 
   public void start(int port,
@@ -47,13 +38,16 @@ public class AsyncServerSocketController implements SocketController {
     socket = new ServerSocket(port);
     acceptThread = new Thread(() -> acceptConnections(consumer));
     acceptThread.setName("accept-connections");
-    acceptThread.setPriority(Thread.MAX_PRIORITY);
     acceptThread.start();
+  }
+
+  @Override
+  public int getPort() {
+    return socket.getLocalPort();
   }
 
 
   private void acceptConnections(Consumer<ClientConnection> consumer) {
-    assert Thread.currentThread().equals(acceptThread);
     assert socket != null;
 
     while (!socket.isClosed()) {
@@ -62,7 +56,6 @@ public class AsyncServerSocketController implements SocketController {
         clientSocket.setSoTimeout(readTimeout);
         var clientConnection = new ClientSocketConnection(clientSocket);
         connectionHandlerExecutor.execute(() -> {
-          assert !Thread.currentThread().equals(acceptThread);
           try {
             consumer.accept(clientConnection);
           } catch (Throwable t) {
@@ -98,6 +91,19 @@ public class AsyncServerSocketController implements SocketController {
     try {
       acceptThread.join(10000);
     } catch (InterruptedException e) {
+      logger.warn("Interrupted while awaiting accept thread termination.");
+      Thread.currentThread().interrupt();
+    }
+
+    // Force executor to shut down all threads, otherwise tests will fail due to rapid accumulation
+    // of threads
+    connectionHandlerExecutor.shutdown();
+    try {
+      connectionHandlerExecutor.awaitTermination(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      logger.warn("Interrupted while awaiting connection handler thread termination, "
+                  + "requesting immediate shutdown.");
+      connectionHandlerExecutor.shutdownNow();
       Thread.currentThread().interrupt();
     }
   }

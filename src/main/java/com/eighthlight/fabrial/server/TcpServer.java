@@ -26,6 +26,8 @@ public class TcpServer implements Closeable {
   // number of clients currently connected to the server socket
   private final AtomicInteger connectionCount;
 
+  private final AtomicInteger peakConnectionCount;
+
   private final ConnectionHandler handler;
 
   private final SocketController socketController;
@@ -48,11 +50,20 @@ public class TcpServer implements Closeable {
     this.config = Objects.requireNonNull(config);
     this.handler = Objects.requireNonNull(handler);
     this.connectionCount = new AtomicInteger(0);
+    this.peakConnectionCount = new AtomicInteger(0);
     this.socketController = Objects.requireNonNull(socketController);
+  }
+
+  public int getPort() {
+    return this.socketController.getPort();
   }
 
   public int getConnectionCount() {
     return connectionCount.get();
+  }
+
+  public int getPeakConnectionCount() {
+    return peakConnectionCount.get();
   }
 
   /**
@@ -64,19 +75,19 @@ public class TcpServer implements Closeable {
    */
   public void start() throws IOException {
     socketController.start(config.port, this::handleConnection);
-    logger.info("Server started on " + config.port);
+    logger.info("Server started on " + socketController.getPort());
     logger.info("Serving files from " + config.directoryPath);
   }
-
-
 
   // Handle new client connections
   private void handleConnection(ClientConnection connection) {
     var connectionId = Integer.toHexString(connection.hashCode());
     try (MDC.MDCCloseable cra = MDC.putCloseable("connectionId", connectionId)) {
+      var incrementCount = this.connectionCount.incrementAndGet();
       logger.info("Accepted connection {}",
-                   StructuredArguments.kv("connectionCount",
-                                          this.connectionCount.incrementAndGet()));
+                   StructuredArguments.kv("connectionCount", incrementCount));
+
+      peakConnectionCount.getAndAccumulate(incrementCount, Integer::max);
 
       try (InputStream is = connection.getInputStream();
           OutputStream os = connection.getOutputStream()) {
@@ -91,8 +102,7 @@ public class TcpServer implements Closeable {
         logger.warn("Connection encountered exception while closing", e);
       } finally {
         logger.info("Closed connection {}",
-                     StructuredArguments.kv("connectionCount",
-                                            this.connectionCount.decrementAndGet()));
+                     StructuredArguments.kv("connectionCount", this.connectionCount.decrementAndGet()));
       }
     }
   }
