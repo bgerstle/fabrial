@@ -14,7 +14,7 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 jdk:
-  - oraclejdk10
+  - openjdk11
 script:
   - ./gradlew check -i
   - CHROMEDRIVER=/usr/lib/chromium-browser/chromedriver ./gradlew testAcceptance -i
