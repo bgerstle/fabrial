@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -89,12 +90,14 @@ public class TcpServerConnectionIntegrationTest {
   @Test
   void peakConnectionCountEqualsNumberOfSimultaneousClients() throws IOException {
     qt().withExamples(10).withShrinkCycles(0)
-        .forAll(integers().between(1, 20)).checkAssert((clientCount) -> {
+        .forAll(integers().between(1, 500)).checkAssert((clientCount) -> {
       Result.attempt(() -> {
         try (TcpServerFixture serverFixture =
             new TcpServerFixture(new ServerConfig(0,
                                                   ServerConfig.DEFAULT_READ_TIMEOUT,
-                                                  ServerConfig.DEFAULT_DIRECTORY_PATH))) {
+                                                  ServerConfig.DEFAULT_DIRECTORY_PATH,
+                                                  Optional.empty(),
+                                                  clientCount))) {
           serverFixture.server.start();
 
           var clients = IntStream

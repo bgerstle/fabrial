@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import static com.google.common.collect.Streams.zip;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.quicktheories.QuickTheory.qt;
+import static org.quicktheories.generators.Generate.booleans;
 import static org.quicktheories.generators.SourceDSL.integers;
 import static org.quicktheories.generators.SourceDSL.lists;
 
@@ -32,15 +34,18 @@ public class MultipleClientsIntegrationTest {
   private static final Logger logger = LoggerFactory.getLogger(MultipleClientsIntegrationTest.class);
 
   @Test
-  void respondsToRequestFromMultipleClientsWithoutHanging() throws Exception {
+  void acceptsConnectionsAndRequestsFromUpToMaxConnections() throws Exception {
     qt().withExamples(50)
         .withShrinkCycles(0)
-        .forAll(lists().of(integers().between(2, 5)).ofSizeBetween(2, 20))
-        .checkAssert((requestCounts) -> {
+        .forAll(lists().of(integers().between(2, 5)).ofSizeBetween(2, 100),
+                booleans())
+        .checkAssert((requestCounts, parallel) -> {
           try (TcpServerFixture serverFixture =
               new TcpServerFixture(new ServerConfig(0,
                                                     ServerConfig.DEFAULT_READ_TIMEOUT,
-                                                    ServerConfig.DEFAULT_DIRECTORY_PATH))) {
+                                                    ServerConfig.DEFAULT_DIRECTORY_PATH,
+                                                    Optional.empty(),
+                                                    requestCounts.size()))) {
 
             Result.attempt(serverFixture.server::start).orElseAssert();
 
@@ -66,7 +71,9 @@ public class MultipleClientsIntegrationTest {
                 .withMethod(Method.OPTIONS)
                 .build();
 
-            var requestService = Executors.newFixedThreadPool(clients.size());
+            var requestService = parallel ?
+                Executors.newFixedThreadPool(clients.size())
+                : Executors.newSingleThreadExecutor();
 
             var futureResponseResults =
                 zip(clients.stream(),

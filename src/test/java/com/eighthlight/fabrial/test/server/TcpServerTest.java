@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -63,6 +64,23 @@ public class TcpServerTest {
     assertThat(mockController.boundPort, is(config.port));
   }
 
+  @ParameterizedTest
+  @ValueSource(ints = {0, 8, 500})
+  void startsWithExpectedMaxConnections(int maxConnections) throws IOException {
+    var mockController = new MockSocketController();
+    var config = new ServerConfig(ServerConfig.DEFAULT_PORT,
+                                  ServerConfig.DEFAULT_READ_TIMEOUT,
+                                  ServerConfig.DEFAULT_DIRECTORY_PATH,
+                                  Optional.empty(),
+                                  maxConnections);
+    var server = new TcpServer(
+        config
+        , new EchoConnectionHandler(),
+        mockController);
+    server.start();
+    assertThat(mockController.maxConnections, is(maxConnections));
+  }
+
   @Test
   void handlesConnection() throws IOException {
     var mockController = new MockSocketController();
@@ -113,7 +131,7 @@ public class TcpServerTest {
         , new EchoConnectionHandler(),
         new MockSocketController() {
           @Override
-          public void start(int port, Consumer<ClientConnection> handler) throws IOException {
+          public void start(int port, int maxConnections, Consumer<ClientConnection> handler) throws IOException {
             throw new IOException("test bind error");
           }
         });

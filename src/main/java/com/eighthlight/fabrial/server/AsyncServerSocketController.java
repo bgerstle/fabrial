@@ -21,21 +21,24 @@ public class AsyncServerSocketController implements SocketController {
 
   private ServerSocket socket = null;
   private Thread acceptThread;
-  private final ExecutorService connectionHandlerExecutor;
+  private ExecutorService connectionHandlerExecutor;
 
   public AsyncServerSocketController(int readTimeout) {
     this.readTimeout = readTimeout;
-
-    var maxConnections = Optional.ofNullable(System.getProperty("maxConnections"))
-                                 .flatMap(c -> Result.attempt(() -> Integer.parseInt(c)).getValue())
-                                 .orElse(Runtime.getRuntime().availableProcessors());
-
-    connectionHandlerExecutor = Executors.newFixedThreadPool(maxConnections);
   }
 
+  @Override
   public void start(int port,
+                    int maxConnections,
                     Consumer<ClientConnection> consumer) throws IOException {
     socket = new ServerSocket(port);
+
+    if (maxConnections <= 0) {
+      connectionHandlerExecutor = Executors.newCachedThreadPool();
+    } else {
+      connectionHandlerExecutor = Executors.newFixedThreadPool(maxConnections);
+    }
+
     acceptThread = new Thread(() -> acceptConnections(consumer));
     acceptThread.setName("accept-connections");
     acceptThread.start();

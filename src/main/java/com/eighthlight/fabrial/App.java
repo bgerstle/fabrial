@@ -42,6 +42,12 @@ public class App {
           .dest("readTimeout")
           .help("Number of milliseconds the server will wait to read data from a socket.");
 
+    parser.addArgument("--max-connections")
+          .type(Integer.class)
+          .setDefault(Runtime.getRuntime().availableProcessors())
+          .dest("maxConnections")
+          .help("Number of simultaneous connections the server can handle, pass 0 for no limit.");
+
     try {
       Namespace ns = parser.parseArgs(args);
 
@@ -65,10 +71,13 @@ public class App {
         throw new ArgumentParserException("Read timeout must be greater than or equal to 0.", parser);
       }
 
+      int maxConnections = ns.getInt("maxConnections");
+
       return Optional.of(new ServerConfig(port,
                                           readTimeout,
                                           directoryPath,
-                                          fromEnvironment(System.getenv())));
+                                          fromEnvironment(System.getenv()),
+                                          maxConnections));
     } catch (ArgumentParserException e) {
       parser.handleError(e);
       return Optional.empty();

@@ -36,7 +36,8 @@ public class AccessLogIntegrationTest {
             ServerConfig.DEFAULT_PORT,
             ServerConfig.DEFAULT_READ_TIMEOUT,
             ServerConfig.DEFAULT_DIRECTORY_PATH,
-            Optional.of(credential)));
+            Optional.of(credential),
+            1));
         var clientFixture = new TcpClientFixture(ServerConfig.DEFAULT_PORT)) {
       serverFixture.server.start();
       clientFixture.client.connect();

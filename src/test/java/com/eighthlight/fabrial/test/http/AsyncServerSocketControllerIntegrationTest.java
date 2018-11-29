@@ -24,7 +24,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var port = 8080;
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
-      controller.start(port, c -> {});
+      controller.start(port, 1, c -> {});
       clientFixture.client.connect(250, 3, 100);
     }
   }
@@ -34,7 +34,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var port = 8080;
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
-      controller.start(port, conn -> {
+      controller.start(port, 1, conn -> {
         try {
           conn.getInputStream().transferTo(conn.getOutputStream());
         } catch (IOException e) {
@@ -61,7 +61,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var futureReadTimeout = new CompletableFuture<IOException>();
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(100)) {
-      controller.start(port, conn -> {
+      controller.start(port, 1, conn -> {
         try {
           conn.getInputStream().transferTo(conn.getOutputStream());
         } catch (IOException e) {
@@ -86,7 +86,7 @@ public class AsyncServerSocketControllerIntegrationTest {
       final var results =
           Collections.synchronizedList(new ArrayList<>(2));
 
-      controller.start(port, (conn) -> {
+      controller.start(port, 1, (conn) -> {
         try {
           var bufferedReader =
               new BufferedReader(new InputStreamReader(conn.getInputStream()));
