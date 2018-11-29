@@ -123,8 +123,7 @@ public class HttpRequestLineParsingTests {
 
   @Test
   void throwsWithBadTargets() {
-    qt().withFixedSeed(580164147028097L)
-        .forAll(methods(), invalidUris(), httpVersions())
+    qt().forAll(methods(), invalidUris(), httpVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(MessageReaderException.class, () -> {
             var request = new RequestReader(requestLineFromComponents(m.name(), u, v)).readRequest();
