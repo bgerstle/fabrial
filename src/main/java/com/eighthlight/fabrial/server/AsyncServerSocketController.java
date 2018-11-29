@@ -8,9 +8,11 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 public class AsyncServerSocketController implements SocketController {
   private static final Logger logger =
@@ -24,16 +26,28 @@ public class AsyncServerSocketController implements SocketController {
 
   public AsyncServerSocketController(int readTimeout) {
     this.readTimeout = readTimeout;
+
+    var maxConnections = Optional.ofNullable(System.getProperty("maxConnections"))
+                                 .flatMap(c -> Result.attempt(() -> Integer.parseInt(c)).getValue())
+                                 .orElse(Runtime.getRuntime().availableProcessors());
+
+    var coreSize = min(Runtime.getRuntime().availableProcessors(), maxConnections);
+    var maxSize = max(coreSize, maxConnections);
+
     this.connectionHandlerExecutor =
-        Executors.newFixedThreadPool(Optional.ofNullable(System.getProperty("maxConnections"))
-                                             .flatMap(c -> Result.attempt(() -> Integer.parseInt(c)).getValue())
-                                             .orElse(Runtime.getRuntime().availableProcessors()));
+        new ThreadPoolExecutor(coreSize,
+                               maxSize,
+                               10,
+                               TimeUnit.SECONDS,
+                               new SynchronousQueue<>());
   }
 
   public void start(int port,
                     Consumer<ClientConnection> consumer) throws IOException {
     socket = new ServerSocket(port);
     acceptThread = new Thread(() -> acceptConnections(consumer));
+    acceptThread.setName("accept-connections");
+    acceptThread.setPriority(Thread.MAX_PRIORITY);
     acceptThread.start();
   }
 
@@ -48,6 +62,7 @@ public class AsyncServerSocketController implements SocketController {
         clientSocket.setSoTimeout(readTimeout);
         var clientConnection = new ClientSocketConnection(clientSocket);
         connectionHandlerExecutor.execute(() -> {
+          assert !Thread.currentThread().equals(acceptThread);
           try {
             consumer.accept(clientConnection);
           } catch (Throwable t) {

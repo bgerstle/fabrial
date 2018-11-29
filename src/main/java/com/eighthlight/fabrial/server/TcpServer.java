@@ -5,6 +5,7 @@ import com.eighthlight.fabrial.http.AccessLogger;
 import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.file.LocalFilesystemController;
+import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -73,9 +74,9 @@ public class TcpServer implements Closeable {
   private void handleConnection(ClientConnection connection) {
     var connectionId = Integer.toHexString(connection.hashCode());
     try (MDC.MDCCloseable cra = MDC.putCloseable("connectionId", connectionId)) {
-      logger.trace("Accepted connection");
-
-      this.connectionCount.incrementAndGet();
+      logger.info("Accepted connection {}",
+                   StructuredArguments.kv("connectionCount",
+                                          this.connectionCount.incrementAndGet()));
 
       try (InputStream is = connection.getInputStream();
           OutputStream os = connection.getOutputStream()) {
@@ -86,12 +87,13 @@ public class TcpServer implements Closeable {
 
       try {
         connection.close();
-        logger.trace("Closed connection");
       } catch (IOException e) {
         logger.warn("Connection encountered exception while closing", e);
+      } finally {
+        logger.info("Closed connection {}",
+                     StructuredArguments.kv("connectionCount",
+                                            this.connectionCount.decrementAndGet()));
       }
-
-      this.connectionCount.decrementAndGet();
     }
   }
 
