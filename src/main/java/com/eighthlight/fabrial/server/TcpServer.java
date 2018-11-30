@@ -23,11 +23,6 @@ public class TcpServer implements Closeable {
 
   public final ServerConfig config;
 
-  // number of clients currently connected to the server socket
-  private final AtomicInteger connectionCount;
-
-  private final AtomicInteger peakConnectionCount;
-
   private final ConnectionHandler handler;
 
   private final SocketController socketController;
@@ -49,8 +44,6 @@ public class TcpServer implements Closeable {
   public TcpServer(ServerConfig config, ConnectionHandler handler, SocketController socketController) {
     this.config = Objects.requireNonNull(config);
     this.handler = Objects.requireNonNull(handler);
-    this.connectionCount = new AtomicInteger(0);
-    this.peakConnectionCount = new AtomicInteger(0);
     this.socketController = Objects.requireNonNull(socketController);
   }
 
@@ -59,11 +52,11 @@ public class TcpServer implements Closeable {
   }
 
   public int getConnectionCount() {
-    return connectionCount.get();
+    return socketController.getConnectionCount();
   }
 
   public int getPeakConnectionCount() {
-    return peakConnectionCount.get();
+    return socketController.getPeakConnectionCount();
   }
 
   /**
@@ -83,26 +76,11 @@ public class TcpServer implements Closeable {
   private void handleConnection(ClientConnection connection) {
     var connectionId = Integer.toHexString(connection.hashCode());
     try (MDC.MDCCloseable cra = MDC.putCloseable("connectionId", connectionId)) {
-      var incrementCount = this.connectionCount.incrementAndGet();
-      logger.info("Accepted connection {}",
-                   StructuredArguments.kv("connectionCount", incrementCount));
-
-      peakConnectionCount.getAndAccumulate(incrementCount, Integer::max);
-
       try (InputStream is = connection.getInputStream();
           OutputStream os = connection.getOutputStream()) {
         handler.handleConnectionStreams(is, os);
       } catch(Throwable t) {
         logger.warn("Connection handler exception", t);
-      }
-
-      try {
-        connection.close();
-      } catch (IOException e) {
-        logger.warn("Connection encountered exception while closing", e);
-      } finally {
-        logger.info("Closed connection {}",
-                     StructuredArguments.kv("connectionCount", this.connectionCount.decrementAndGet()));
       }
     }
   }

@@ -1,14 +1,18 @@
 package com.eighthlight.fabrial.server;
 
+import ch.qos.logback.core.net.server.Client;
 import com.eighthlight.fabrial.utils.Result;
+import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static java.lang.Math.*;
@@ -23,8 +27,24 @@ public class AsyncServerSocketController implements SocketController {
   private Thread acceptThread;
   private ExecutorService connectionHandlerExecutor;
 
+  private final AtomicInteger connectionCount;
+
+  private  int peakConnectionCount;
+
   public AsyncServerSocketController(int readTimeout) {
     this.readTimeout = readTimeout;
+    this.connectionCount = new AtomicInteger(0);
+    this.peakConnectionCount = 0;
+  }
+
+  @Override
+  public int getConnectionCount() {
+    return connectionCount.get();
+  }
+
+  @Override
+  public int getPeakConnectionCount() {
+    return peakConnectionCount;
   }
 
   @Override
@@ -49,29 +69,56 @@ public class AsyncServerSocketController implements SocketController {
     return socket.getLocalPort();
   }
 
+  private Socket acceptNext() throws IOException {
+    var clientSocket = socket.accept();
+
+    clientSocket.setSoTimeout(readTimeout);
+
+    var incrementCount = this.connectionCount.incrementAndGet();
+    peakConnectionCount = max(incrementCount, peakConnectionCount);
+
+    logger.info("Accepted connection {}",
+                StructuredArguments.kv("connectionCount", incrementCount));
+
+    return clientSocket;
+  }
+
+  private void close(Socket connection) {
+    var decrementCount = this.connectionCount.decrementAndGet();
+
+    try {
+      connection.close();
+      logger.info("Closed connection {}",
+                  StructuredArguments.kv("connectionCount", decrementCount));
+    } catch (IOException e) {
+      logger.warn("Error while closing connection.", e);
+    }
+  }
 
   private void acceptConnections(Consumer<ClientConnection> consumer) {
     assert socket != null;
 
     while (!socket.isClosed()) {
-      try {
-        var clientSocket = socket.accept();
-        clientSocket.setSoTimeout(readTimeout);
-        var clientConnection = new ClientSocketConnection(clientSocket);
-        connectionHandlerExecutor.execute(() -> {
-          try {
-            consumer.accept(clientConnection);
-          } catch (Throwable t) {
-            logger.warn("Connection handler error", t);
-          }
-        });
-      } catch (IOException e) {
-        if (e instanceof SocketException && e.getMessage().equals("Socket closed")) {
-          logger.trace("Server socket closed");
-        } else {
-          logger.warn("Exception while accepting new connection", e);
-        }
-      }
+      Result.<Socket, Throwable>attempt(this::acceptNext)
+          .flatMapAttempt(clientSocket -> {
+            connectionHandlerExecutor.execute(() -> {
+              try {
+                consumer.accept(new ClientSocketConnection(clientSocket));
+              } catch (Throwable t) {
+                logger.warn("Connection consumer exception.", t);
+              }
+              close(clientSocket);
+            });
+            return clientSocket;
+          })
+          .getError()
+          .ifPresent(e -> {
+            if (e instanceof SocketException && e.getMessage().equals("Socket closed")) {
+              logger.trace("Server socket closed");
+            } else {
+              logger.warn("Exception while accepting new connection", e);
+            }
+          });
     }
   }
 
