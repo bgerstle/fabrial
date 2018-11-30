@@ -45,7 +45,11 @@ public class ArbitraryHttp {
     return strings().betweenCodePoints(LAST_ASCII_CODE_POINT + 1, Character.MAX_CODE_POINT)
                     .ofLengthBetween(1, 32)
                     // force utf8, otherwise we get weird side-effects when a utf16 string pops up
-                    .map(s -> new String(s.getBytes(StandardCharsets.UTF_8)));
+                    .map(s -> new String(s.getBytes(StandardCharsets.UTF_8)))
+                    .assuming(s -> {
+                      var encoder = StandardCharsets.US_ASCII.newEncoder();
+                      return s.chars().noneMatch(c -> encoder.canEncode((char)c));
+                    });
   }
 
   // Characters which can be included in URI paths without percent encoding
