@@ -126,7 +126,8 @@ public class HttpRequestLineParsingTests {
     qt().forAll(methods(), invalidUris(), httpVersions())
         .checkAssert((m, u, v) -> {
           assertThrows(MessageReaderException.class, () -> {
-            new RequestReader(requestLineFromComponents(m.name(), u, v)).readRequest().get();
+            var request = new RequestReader(requestLineFromComponents(m.name(), u, v)).readRequest();
+            request.get();
           });
         });
   }

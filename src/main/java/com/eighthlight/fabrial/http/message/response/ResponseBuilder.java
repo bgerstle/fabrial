@@ -8,7 +8,6 @@ import java.io.ByteArrayInputStream;
  * Builder object for @link Response instances.
  */
 public class ResponseBuilder extends AbstractMessageBuilder<ResponseBuilder, Response> {
-  private String version;
   private int statusCode;
   private String reason;
 
@@ -16,9 +15,10 @@ public class ResponseBuilder extends AbstractMessageBuilder<ResponseBuilder, Res
     super();
   }
 
-  public ResponseBuilder withVersion(String version) {
-    this.version = version;
-    return this;
+  public ResponseBuilder(Response response) {
+    super(response.version, response.headers, response.body);
+    this.statusCode = response.statusCode;
+    this.reason = response.reason;
   }
 
   public ResponseBuilder withStatusCode(int statusCode) {

@@ -11,11 +11,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.quicktheories.QuickTheory.qt;
+import static org.quicktheories.generators.SourceDSL.integers;
 
 public class TcpServerTest {
 
@@ -63,6 +66,23 @@ public class TcpServerTest {
     assertThat(mockController.boundPort, is(config.port));
   }
 
+  @ParameterizedTest
+  @ValueSource(ints = {0, 8, 500})
+  void startsWithExpectedMaxConnections(int maxConnections) throws IOException {
+    var mockController = new MockSocketController();
+    var config = new ServerConfig(ServerConfig.DEFAULT_PORT,
+                                  ServerConfig.DEFAULT_READ_TIMEOUT,
+                                  ServerConfig.DEFAULT_DIRECTORY_PATH,
+                                  Optional.empty(),
+                                  maxConnections);
+    var server = new TcpServer(
+        config
+        , new EchoConnectionHandler(),
+        mockController);
+    server.start();
+    assertThat(mockController.maxConnections, is(maxConnections));
+  }
+
   @Test
   void handlesConnection() throws IOException {
     var mockController = new MockSocketController();
@@ -78,7 +98,6 @@ public class TcpServerTest {
     var mockConn = new MockClientConnection("foo");
     mockController.consumer.accept(mockConn);
     assertThat(mockConn.out.toString(), is(mockConn.in));
-    assertThat(mockConn.isClosed, is(true));
   }
 
   @Test
@@ -99,7 +118,6 @@ public class TcpServerTest {
         .forEach(conn -> {
           mockController.consumer.accept(conn);
           assertThat(conn.out.toString(), is(conn.in));
-          assertThat(conn.isClosed, is(true));
         });
   }
 
@@ -113,7 +131,7 @@ public class TcpServerTest {
         , new EchoConnectionHandler(),
         new MockSocketController() {
           @Override
-          public void start(int port, Consumer<ClientConnection> handler) throws IOException {
+          public void start(int port, int maxConnections, Consumer<ClientConnection> handler) throws IOException {
             throw new IOException("test bind error");
           }
         });
@@ -122,7 +140,7 @@ public class TcpServerTest {
   }
 
   @Test
-  void catchesHandlerErrorAndClosesConnection() throws IOException {
+  void catchesHandlerError() throws IOException {
     var config = new ServerConfig(ServerConfig.DEFAULT_PORT,
                                   ServerConfig.DEFAULT_READ_TIMEOUT,
                                   ServerConfig.DEFAULT_DIRECTORY_PATH);
@@ -135,34 +153,8 @@ public class TcpServerTest {
     server.start();
 
     var conn = new MockClientConnection("");
-    mockController.consumer.accept(conn);
 
-    assertThat(conn.isClosed, is(true));
-  }
-
-  @Test
-  void catchesConnectionCloseErrors() throws IOException {
-    var config = new ServerConfig(ServerConfig.DEFAULT_PORT,
-                                  ServerConfig.DEFAULT_READ_TIMEOUT,
-                                  ServerConfig.DEFAULT_DIRECTORY_PATH);
-    var mockController = new MockSocketController();
-    var server = new TcpServer(
-        config,
-        new EchoConnectionHandler(),
-        mockController);
-
-    server.start();
-
-    var conn = new MockClientConnection("baz") {
-      @Override
-      public void close() throws IOException {
-        throw new IOException("test close connection error");
-      }
-    };
-
-    mockController.consumer.accept(conn);
-
-    assertThat(conn.out.toString(), is(conn.in));
+    mockController.invokeHandlerWith(conn);
   }
 
   @Test
@@ -185,13 +177,11 @@ public class TcpServerTest {
       }
     };
 
-    mockController.consumer.accept(conn);
-
-    assertThat(conn.isClosed, is(true));
+    mockController.invokeHandlerWith(conn);
   }
 
   @Test
-  void handlesOutputStream() throws IOException {
+  void handlesOutputStreamErrors() throws IOException {
     var config = new ServerConfig(ServerConfig.DEFAULT_PORT,
                                   ServerConfig.DEFAULT_READ_TIMEOUT,
                                   ServerConfig.DEFAULT_DIRECTORY_PATH);
@@ -210,8 +200,27 @@ public class TcpServerTest {
       }
     };
 
-    mockController.consumer.accept(conn);
+    mockController.invokeHandlerWith(conn);
+  }
 
-    assertThat(conn.isClosed, is(true));
+  @Test
+  void returnsSocketControllerConnectionCounts() {
+    qt().withExamples(10)
+        .forAll(integers().all(), integers().all())
+        .checkAssert((connectionCount, peakConnectionCount) -> {
+          var config = new ServerConfig(ServerConfig.DEFAULT_PORT,
+                                        ServerConfig.DEFAULT_READ_TIMEOUT,
+                                        ServerConfig.DEFAULT_DIRECTORY_PATH);
+          var mockController = new MockSocketController();
+          mockController.connectionCount = connectionCount;
+          mockController.peakConnectionCount = peakConnectionCount;
+          var server = new TcpServer(
+              config,
+              new EchoConnectionHandler(),
+              mockController);
+
+          assertThat(server.getConnectionCount(), equalTo(connectionCount));
+          assertThat(server.getPeakConnectionCount(), equalTo(peakConnectionCount));
+        });
   }
 }

@@ -1,6 +1,7 @@
 package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.server.AsyncServerSocketController;
+import com.eighthlight.fabrial.server.ClientConnection;
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.test.client.TcpClient;
 import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
@@ -13,9 +14,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.grantwest.eventually.EventuallyLambdaMatcher.eventuallyEval;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AsyncServerSocketControllerIntegrationTest {
@@ -24,7 +28,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var port = 8080;
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
-      controller.start(port, c -> {});
+      controller.start(port, 1, c -> {});
       clientFixture.client.connect(250, 3, 100);
     }
   }
@@ -34,7 +38,7 @@ public class AsyncServerSocketControllerIntegrationTest {
     var port = 8080;
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
-      controller.start(port, conn -> {
+      controller.start(port, 1, conn -> {
         try {
           conn.getInputStream().transferTo(conn.getOutputStream());
         } catch (IOException e) {
@@ -56,12 +60,31 @@ public class AsyncServerSocketControllerIntegrationTest {
   }
 
   @Test
+  void closesConnectionAfterHandling() throws IOException {
+    var port = 8080;
+    try (var clientFixture = new TcpClientFixture(port);
+        var controller = new AsyncServerSocketController(ServerConfig.DEFAULT_READ_TIMEOUT)) {
+
+      var connSpy = new AtomicReference<ClientConnection>(null);
+
+      controller.start(port, 1, conn -> {
+        connSpy.set(conn);
+      });
+
+      clientFixture.client.connect(250, 3, 100);
+
+      assertThat(connSpy::get, eventuallyEval(notNullValue()));
+      assertThat(() -> connSpy.get().isClosed(), eventuallyEval(equalTo(true)));
+    }
+  }
+
+  @Test
   void setsReadTimeoutToPreventHangingConnections() throws Exception {
     var port = 8080;
     var futureReadTimeout = new CompletableFuture<IOException>();
     try (var clientFixture = new TcpClientFixture(port);
         var controller = new AsyncServerSocketController(100)) {
-      controller.start(port, conn -> {
+      controller.start(port, 1, conn -> {
         try {
           conn.getInputStream().transferTo(conn.getOutputStream());
         } catch (IOException e) {
@@ -86,7 +109,7 @@ public class AsyncServerSocketControllerIntegrationTest {
       final var results =
           Collections.synchronizedList(new ArrayList<>(2));
 
-      controller.start(port, (conn) -> {
+      controller.start(port, 1, (conn) -> {
         try {
           var bufferedReader =
               new BufferedReader(new InputStreamReader(conn.getInputStream()));

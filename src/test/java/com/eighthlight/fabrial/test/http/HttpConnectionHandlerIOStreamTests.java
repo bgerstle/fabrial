@@ -61,86 +61,11 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
     ByteArrayInputStream is = new ByteArrayInputStream(request);
     ByteArrayOutputStream respOs = new ByteArrayOutputStream();
     try {
-      handler.handle(is, respOs);
+      handler.handleConnectionStreams(is, respOs);
     } catch (Throwable t) {
       throw new RuntimeException(t);
     }
     return new String(respOs.toByteArray(), StandardCharsets.UTF_8);
-  }
-
-
-  @Test
-  void responds200ToTestHeadRequest() throws Throwable {
-    String version = HttpVersion.ONE_ONE;
-    assertThat(
-        sendRequest(new RequestBuilder()
-                           .withVersion (version)
-                           .withMethod(Method.HEAD)
-                           .withUriString("/test").build()),
-        equalTo("HTTP/" + version + " 200 " + CRLF + CRLF));
-  }
-
-  @Test
-  void responds501ToUnimplementedMethods() throws Throwable {
-    String version = HttpVersion.ONE_ONE;
-    assertThat(
-        sendRequest(new RequestBuilder()
-                           .withVersion (version)
-                           .withMethod(Method.DELETE)
-                           .withUriString("/test")
-                           .build()),
-        allOf(
-            startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
-            endsWith(CRLF)
-        ));
-  }
-
-  @Test
-  void responds501ToUnregisteredHTTPMethods() throws Throwable {
-    qt().forAll(unspecifiedMethods()).checkAssert(unspecifiedMethod -> {
-      String version = HttpVersion.ONE_ONE;
-      Result<String, Throwable> response = Result.attempt(() -> {
-        return sendRequest(new RequestBuilder()
-                        .withVersion (version)
-                        .withMethodValue(unspecifiedMethod)
-                        .withUriString("/test")
-                        .build());
-      });
-
-      assertThat(
-          response.getValue().orElse(null),
-          allOf(
-              startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
-              endsWith(CRLF)
-          ));
-    });
-  }
-
-  @Test
-  void responds404ToNonTestPaths() throws Throwable {
-    String version = HttpVersion.ONE_ONE;
-    assertThat(
-        sendRequest(new RequestBuilder()
-                           .withVersion (version)
-                           .withMethod(Method.HEAD)
-                           .withUriString("/foobarbuz")
-                           .build()),
-        equalTo("HTTP/" + version + " 404 " + CRLF + CRLF));
-  }
-
-  @Test
-  void responds501ToUnsupportedHttpVersions() throws Throwable {
-    String version = HttpVersion.ZERO_NINE;
-    assertThat(
-        sendRequest(new RequestBuilder()
-                           .withVersion (version)
-                           .withMethod(Method.HEAD)
-                           .withUriString("/test")
-                           .build()),
-        allOf(
-            startsWith("HTTP/" + HttpVersion.ONE_ONE + " 501 "),
-            endsWith(CRLF)
-        ));
   }
 
   @Test
@@ -148,8 +73,7 @@ public class HttpConnectionHandlerIOStreamTests implements HttpResponder {
     assertThat(
         sendRequest("FOO"),
         allOf(
-            startsWith("HTTP/" + HttpVersion.ONE_ONE + " 400 "),
-            endsWith(CRLF)
+            startsWith("HTTP/" + HttpVersion.ONE_ONE + " 400 ")
         ));
   }
 }

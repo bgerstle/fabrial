@@ -5,6 +5,7 @@ import com.eighthlight.fabrial.http.AccessLogger;
 import com.eighthlight.fabrial.http.HttpConnectionHandler;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.file.LocalFilesystemController;
+import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -21,9 +22,6 @@ public class TcpServer implements Closeable {
   private static final Logger logger = LoggerFactory.getLogger(TcpServer.class);
 
   public final ServerConfig config;
-
-  // number of clients currently connected to the server socket
-  private final AtomicInteger connectionCount;
 
   private final ConnectionHandler handler;
 
@@ -46,12 +44,19 @@ public class TcpServer implements Closeable {
   public TcpServer(ServerConfig config, ConnectionHandler handler, SocketController socketController) {
     this.config = Objects.requireNonNull(config);
     this.handler = Objects.requireNonNull(handler);
-    this.connectionCount = new AtomicInteger(0);
     this.socketController = Objects.requireNonNull(socketController);
   }
 
+  public int getPort() {
+    return this.socketController.getPort();
+  }
+
   public int getConnectionCount() {
-    return connectionCount.get();
+    return socketController.getConnectionCount();
+  }
+
+  public int getPeakConnectionCount() {
+    return socketController.getPeakConnectionCount();
   }
 
   /**
@@ -62,36 +67,21 @@ public class TcpServer implements Closeable {
    * @throws IOException If the underlying socket couldn't bind successfully.
    */
   public void start() throws IOException {
-    socketController.start(config.port, this::handleConnection);
-    logger.info("Server started on " + config.port);
+    socketController.start(config.port, this.config.maxConnections, this::handleConnection);
+    logger.info("Server started on " + socketController.getPort());
     logger.info("Serving files from " + config.directoryPath);
   }
-
-
 
   // Handle new client connections
   private void handleConnection(ClientConnection connection) {
     var connectionId = Integer.toHexString(connection.hashCode());
     try (MDC.MDCCloseable cra = MDC.putCloseable("connectionId", connectionId)) {
-      logger.trace("Accepted connection");
-
-      this.connectionCount.incrementAndGet();
-
       try (InputStream is = connection.getInputStream();
           OutputStream os = connection.getOutputStream()) {
-        handler.handle(is, os);
+        handler.handleConnectionStreams(is, os);
       } catch(Throwable t) {
         logger.warn("Connection handler exception", t);
       }
-
-      try {
-        connection.close();
-        logger.trace("Closed connection");
-      } catch (IOException e) {
-        logger.warn("Connection encountered exception while closing", e);
-      }
-
-      this.connectionCount.decrementAndGet();
     }
   }
 

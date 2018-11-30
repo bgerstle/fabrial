@@ -36,6 +36,18 @@ public class App {
           .dest("directory")
           .help("Directory that files should be served from. Defaults to current working directory.");
 
+    parser.addArgument("--read-timeout")
+          .type(Integer.class)
+          .setDefault(ServerConfig.DEFAULT_READ_TIMEOUT)
+          .dest("readTimeout")
+          .help("Number of milliseconds the server will wait to read data from a socket.");
+
+    parser.addArgument("--max-connections")
+          .type(Integer.class)
+          .setDefault(Runtime.getRuntime().availableProcessors())
+          .dest("maxConnections")
+          .help("Number of simultaneous connections the server can handle, pass 0 for no limit.");
+
     try {
       Namespace ns = parser.parseArgs(args);
 
@@ -54,10 +66,18 @@ public class App {
                                           parser);
       }
 
+      int readTimeout = ns.getInt("readTimeout");
+      if (readTimeout < 0) {
+        throw new ArgumentParserException("Read timeout must be greater than or equal to 0.", parser);
+      }
+
+      int maxConnections = ns.getInt("maxConnections");
+
       return Optional.of(new ServerConfig(port,
-                                          ServerConfig.DEFAULT_READ_TIMEOUT,
+                                          readTimeout,
                                           directoryPath,
-                                          fromEnvironment(System.getenv())));
+                                          fromEnvironment(System.getenv()),
+                                          maxConnections));
     } catch (ArgumentParserException e) {
       parser.handleError(e);
       return Optional.empty();
