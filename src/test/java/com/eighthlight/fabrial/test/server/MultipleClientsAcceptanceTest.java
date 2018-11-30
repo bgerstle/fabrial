@@ -62,8 +62,7 @@ public class MultipleClientsAcceptanceTest {
 
 
             // wait for all clients to connect
-            assertThat(serverFixture.server::getConnectionCount,
-                       eventuallyEval(equalTo(clients.size())));
+            assertThat(serverFixture.server::getConnectionCount, eventuallyEval(equalTo(clients.size())));
 
 
             var request = new RequestBuilder()
@@ -262,6 +261,78 @@ public class MultipleClientsAcceptanceTest {
               assertThat(result.map(r -> r.statusCode).getValue().orElse(null),
                          equalTo(200));
             });
+          }
+        });
+  }
+
+  @Test
+  void eventuallyRespondsToQueuedRequests() throws Exception {
+    var maxConnGen = integers().between(2, Runtime.getRuntime().availableProcessors());
+    var clientCountGen = maxConnGen.mutate((maxConnections, rand) -> {
+      return maxConnections + integers().between(1, 50).generate(rand);
+    });
+    qt().forAll(maxConnGen, clientCountGen)
+        .checkAssert((maxConnections, clientCount) -> {
+          try (TcpServerFixture serverFixture =
+              new TcpServerFixture(new ServerConfig(0,
+                                                    ServerConfig.DEFAULT_READ_TIMEOUT,
+                                                    ServerConfig.DEFAULT_DIRECTORY_PATH,
+                                                    Optional.empty(),
+                                                    maxConnections))) {
+
+            Result.attempt(serverFixture.server::start).orElseAssert();
+
+            // connect all clients at once
+            var clients = IntStream
+                .iterate(clientCount, i -> i > 0, i -> i - 1)
+                .mapToObj(i -> {
+                  var client = new TcpClient(new InetSocketAddress(serverFixture.server.getPort()));
+                  Result.attempt(() -> client.connect()).orElseAssert();
+                  return client;
+                })
+                .collect(Collectors.toList());
+
+            // should assert that connectionCount == # of clients, but connection count isn't
+            // incremented until the connection is pulled of the work queue (so connection count
+            // is actually a representation of connections being handled, not connections accepted)
+
+            // each client sends a request that should result in the connection being closed,
+            // allowing other clients' requests to be handled
+            var request = new RequestBuilder()
+                .withVersion(HttpVersion.ONE_ONE)
+                .withUriString("/")
+                .withMethod(Method.OPTIONS)
+                .withHeaders(Map.of("Connection", "close"))
+                .build();
+
+            var requestService = Executors.newFixedThreadPool(clientCount);
+
+            var futureResponseResults = clients.stream().map(client -> {
+                  return requestService.submit(() -> {
+                    var httpClient = new HttpClient(client);
+                    var result = Result.<Response, Throwable>attempt(() -> {
+                      return httpClient.send(request).get();
+                    });
+                    return result;
+                  });
+                })
+                .collect(Collectors.toList());
+
+            var responseResults = futureResponseResults
+                .stream()
+                .parallel()
+                .map(f -> Result.attempt(() -> f.get(20, TimeUnit.SECONDS)).orElseAssert())
+                .collect(Collectors.toList());
+
+            try {
+              responseResults.forEach(result -> {
+                assertThat(result.getError().isPresent(), equalTo(false));
+                assertThat(result.map(r -> r.statusCode).getValue().orElse(null),
+                           equalTo(200));
+              });
+            } catch (Exception e) {
+              clients.forEach(c -> Result.attempt(() -> c.close()).orElseAssert());
+            }
           }
         });
   }
