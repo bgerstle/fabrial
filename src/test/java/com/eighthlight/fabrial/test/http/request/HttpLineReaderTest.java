@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.http.request;
 
 import com.eighthlight.fabrial.utils.HttpLineReader;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

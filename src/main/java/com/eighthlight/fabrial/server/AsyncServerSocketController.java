@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.server;
 
 import ch.qos.logback.core.net.server.Client;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -4,7 +4,7 @@ import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.test.client.TcpClient;
 import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
 import com.eighthlight.fabrial.test.fixtures.TcpServerFixture;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 

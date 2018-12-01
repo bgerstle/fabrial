@@ -10,17 +10,7 @@ sourceCompatibility = 1.10
 
 repositories {
     mavenCentral()
-}
-
-sourceSets {
-    integration {
-        java {
-            srcDir 'test-integration'
-        }
-        resources {
-            srcDir 'test-integration'
-        }
-    }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -29,6 +19,7 @@ dependencies {
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile group: 'net.logstash.logback', name: 'logstash-logback-encoder', version: '5.2'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    compile 'com.github.bgerstle:result-java:master-SNAPSHOT'
 
     testCompile('org.hamcrest:hamcrest-junit:2.0.0.0')
     testCompile('com.github.grantwest.eventually:hamcrest-eventually-matchers:0.0.1')

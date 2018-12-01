@@ -2,7 +2,7 @@ package com.eighthlight.fabrial.test.fixtures;
 
 import com.eighthlight.fabrial.server.ServerConfig;
 import com.eighthlight.fabrial.server.TcpServer;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 
 public class TcpServerFixture implements AutoCloseable {
   public final TcpServer server;

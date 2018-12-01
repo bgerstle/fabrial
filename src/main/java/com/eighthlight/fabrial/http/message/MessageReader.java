@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.http.message;
 
-import com.eighthlight.fabrial.utils.CheckedFunction;
+import com.bgerstle.result.CheckedFunction;
 import com.eighthlight.fabrial.utils.HttpLineReader;
 
 import java.io.IOException;

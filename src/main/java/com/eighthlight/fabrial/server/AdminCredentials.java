@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.server;
 
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 
 import java.util.Map;
 import java.util.Optional;

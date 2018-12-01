@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.http.request;
 
 import com.eighthlight.fabrial.http.message.HttpHeaderReader;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.http.responder;
 
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;

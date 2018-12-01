@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.fixtures;
 
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 
 import java.nio.file.Path;
 

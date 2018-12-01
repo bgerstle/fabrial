@@ -5,7 +5,7 @@ import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.server.BasicAuthResponder;
 import com.eighthlight.fabrial.server.Credential;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

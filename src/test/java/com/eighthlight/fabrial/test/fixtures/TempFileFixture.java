@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.fixtures;
 
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 
 import java.io.FileWriter;
 import java.io.InputStream;
@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.eighthlight.fabrial.utils.Result.attempt;
 
 public class TempFileFixture implements AutoCloseable {
   public final Path tempFilePath;
@@ -24,7 +23,7 @@ public class TempFileFixture implements AutoCloseable {
 
   public TempFileFixture(Path dir, String suffix) {
     tempFilePath =
-        attempt(() -> Files.createTempFile(dir, "test", suffix))
+        Result.attempt(() -> Files.createTempFile(dir, "test", suffix))
               .orElseAssert();
   }
 
@@ -42,6 +41,6 @@ public class TempFileFixture implements AutoCloseable {
 
   @Override
   public void close() {
-      attempt(() -> Files.deleteIfExists(tempFilePath));
+      Result.attempt(() -> Files.deleteIfExists(tempFilePath));
   }
 }

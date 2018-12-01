@@ -11,7 +11,7 @@ import com.eighthlight.fabrial.test.client.TcpClient;
 import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
 import com.eighthlight.fabrial.test.fixtures.TcpServerFixture;
 import com.eighthlight.fabrial.test.http.client.HttpClient;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;

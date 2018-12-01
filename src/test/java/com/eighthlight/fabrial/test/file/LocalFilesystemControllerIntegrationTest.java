@@ -3,7 +3,7 @@ package com.eighthlight.fabrial.test.file;
 import com.eighthlight.fabrial.http.file.LocalFilesystemController;
 import com.eighthlight.fabrial.test.fixtures.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;

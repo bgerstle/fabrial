@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.fixtures;
 
 import com.eighthlight.fabrial.server.ServerConfig;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;

@@ -1,10 +1,9 @@
 package com.eighthlight.fabrial.test.fixtures;
 
+import com.bgerstle.result.Result;
 import com.eighthlight.fabrial.test.client.TcpClient;
 
 import java.net.InetSocketAddress;
-
-import static com.eighthlight.fabrial.utils.Result.attempt;
 
 public class TcpClientFixture implements AutoCloseable {
   public final TcpClient client;
@@ -16,7 +15,7 @@ public class TcpClientFixture implements AutoCloseable {
   @Override
   public void close() {
     if (!client.isClosed()) {
-      attempt(client::close).orElseAssert();
+      Result.attempt(client::close).orElseAssert();
     }
   }
 }

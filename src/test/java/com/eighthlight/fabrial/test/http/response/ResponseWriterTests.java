@@ -5,7 +5,7 @@ import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.http.message.response.ResponseWriter;
 import com.eighthlight.fabrial.test.http.client.ResponseReader;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.core.Gen;
 

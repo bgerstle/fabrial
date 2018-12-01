@@ -4,7 +4,7 @@ import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.message.response.HttpStatusLineWriter;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;

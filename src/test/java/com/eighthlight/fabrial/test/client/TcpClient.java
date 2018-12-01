@@ -1,6 +1,6 @@
 package com.eighthlight.fabrial.test.client;
 
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import net.logstash.logback.argument.StructuredArguments;
 import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
@@ -13,7 +13,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.Optional;
 
-import static com.eighthlight.fabrial.utils.Result.attempt;
 import static java.lang.Thread.sleep;
 
 public class TcpClient implements AutoCloseable {
@@ -33,10 +32,7 @@ public class TcpClient implements AutoCloseable {
   public void connect(int timeout, int retries, int delay) throws IOException {
     socket = new Socket();
 
-    Result<ObjectUtils.Null, IOException> result =
-        attempt(() -> socket.connect(address, timeout));
-
-    Optional<IOException> ioe = result.getError();
+    Optional<IOException> ioe = Result.attempt(() -> socket.connect(address, timeout)).getError();
     if (!ioe.isPresent()) {
       return;
     }

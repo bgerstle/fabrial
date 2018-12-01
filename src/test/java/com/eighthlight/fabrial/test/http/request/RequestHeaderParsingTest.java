@@ -2,7 +2,7 @@ package com.eighthlight.fabrial.test.http.request;
 
 import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.http.message.request.RequestReader;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

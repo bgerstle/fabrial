@@ -3,7 +3,7 @@ package com.eighthlight.fabrial.test.server;
 import com.eighthlight.fabrial.http.auth.AuthorizationParsingException;
 import com.eighthlight.fabrial.http.auth.BasicAuth;
 import com.eighthlight.fabrial.server.Credential;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;

@@ -9,7 +9,7 @@ import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
 import com.eighthlight.fabrial.test.http.request.RequestWriter;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

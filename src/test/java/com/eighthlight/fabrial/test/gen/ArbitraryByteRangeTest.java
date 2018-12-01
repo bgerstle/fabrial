@@ -1,7 +1,7 @@
 package com.eighthlight.fabrial.test.gen;
 
 import com.eighthlight.fabrial.http.message.request.HttpRequestByteRange;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Test;
 import org.quicktheories.api.Pair;
 import org.quicktheories.api.Tuple3;

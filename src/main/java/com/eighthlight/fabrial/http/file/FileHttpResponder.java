@@ -7,7 +7,7 @@ import com.eighthlight.fabrial.http.message.request.HttpRequestByteRange;
 import com.eighthlight.fabrial.http.message.request.Request;
 import com.eighthlight.fabrial.http.message.response.Response;
 import com.eighthlight.fabrial.http.message.response.ResponseBuilder;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

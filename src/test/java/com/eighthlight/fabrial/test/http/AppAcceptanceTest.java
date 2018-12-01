@@ -8,7 +8,7 @@ import com.eighthlight.fabrial.test.fixtures.TcpClientFixture;
 import com.eighthlight.fabrial.test.fixtures.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
 import com.eighthlight.fabrial.test.http.client.HttpClient;
-import com.eighthlight.fabrial.utils.Result;
+import com.bgerstle.result.Result;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
