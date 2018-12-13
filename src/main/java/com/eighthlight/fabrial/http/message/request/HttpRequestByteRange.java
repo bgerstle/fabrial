@@ -120,11 +120,23 @@ public class HttpRequestByteRange {
     return last - first + 1;
   }
 
+
+  public String toString() {
+    return responseContentRangeString();
+  }
+
   /**
    * @return A string formatted for use in Content-Range response headers.
    */
-  public String toString() {
+  public String responseContentRangeString() {
     return String.format("bytes %d-%d", first, last);
+  }
+
+  /**
+   * @return A string formatted for use in Range request headers.
+   */
+  public String requestRangeString() {
+    return String.format("bytes=%d-%d", first, last);
   }
 
   @Override

@@ -4,31 +4,43 @@ import com.eighthlight.fabrial.http.HttpVersion;
 import com.eighthlight.fabrial.http.Method;
 import com.eighthlight.fabrial.http.file.FileHttpResponder;
 import com.eighthlight.fabrial.http.file.LocalFilesystemController;
+import com.eighthlight.fabrial.http.message.request.HttpRequestByteRange;
 import com.eighthlight.fabrial.http.message.request.RequestBuilder;
 import com.eighthlight.fabrial.test.fixtures.TempDirectoryFixture;
 import com.eighthlight.fabrial.test.fixtures.TempFileFixture;
 import com.bgerstle.result.Result;
+import com.google.common.base.Charsets;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.quicktheories.api.Tuple4;
+import org.quicktheories.generators.Generate;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static com.eighthlight.fabrial.test.gen.ArbitraryHttp.paths;
+import static com.eighthlight.fabrial.test.http.ArbitraryByteRangeTest.fileSizeAndPosition;
+import static com.eighthlight.fabrial.test.http.ArbitraryByteRangeTest.fileSizeFirstPosAndLastPos;
+import static java.lang.Math.exp;
+import static java.lang.Math.max;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.quicktheories.QuickTheory.qt;
-import static org.quicktheories.generators.Generate.pick;
+import static org.quicktheories.generators.Generate.*;
+import static org.quicktheories.generators.SourceDSL.integers;
 import static org.quicktheories.generators.SourceDSL.strings;
 
 public class FileHttpResponderIntegrationTest {
@@ -293,6 +305,83 @@ public class FileHttpResponderIntegrationTest {
                 Optional.ofNullable(response.body)
                         .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
             assertThat(bodyBytes.orElse(null), is(data));
+          } finally {
+            // close base temp directory
+            baseDirFixture.close();
+          }
+        });
+  }
+
+  @Test
+  void getArbitraryRange() {
+    final var extensionsToMimes = Map.of(
+        "txt", "text/plain",
+        "jpg", "image/jpeg",
+        "gif", "image/gif"
+    );
+
+    var rangeAndData = fileSizeFirstPosAndLastPos()
+        .mutate((sizeFirstAndLast, rand)-> {
+      var data = Generate.byteArrays(constant(sizeFirstAndLast._1),
+                                      Generate.bytes((byte)0, (byte)0xF, (byte)0))
+                          .generate(rand);
+      return Tuple4.of(sizeFirstAndLast._1, sizeFirstAndLast._2, sizeFirstAndLast._3, data);
+    });
+
+    qt().forAll(paths(32),
+                rangeAndData,
+                pick(List.copyOf(extensionsToMimes.keySet())))
+        .checkAssert((relSubdirPath, sizeStartEndData, ext) -> {
+          var size = sizeStartEndData._1;
+          var rangeStart = sizeStartEndData._2;
+          var rangeEnd = sizeStartEndData._3;
+          var range =
+              new HttpRequestByteRange(rangeStart, rangeEnd);
+          var data = sizeStartEndData._4;
+
+          // create temp directory
+          var baseDirFixture = new TempDirectoryFixture();
+          // setup folder inside arbitrary temp dir
+          var absSubdirPath = Paths.get(baseDirFixture.tempDirPath.toString(), relSubdirPath);
+          Result.attempt(() ->  Files.createDirectories(absSubdirPath))
+                .orElseAssert();
+          // create file in arbitrary temp dir subfolder
+          try (var tmpFileFixture = new TempFileFixture(absSubdirPath, "." + ext)) {
+            // write arbitrary data
+            tmpFileFixture.write(new ByteArrayInputStream(data));
+
+            var responder = new FileHttpResponder(
+                new LocalFilesystemController(baseDirFixture.tempDirPath));
+
+            var relFilePath =
+                baseDirFixture.tempDirPath.relativize(tmpFileFixture.tempFilePath).toString();
+
+
+            var response = responder.getResponse(
+                new RequestBuilder()
+                    .withVersion(HttpVersion.ONE_ONE)
+                    .withMethod(Method.GET)
+                    .withUriString(relFilePath)
+                    .withHeaders(Map.of("Range", range.requestRangeString()))
+                    .build());
+
+            assertThat(response.statusCode, is(206));
+            assertThat(response.headers, allOf(
+                hasEntry("Content-Length", Integer.toString(range.length())),
+                hasEntry("Content-Type", extensionsToMimes.get(ext)),
+                hasEntry("Content-Range", range.responseContentRangeString() + "/" + Integer.toString(data.length))
+            ));
+
+            var bodyBytes =
+                Optional.ofNullable(response.body)
+                        .map(is -> Result.attempt(is::readAllBytes).orElseAssert());
+
+            var expectedBody = new byte[range.length()];
+            var buffer = ByteBuffer.wrap(data);
+            buffer.position(range.first);
+            buffer.get(expectedBody, 0, range.length());
+            assertThat(bodyBytes.orElse(null),
+                       is(expectedBody));
           } finally {
             // close base temp directory
             baseDirFixture.close();

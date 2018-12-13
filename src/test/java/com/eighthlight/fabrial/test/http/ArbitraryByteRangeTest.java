@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test.gen;
+package com.eighthlight.fabrial.test.http;
 
 import com.eighthlight.fabrial.http.message.request.HttpRequestByteRange;
 import com.bgerstle.result.Result;
@@ -15,14 +15,15 @@ import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.integers;
 
 public class ArbitraryByteRangeTest {
-  private static Gen<Pair<Integer, Integer>> fileSizeAndPosition() {
+  public static Gen<Pair<Integer, Integer>> fileSizeAndPosition() {
     return integers().from(1)
-                     .upToAndIncluding(Integer.MAX_VALUE - 1)
+                     .upToAndIncluding(1000)
                      .mutate((size, rand) -> {
                        return Pair.of(size, integers().between(0, size - 1).generate(rand));
                      });
   }
-  private static Gen<Tuple3<Integer, Integer, Integer>> fileSizeFirstPosAndLastPos() {
+
+  public static Gen<Tuple3<Integer, Integer, Integer>> fileSizeFirstPosAndLastPos() {
     return fileSizeAndPosition().mutate((sizeAndFirst, rand) -> {
       var size = sizeAndFirst._1;
       var first = sizeAndFirst._2;
