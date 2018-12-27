@@ -23,4 +23,9 @@ test {
     useJUnitPlatform()
 }
 
-mainClassName = 'App'
+mainClassName = 'com.eighthlight.fabrial.App'
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
