@@ -22,6 +22,7 @@ public class TcpListenerAcceptanceTest {
   @AfterEach
   void tearDown() throws Exception {
     if (appFixture != null) {
+      appFixture.assertNoErrors();
       appFixture.stop();
       appFixture = null;
     }
@@ -32,10 +33,8 @@ public class TcpListenerAcceptanceTest {
   }
 
   @Test
-  void whenStarted_thenStaysAlive() throws Exception {
+  void whenStarted_thenHasNoErrors() throws Exception {
     appFixture = new AppFixture();
-    String output = appFixture.readOutputLine();
-    assertEquals("Starting server...", output);
   }
 
   @Test
