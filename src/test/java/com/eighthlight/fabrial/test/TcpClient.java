@@ -1,3 +1,5 @@
+package com.eighthlight.fabrial.test;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
