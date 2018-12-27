@@ -1,7 +1,9 @@
 package com.eighthlight.fabrial.test;
 
+import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -12,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+@Tag("acceptance")
 public class TcpListenerAcceptanceTest {
   AppFixture appFixture;
   TcpClient client;
@@ -32,7 +35,7 @@ public class TcpListenerAcceptanceTest {
   void whenStarted_thenStaysAlive() throws Exception {
     appFixture = new AppFixture();
     String output = appFixture.readOutputLine();
-    assertEquals("Hello world!", output);
+    assertEquals("Starting server...", output);
   }
 
   @Test
