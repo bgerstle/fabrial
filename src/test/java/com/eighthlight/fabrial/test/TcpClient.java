@@ -2,35 +2,23 @@ package com.eighthlight.fabrial.test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.Optional;
 
 public class TcpClient implements Closeable {
-  final String host;
-  final int port;
-  Optional<Socket> socket;
+  private final Socket socket;
 
-  TcpClient(int port, Optional<String> host) {
-    this.host = host.orElse("localhost");
-    this.port = port;
-    this.socket = Optional.empty();
+  TcpClient() {
+    socket = new Socket();
   }
 
-  void connect(Optional<Integer> timeout) throws IOException {
-    assert !this.socket.isPresent();
-    Socket socket = new Socket();
-    this.socket = Optional.of(socket);
-    SocketAddress address = new InetSocketAddress(this.host, this.port);
-    socket.connect(address, timeout.orElse(0));
+  public void connect(String host, int port, int timeout) throws IOException {
+    var address = new InetSocketAddress(host, port);
+    socket.connect(address, timeout);
   }
 
   @Override
   public void close() throws IOException {
-    if (this.socket.isPresent()) {
-      this.socket.get().close();
-    }
+    socket.close();
   }
 }
