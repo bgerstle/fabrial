@@ -4,8 +4,11 @@ import junit.framework.AssertionFailedError;
 import org.apache.commons.io.input.TeeInputStream;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -41,14 +44,32 @@ public class AppFixture {
     return bufferedStdOut.readLine();
   }
 
-  public void assertNoErrors() {
+  private String readStdErr(Duration timeout) throws IOException, InterruptedException {
+    var stop = Instant.now().plus(timeout);
+    var accumulatingBuffer = new ByteArrayOutputStream();
+    var errStream = app.getErrorStream();
+    while (Instant.now().isBefore(stop)) {
+      var available = errStream.available();
+      if (available < 1) {
+        Thread.sleep(50);
+        continue;
+      }
+      stop = Instant.now().plus(timeout);
+      var readBuffer = new byte[available];
+      errStream.read(readBuffer);
+      accumulatingBuffer.writeBytes(readBuffer);
+    }
+    return new String(accumulatingBuffer.toByteArray());
+  }
+
+  public void assertNoErrors() throws Exception {
     try {
-      var appErrors = new String(app.getErrorStream().readAllBytes());
+      var appErrors = readStdErr(Duration.ofSeconds(1));
       if (appErrors.length() > 0) {
         logger.severe("App encountered errors:\n" + appErrors);
         fail();
       }
-    } catch (IOException e) {}
+    } catch (IOException|InterruptedException e) {}
   }
 
   public void stop() {
