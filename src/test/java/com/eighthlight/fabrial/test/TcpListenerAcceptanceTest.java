@@ -1,13 +1,10 @@
 package com.eighthlight.fabrial.test;
 
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,16 +13,17 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @Tag("acceptance")
 public class TcpListenerAcceptanceTest {
-  AppFixture appFixture;
+  ServerProcess serverProcess;
   TcpClient client;
 
   @AfterEach
   void tearDown() throws Exception {
-    if (appFixture != null) {
-      appFixture.assertNoErrors();
-      appFixture.stop();
-      appFixture = null;
+    if (serverProcess != null) {
+      serverProcess.assertNoErrors();
+      serverProcess.stop();
+      serverProcess = null;
     }
+
     if (client != null) {
       client.close();
       client = null;
@@ -34,16 +32,29 @@ public class TcpListenerAcceptanceTest {
 
   @Test
   void whenStarted_thenHasNoErrors() throws Exception {
-    appFixture = new AppFixture();
+    serverProcess = new ServerProcess();
   }
 
   @Test
   void givenRunning_whenClientConnects_thenItSucceeds() throws IOException {
-    appFixture = new AppFixture();
-    client = new TcpClient();
+    serverProcess = new ServerProcess();
 
     try {
-      client.connect("localhost", 80, 1000);
+      client = new TcpClient("localhost", 80, 1000);
+    } catch (IOException e) {
+      fail(e);
+    }
+  }
+
+  @Test
+  void givenHasClientConnection_whenAnotherClientConnects_thenItSucceeds() throws IOException {
+    serverProcess = new ServerProcess();
+
+    try {
+      client = new TcpClient("localhost", 80, 1000);
+      var client2 = new TcpClient("localhost", 80, 1000);
+
+      client2.close();
     } catch (IOException e) {
       fail(e);
     }

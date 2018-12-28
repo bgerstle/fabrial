@@ -8,11 +8,8 @@ import java.util.Optional;
 public class TcpClient implements Closeable {
   private final Socket socket;
 
-  TcpClient() {
+  TcpClient(String host, int port, int timeout) throws IOException {
     socket = new Socket();
-  }
-
-  public void connect(String host, int port, int timeout) throws IOException {
     var address = new InetSocketAddress(host, port);
     socket.connect(address, timeout);
   }

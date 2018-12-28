@@ -1,10 +1,8 @@
 package com.eighthlight.fabrial.test;
 
-import junit.framework.AssertionFailedError;
 import org.apache.commons.io.input.TeeInputStream;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -13,13 +11,13 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class AppFixture {
-  private static final Logger logger = Logger.getLogger(AppFixture.class.getName());
+public class ServerProcess {
+  private static final Logger logger = Logger.getLogger(ServerProcess.class.getName());
 
   final Process app;
   BufferedReader bufferedStdOut;
 
-  public AppFixture() throws IOException {
+  public ServerProcess() throws IOException {
     this.app =
         new ProcessBuilder(
             "java",
@@ -56,8 +54,11 @@ public class AppFixture {
       }
       stop = Instant.now().plus(timeout);
       var readBuffer = new byte[available];
-      errStream.read(readBuffer);
-      accumulatingBuffer.writeBytes(readBuffer);
+      var readCount = errStream.read(readBuffer);
+      if (readCount > 0) {
+        accumulatingBuffer.write(readBuffer, 0, readCount);
+      }
+
     }
     return new String(accumulatingBuffer.toByteArray());
   }
