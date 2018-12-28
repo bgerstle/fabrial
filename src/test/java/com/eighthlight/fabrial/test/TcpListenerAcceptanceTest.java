@@ -60,9 +60,7 @@ public class TcpListenerAcceptanceTest {
                   .map(input -> {
                     try (var client = TcpClient.forLocalServer()) {
                       client.connect();
-                      return Executors.newSingleThreadExecutor()
-                                      .submit(() -> client.echo(input))
-                                      .get(1, TimeUnit.SECONDS);
+                      return client.echo(input);
                     } catch (Exception e) {
                       fail(e);
                     }
