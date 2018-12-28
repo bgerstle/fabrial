@@ -59,6 +59,7 @@ public class TcpClient implements Closeable {
   public void close() throws IOException {
     if (socket != null && socket.isConnected()) {
       socket.close();
+      socket = null;
     }
   }
 

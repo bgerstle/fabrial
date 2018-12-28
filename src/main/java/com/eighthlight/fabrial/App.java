@@ -8,11 +8,12 @@ public class App {
 
   public static void main(String[] args) throws Exception {
     System.out.println("Starting server...");
-
     try (var serverSocket = new ServerSocket()) {
       serverSocket.bind(new InetSocketAddress(DEFAULT_PORT));
-      try (var connection = serverSocket.accept()) {
-        connection.getInputStream().transferTo(connection.getOutputStream());
+      while (true) {
+        try (var connection = serverSocket.accept()) {
+          connection.getInputStream().transferTo(connection.getOutputStream());
+        }
       }
     }
   }
