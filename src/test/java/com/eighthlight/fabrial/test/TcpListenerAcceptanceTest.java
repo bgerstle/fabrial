@@ -1,25 +1,29 @@
 package com.eighthlight.fabrial.test;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @Tag("acceptance")
 public class TcpListenerAcceptanceTest {
   ServerProcess serverProcess;
   TcpClient client;
 
+  @BeforeEach
+  void setUp() throws Exception {
+    serverProcess = new ServerProcess();
+    client = TcpClient.forLocalServer();
+  }
+
   @AfterEach
   void tearDown() throws Exception {
     if (serverProcess != null) {
-      serverProcess.assertNoErrors();
       serverProcess.stop();
       serverProcess = null;
     }
@@ -31,32 +35,18 @@ public class TcpListenerAcceptanceTest {
   }
 
   @Test
-  void whenStarted_thenHasNoErrors() throws Exception {
-    serverProcess = new ServerProcess();
+  void whenStarted_thenHasNoErrors() throws IOException {
+    assertEquals("Starting server...", serverProcess.readOutputLine());
+    serverProcess.assertNoErrors();
   }
 
   @Test
-  void givenRunning_whenClientConnects_thenItSucceeds() throws IOException {
-    serverProcess = new ServerProcess();
+  void givenRunning_whenClientConnects_thenItSucceeds() throws Exception {
+    client.connect();
+    assertTrue(client.isConnected());
 
-    try {
-      client = new TcpClient("localhost", 80, 1000);
-    } catch (IOException e) {
-      fail(e);
-    }
-  }
-
-  @Test
-  void givenHasClientConnection_whenAnotherClientConnects_thenItSucceeds() throws IOException {
-    serverProcess = new ServerProcess();
-
-    try {
-      client = new TcpClient("localhost", 80, 1000);
-      var client2 = new TcpClient("localhost", 80, 1000);
-
-      client2.close();
-    } catch (IOException e) {
-      fail(e);
-    }
+    var echoInput = "foo";
+    var response = client.echo(echoInput);
+    assertEquals(echoInput, response);
   }
 }

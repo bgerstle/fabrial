@@ -2,11 +2,17 @@ package com.eighthlight.fabrial.test;
 
 import org.apache.commons.io.input.TeeInputStream;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -62,22 +68,24 @@ public class ServerProcess {
       if (readCount > 0) {
         accumulatingBuffer.write(readBuffer, 0, readCount);
       }
-
     }
     return new String(accumulatingBuffer.toByteArray());
   }
 
-  public void assertNoErrors() throws Exception {
+  public void assertNoErrors() {
     try {
       var appErrors = readStdErr(Duration.ofSeconds(1));
       if (appErrors.length() > 0) {
         logger.severe("App encountered errors:\n" + appErrors);
         fail();
       }
-    } catch (IOException|InterruptedException e) {}
+    } catch (IOException|InterruptedException e) {
+      System.err.println("Encountered exception reading server app stderr: " + e.getMessage());
+    }
   }
 
-  public void stop() {
+  public void stop() throws TimeoutException, ExecutionException, InterruptedException {
     app.destroy();
+    app.onExit().get(5, TimeUnit.SECONDS);
   }
 }
