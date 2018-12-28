@@ -14,8 +14,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class ServerProcess {
   private static final Logger logger = Logger.getLogger(ServerProcess.class.getName());
 
-  final Process app;
-  BufferedReader bufferedStdOut;
+  private final Process app;
+
+  private final BufferedReader bufferedStdOut;
 
   public ServerProcess() throws IOException {
     this.app =
@@ -37,6 +38,9 @@ public class ServerProcess {
     bufferedStdOut = new BufferedReader(new InputStreamReader(teedStdout));
   }
 
+  public Boolean isAlive() {
+    return app.isAlive();
+  }
 
   public String readOutputLine() throws IOException {
     return bufferedStdOut.readLine();
