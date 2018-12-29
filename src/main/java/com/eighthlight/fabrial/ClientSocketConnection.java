@@ -5,10 +5,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class ClientSocketWrapper implements ClientConnection {
+public class ClientSocketConnection implements ClientConnection {
   private final Socket clientSocket;
 
-  public ClientSocketWrapper(Socket clientSocket) {
+  public ClientSocketConnection(Socket clientSocket) {
     this.clientSocket = clientSocket;
   }
 

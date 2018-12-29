@@ -5,7 +5,7 @@ import com.eighthlight.fabrial.ClientConnectionHandler;
 import com.eighthlight.fabrial.TcpServer;
 import com.eighthlight.fabrial.test.mocks.MockClientConnection;
 import com.eighthlight.fabrial.test.mocks.MockClientConnectionHandler;
-import com.eighthlight.fabrial.test.mocks.MockServerSocket;
+import com.eighthlight.fabrial.test.mocks.MockServerConnection;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class TcpServerTest {
   void givenPort_whenStarted_thenStartsAcceptingConnections() throws Exception {
     var port = 80;
     List<ClientConnection> connections = List.of(new MockClientConnection(), new MockClientConnection());
-    var mockServerSocket = new MockServerSocket(connections);
+    var mockServerSocket = new MockServerConnection(connections);
     var mockConnectionHandler = new MockClientConnectionHandler();
     var server = new TcpServer(mockServerSocket, mockConnectionHandler);
 
@@ -34,7 +34,7 @@ public class TcpServerTest {
   void whenHandlerThrows_thenServerStillClosesConnection() throws Exception {
     var connection = new MockClientConnection();
     List<ClientConnection> connections = List.of(connection);
-    var mockServerSocket = new MockServerSocket(connections);
+    var mockServerSocket = new MockServerConnection(connections);
     var mockConnectionHandler = new ClientConnectionHandler() {
       @Override
       public void handle(ClientConnection connection) {
@@ -51,7 +51,7 @@ public class TcpServerTest {
 
   @Test
   void whenClosed_thenClosesSocket() throws Exception {
-    var mockServerSocket = new MockServerSocket(List.of());
+    var mockServerSocket = new MockServerConnection(List.of());
     var mockConnectionHandler = new MockClientConnectionHandler();
     var server = new TcpServer(mockServerSocket, mockConnectionHandler);
 

@@ -2,7 +2,7 @@ package com.eighthlight.fabrial.test.integration;
 
 import com.eighthlight.fabrial.EchoConnectionHandler;
 import com.eighthlight.fabrial.TcpServer;
-import com.eighthlight.fabrial.TcpServerSocket;
+import com.eighthlight.fabrial.ServerSocketConnection;
 import com.eighthlight.fabrial.test.utils.TcpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,7 @@ public class TcpServerEchoIntegrationTest {
 
   @BeforeEach
   void setUp() {
-    server = new TcpServer(new TcpServerSocket(), new EchoConnectionHandler());
+    server = new TcpServer(new ServerSocketConnection(), new EchoConnectionHandler());
   }
 
   @AfterEach

@@ -6,7 +6,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-public class TcpServerSocket implements ServerSocket {
+public class ServerSocketConnection implements ServerConnection {
   private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
 
   private java.net.ServerSocket socket;
@@ -30,7 +30,7 @@ public class TcpServerSocket implements ServerSocket {
       try {
         var clientSocket = boundSocket.accept();
         logger.finer("Accepted connection: " + Integer.toHexString(clientSocket.getRemoteSocketAddress().hashCode()));
-        action.accept(new ClientSocketWrapper(clientSocket));
+        action.accept(new ClientSocketConnection(clientSocket));
         return true;
       } catch (IOException e) {
         logger.info("Can't accept any more connections due to " + e.getMessage());

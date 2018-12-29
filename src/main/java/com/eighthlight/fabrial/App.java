@@ -5,7 +5,7 @@ public class App {
 
   public static void main(String[] args) throws Exception {
     System.out.println("Starting server...");
-    try (var server = new TcpServer(new TcpServerSocket(), new EchoConnectionHandler())) {
+    try (var server = new TcpServer(new ServerSocketConnection(), new EchoConnectionHandler())) {
       server.start(80);
     }
   }

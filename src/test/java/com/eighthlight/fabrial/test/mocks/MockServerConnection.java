@@ -1,18 +1,18 @@
 package com.eighthlight.fabrial.test.mocks;
 
 import com.eighthlight.fabrial.ClientConnection;
-import com.eighthlight.fabrial.ServerSocket;
+import com.eighthlight.fabrial.ServerConnection;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Spliterator;
 
-public class MockServerSocket implements ServerSocket {
+public class MockServerConnection implements ServerConnection {
   public final List<ClientConnection> connections;
   public InetSocketAddress address;
   public boolean isClosed = false;
 
-  public MockServerSocket(List<ClientConnection> connections) {
+  public MockServerConnection(List<ClientConnection> connections) {
     this.connections = connections;
   }
 

@@ -7,16 +7,16 @@ import java.util.logging.Logger;
 public class TcpServer implements AutoCloseable {
   private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
 
-  private final ServerSocket serverSocket;
+  private final ServerConnection serverConnection;
   private final ClientConnectionHandler handler;
 
-  public TcpServer(ServerSocket serverSocket, ClientConnectionHandler handler) {
-    this.serverSocket = serverSocket;
+  public TcpServer(ServerConnection serverConnection, ClientConnectionHandler handler) {
+    this.serverConnection = serverConnection;
     this.handler = handler;
   }
 
   public void start(int port) throws IOException {
-    serverSocket.acceptConnections(new InetSocketAddress(port)).forEachRemaining(conn -> {
+    serverConnection.acceptConnections(new InetSocketAddress(port)).forEachRemaining(conn -> {
       try (conn) {
         handler.handle(conn);
       } catch (Exception e) {
@@ -27,6 +27,6 @@ public class TcpServer implements AutoCloseable {
 
   @Override
   public void close() throws Exception {
-    serverSocket.close();
+    serverConnection.close();
   }
 }
