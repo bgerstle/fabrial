@@ -20,7 +20,7 @@ public class TcpClient implements Closeable {
   }
 
   public void connect() throws IOException, InterruptedException {
-    connect(1000, 1000, 3);
+    connect(500, 500, 3);
   }
 
   public void connect(int timeout, int delay, int retries) throws IOException, InterruptedException {
