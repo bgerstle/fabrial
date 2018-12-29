@@ -1,12 +1,10 @@
 package com.eighthlight.fabrial.test;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.input.TeeInputStream;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
