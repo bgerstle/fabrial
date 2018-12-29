@@ -1,8 +1,5 @@
 package com.eighthlight.fabrial;
 
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-
 public class App {
   public static final int DEFAULT_PORT = 80;
 

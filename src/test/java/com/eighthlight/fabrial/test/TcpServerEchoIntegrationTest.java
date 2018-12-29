@@ -1,6 +1,5 @@
 package com.eighthlight.fabrial.test;
 
-import com.eighthlight.fabrial.ClientConnection;
 import com.eighthlight.fabrial.EchoConnectionHandler;
 import com.eighthlight.fabrial.TcpServer;
 import com.eighthlight.fabrial.TcpServerSocket;
@@ -9,10 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

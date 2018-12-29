@@ -6,7 +6,6 @@ import com.eighthlight.fabrial.ServerSocket;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Spliterator;
-import java.util.stream.Stream;
 
 public class MockServerSocket implements ServerSocket {
   public final List<ClientConnection> connections;
