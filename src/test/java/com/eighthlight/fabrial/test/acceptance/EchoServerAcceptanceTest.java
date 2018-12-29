@@ -1,10 +1,10 @@
-package com.eighthlight.fabrial.test;
+package com.eighthlight.fabrial.test.acceptance;
 
-import com.eighthlight.fabrial.EchoConnectionHandler;
-import com.eighthlight.fabrial.TcpServer;
-import com.eighthlight.fabrial.TcpServerSocket;
+import com.eighthlight.fabrial.test.utils.ServerProcess;
+import com.eighthlight.fabrial.test.utils.TcpClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,35 +14,39 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class TcpServerEchoIntegrationTest {
-  TcpServer server;
-  Thread serverThread;
+@Tag("acceptance")
+public class EchoServerAcceptanceTest {
+  ServerProcess serverProcess;
 
   @BeforeEach
-  void setUp() {
-    server = new TcpServer(new TcpServerSocket(), new EchoConnectionHandler());
+  void setUp() throws Exception {
+    serverProcess = new ServerProcess();
   }
 
   @AfterEach
   void tearDown() throws Exception {
-    server.close();
-    serverThread.join(2000);
-  }
-
-  void startServer(int port) {
-    serverThread = new Thread(() -> {
-      try {
-        server.start(port);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
-    serverThread.start();
+    serverProcess.stop();
   }
 
   @Test
-  void consecutiveConnections() {
-    startServer(80);
+  void whenClientEchoes_thenItGetsIdenticalResponse() throws Exception {
+    try (var client = TcpClient.forLocalServer()) {
+      client.connect();
+
+      var echoInput = "foo";
+      var response = client.echo(echoInput);
+
+      assertEquals(echoInput, response);
+    }
+  }
+
+  @Test
+  void whenStarted_thenHasNoErrors() throws IOException {
+    serverProcess.assertNoErrors();
+  }
+
+  @Test
+  void givenRunning_whenConsecutiveEchoesAreSent_thenTheyReceiveResponses() {
     var echoInputs = List.of("foo", "bar", "baz");
 
     var echoResponses =

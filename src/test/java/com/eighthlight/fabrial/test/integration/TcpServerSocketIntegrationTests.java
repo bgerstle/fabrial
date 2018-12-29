@@ -1,8 +1,9 @@
-package com.eighthlight.fabrial.test;
+package com.eighthlight.fabrial.test.integration;
 
 import com.eighthlight.fabrial.ClientConnection;
 import com.eighthlight.fabrial.ClientSocketWrapper;
 import com.eighthlight.fabrial.TcpServerSocket;
+import com.eighthlight.fabrial.test.utils.TcpClient;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;

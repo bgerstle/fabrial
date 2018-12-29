@@ -1,8 +1,11 @@
-package com.eighthlight.fabrial.test;
+package com.eighthlight.fabrial.test.unit;
 
 import com.eighthlight.fabrial.ClientConnection;
 import com.eighthlight.fabrial.ClientConnectionHandler;
 import com.eighthlight.fabrial.TcpServer;
+import com.eighthlight.fabrial.test.mocks.MockClientConnection;
+import com.eighthlight.fabrial.test.mocks.MockClientConnectionHandler;
+import com.eighthlight.fabrial.test.mocks.MockServerSocket;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

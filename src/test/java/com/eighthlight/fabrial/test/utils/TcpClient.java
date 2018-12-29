@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test;
+package com.eighthlight.fabrial.test.utils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -9,9 +9,9 @@ import static com.eighthlight.fabrial.App.DEFAULT_PORT;
 
 public class TcpClient implements Closeable {
   private Socket socket;
-  final InetSocketAddress address;
+  public final InetSocketAddress address;
 
-  TcpClient(String host, int port) {
+  public TcpClient(String host, int port) {
     address = new InetSocketAddress(host, port);
   }
 

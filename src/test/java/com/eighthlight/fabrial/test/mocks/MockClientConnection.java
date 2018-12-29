@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test;
+package com.eighthlight.fabrial.test.mocks;
 
 import com.eighthlight.fabrial.ClientConnection;
 

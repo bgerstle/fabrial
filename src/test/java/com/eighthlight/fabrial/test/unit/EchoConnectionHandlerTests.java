@@ -1,6 +1,7 @@
-package com.eighthlight.fabrial.test;
+package com.eighthlight.fabrial.test.unit;
 
 import com.eighthlight.fabrial.EchoConnectionHandler;
+import com.eighthlight.fabrial.test.mocks.MockClientConnection;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

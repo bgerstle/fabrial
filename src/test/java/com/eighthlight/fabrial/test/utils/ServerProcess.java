@@ -1,4 +1,4 @@
-package com.eighthlight.fabrial.test;
+package com.eighthlight.fabrial.test.utils;
 
 import org.apache.commons.io.input.TeeInputStream;
 
