@@ -70,12 +70,10 @@ public class TcpServerSocketIntegrationTests {
     var serverSocket = new TcpServerSocket();
     var address = new InetSocketAddress(80);
 
-    var futureAdvanceResult = Executors.newSingleThreadExecutor().submit(() -> {
-      var iter = serverSocket.acceptConnections(address);
-      serverSocket.close();
-      return iter.tryAdvance(unused -> fail());
-    });
+    var iter = serverSocket.acceptConnections(address);
+    serverSocket.close();
+    var didAdvance = iter.tryAdvance(unused -> fail());
 
-    assertFalse(futureAdvanceResult.get(2, TimeUnit.SECONDS));
+    assertFalse(didAdvance);
   }
 }

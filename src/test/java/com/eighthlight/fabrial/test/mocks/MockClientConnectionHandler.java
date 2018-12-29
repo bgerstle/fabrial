@@ -6,7 +6,7 @@ import com.eighthlight.fabrial.ClientConnectionHandler;
 import java.util.ArrayList;
 
 public class MockClientConnectionHandler implements ClientConnectionHandler {
-  final ArrayList<ClientConnection> handledConnections;
+  public final ArrayList<ClientConnection> handledConnections;
 
   public MockClientConnectionHandler() {
     this.handledConnections = new ArrayList<>();
