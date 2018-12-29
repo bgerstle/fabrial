@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EchoConnectionHandlerTests {
@@ -13,13 +14,13 @@ public class EchoConnectionHandlerTests {
   void whenOutputHasData_thenInputReceivesIt() {
     var mockData = "foo".getBytes();
     var mockConnection = new MockClientConnection();
-    mockConnection.outputStream = new ByteArrayOutputStream();;
+    mockConnection.outputStream = new ByteArrayOutputStream();
     mockConnection.inputStream = new ByteArrayInputStream(mockData);
 
     var echoHandler = new EchoConnectionHandler();
 
     echoHandler.handle(mockConnection);
 
-    assertEquals(mockData, mockConnection.outputStream.toByteArray());
+    assertArrayEquals(mockData, mockConnection.outputStream.toByteArray());
   }
 }
