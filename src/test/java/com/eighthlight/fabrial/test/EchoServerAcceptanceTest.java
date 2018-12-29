@@ -40,7 +40,6 @@ public class EchoServerAcceptanceTest {
 
   @Test
   void whenStarted_thenHasNoErrors() throws IOException {
-    assertEquals("Starting server...", serverProcess.readOutputLine());
     serverProcess.assertNoErrors();
   }
 

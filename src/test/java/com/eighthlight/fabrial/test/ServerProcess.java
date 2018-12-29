@@ -1,18 +1,18 @@
 package com.eighthlight.fabrial.test;
 
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.input.TeeInputStream;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -23,6 +23,9 @@ public class ServerProcess {
   private final Process app;
 
   private final BufferedReader bufferedStdOut;
+  private final BufferedReader bufferedStdErr;
+
+  private ExecutorService consoleLoggerService;
 
   public ServerProcess() throws IOException {
     this.app =
@@ -39,9 +42,33 @@ public class ServerProcess {
                  .toString())
             .start();
 
-    // "tee" app's stdout to this process, read from that output into a buffer for testing
-    var teedStdout = new TeeInputStream(app.getInputStream(), System.out);
-    bufferedStdOut = new BufferedReader(new InputStreamReader(teedStdout));
+    // use `TeeInputStream` to stream server logs to the test console and simultaneously
+    // feed them to buffered readers for use in tests
+
+    var branchStdout = new PipedOutputStream();
+    var teedStdout = new TeeInputStream(app.getInputStream(), branchStdout);
+    bufferedStdOut = new BufferedReader(new InputStreamReader(new PipedInputStream(branchStdout)));
+
+    var branchStderr = new PipedOutputStream();
+    var teedStderr = new TeeInputStream(app.getErrorStream(), branchStderr);
+    bufferedStdErr = new BufferedReader(new InputStreamReader(new PipedInputStream(branchStderr)));
+
+    streamAppOutputToConsole(teedStdout, teedStderr);
+  }
+
+  private void streamAppOutputToConsole(InputStream stdout, InputStream stderr) {
+    consoleLoggerService = Executors.newFixedThreadPool(2);
+    logLinesWithPrefix("Server STDOUT: ", stdout, System.out);
+    logLinesWithPrefix("Server STDERR: ", stderr, System.err);
+  }
+
+  private void logLinesWithPrefix(String prefix, InputStream src, PrintStream dest) {
+    consoleLoggerService.submit(() -> {
+      var reader = new BufferedReader(new InputStreamReader(src));
+      reader.lines().forEach(l -> {
+        dest.println(prefix + l);
+      });
+    });
   }
 
   public Boolean isAlive() {
@@ -55,21 +82,20 @@ public class ServerProcess {
   private String readStdErr(Duration timeout) throws IOException, InterruptedException {
     var stop = Instant.now().plus(timeout);
     var accumulatingBuffer = new ByteArrayOutputStream();
-    var errStream = app.getErrorStream();
     while (Instant.now().isBefore(stop)) {
-      var available = errStream.available();
-      if (available < 1) {
+      if (!bufferedStdErr.ready()) {
         Thread.sleep(50);
         continue;
       }
       stop = Instant.now().plus(timeout);
-      var readBuffer = new byte[available];
-      var readCount = errStream.read(readBuffer);
+      var readBuffer = new char[128];
+      var readCount = bufferedStdErr.read(readBuffer, 0, readBuffer.length);
       if (readCount > 0) {
-        accumulatingBuffer.write(readBuffer, 0, readCount);
+        var readBytes = StandardCharsets.ISO_8859_1.encode(CharBuffer.wrap(readBuffer, 0, readCount));
+        accumulatingBuffer.writeBytes(readBytes.array());
       }
     }
-    return new String(accumulatingBuffer.toByteArray());
+    return StandardCharsets.ISO_8859_1.decode(ByteBuffer.wrap(accumulatingBuffer.toByteArray())).toString();
   }
 
   public void assertNoErrors() {
@@ -87,5 +113,7 @@ public class ServerProcess {
   public void stop() throws TimeoutException, ExecutionException, InterruptedException {
     app.destroy();
     app.onExit().get(5, TimeUnit.SECONDS);
+    consoleLoggerService.shutdown();
+    consoleLoggerService.awaitTermination(2, TimeUnit.SECONDS);
   }
 }
