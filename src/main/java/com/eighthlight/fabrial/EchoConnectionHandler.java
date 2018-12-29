@@ -7,6 +7,7 @@ public class EchoConnectionHandler implements ClientConnectionHandler {
   public void handle(ClientConnection connection) {
     try {
       connection.getInputStream().transferTo(connection.getOutputStream());
+      connection.close();
     } catch (IOException e) {
 
     }

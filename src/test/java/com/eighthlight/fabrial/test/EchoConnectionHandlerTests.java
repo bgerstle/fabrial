@@ -7,7 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EchoConnectionHandlerTests {
   @Test
@@ -22,5 +22,6 @@ public class EchoConnectionHandlerTests {
     echoHandler.handle(mockConnection);
 
     assertArrayEquals(mockData, mockConnection.outputStream.toByteArray());
+    assertTrue(mockConnection.isClosed);
   }
 }

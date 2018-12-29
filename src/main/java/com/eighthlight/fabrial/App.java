@@ -8,21 +8,8 @@ public class App {
 
   public static void main(String[] args) throws Exception {
     System.out.println("Starting server...");
-    try (var server = new TcpServer(new TcpServerSocket(), new ClientConnectionHandler() {
-      @Override
-      public void handle(ClientConnection connection) {
-
-      }
-    })) {
+    try (var server = new TcpServer(new TcpServerSocket(), new EchoConnectionHandler())) {
       server.start(80);
     }
-//    try (var serverSocket = new ServerSocket()) {
-//      serverSocket.bind(new InetSocketAddress(DEFAULT_PORT));
-//      while (true) {
-//        try (var connection = serverSocket.accept()) {
-//          connection.getInputStream().transferTo(connection.getOutputStream());
-//        }
-//      }
-//    }
   }
 }

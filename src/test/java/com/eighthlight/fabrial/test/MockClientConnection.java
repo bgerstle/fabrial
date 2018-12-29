@@ -7,6 +7,7 @@ import java.io.*;
 public class MockClientConnection implements ClientConnection {
   public ByteArrayInputStream inputStream;
   public ByteArrayOutputStream outputStream;
+  boolean isClosed = false;
 
   @Override
   public InputStream getInputStream() throws IOException {
@@ -16,5 +17,10 @@ public class MockClientConnection implements ClientConnection {
   @Override
   public OutputStream getOutputStream() throws IOException {
     return outputStream;
+  }
+
+  @Override
+  public void close() throws IOException {
+    isClosed = true;
   }
 }

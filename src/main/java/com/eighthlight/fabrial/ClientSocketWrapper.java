@@ -21,4 +21,9 @@ public class ClientSocketWrapper implements ClientConnection {
   public InputStream getInputStream() throws IOException {
     return clientSocket.getInputStream();
   }
+
+  @Override
+  public void close() throws IOException {
+    clientSocket.close();
+  }
 }
