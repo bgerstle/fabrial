@@ -22,11 +22,13 @@ public class TcpServerSocket implements ServerSocket, Spliterator<ClientConnecti
   public boolean tryAdvance(Consumer<? super ClientConnection> action) {
     try {
       var clientSocket = socket.accept();
+      logger.finer("Accepted connection: " + Integer.toHexString(clientSocket.getRemoteSocketAddress().hashCode()));
       action.accept(new ClientSocketWrapper(clientSocket));
     } catch (IOException e) {
       logger.info("Can't accept any more connections due to " + e.getMessage());
+      return false;
     }
-    return false;
+    return true;
   }
 
   @Override

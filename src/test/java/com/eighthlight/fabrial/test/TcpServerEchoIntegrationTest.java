@@ -1,52 +1,52 @@
 package com.eighthlight.fabrial.test;
 
+import com.eighthlight.fabrial.ClientConnection;
+import com.eighthlight.fabrial.EchoConnectionHandler;
+import com.eighthlight.fabrial.TcpServer;
+import com.eighthlight.fabrial.TcpServerSocket;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@Tag("acceptance")
-public class EchoServerAcceptanceTest {
-  ServerProcess serverProcess;
+public class TcpServerEchoIntegrationTest {
+  TcpServer server;
+  Thread serverThread;
 
   @BeforeEach
-  void setUp() throws Exception {
-    serverProcess = new ServerProcess();
+  void setUp() {
+    server = new TcpServer(new TcpServerSocket(), new EchoConnectionHandler());
   }
 
   @AfterEach
   void tearDown() throws Exception {
-    serverProcess.stop();
+    server.close();
+    serverThread.join(2000);
+  }
+
+  void startServer(int port) {
+    serverThread = new Thread(() -> {
+      try {
+        server.start(port);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    serverThread.start();
   }
 
   @Test
-  void whenClientEchoes_thenItGetsIdenticalResponse() throws Exception {
-    try (var client = TcpClient.forLocalServer()) {
-      client.connect();
-
-      var echoInput = "foo";
-      var response = client.echo(echoInput);
-
-      assertEquals(echoInput, response);
-    }
-  }
-
-  @Test
-  void whenStarted_thenHasNoErrors() throws IOException {
-    assertEquals("Starting server...", serverProcess.readOutputLine());
-    serverProcess.assertNoErrors();
-  }
-
-  @Test
-  void givenRunning_whenConsecutiveEchoesAreSent_thenTheyReceiveResponses() {
+  void consecutiveConnections() throws Exception {
+    startServer(80);
     var echoInputs = List.of("foo", "bar", "baz");
 
     var echoResponses =
