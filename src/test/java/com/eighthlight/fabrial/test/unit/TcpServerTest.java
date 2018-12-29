@@ -1,7 +1,6 @@
 package com.eighthlight.fabrial.test.unit;
 
 import com.eighthlight.fabrial.ClientConnection;
-import com.eighthlight.fabrial.ClientConnectionHandler;
 import com.eighthlight.fabrial.TcpServer;
 import com.eighthlight.fabrial.test.mocks.MockClientConnection;
 import com.eighthlight.fabrial.test.mocks.MockClientConnectionHandler;
@@ -31,13 +30,13 @@ public class TcpServerTest {
   }
 
   @Test
-  void whenHandlerThrows_thenServerStillClosesConnection() throws Exception {
-    var connection = new MockClientConnection();
-    List<ClientConnection> connections = List.of(connection);
+  void whenHandlerThrows_thenServerIsNotInterrupted() throws Exception {
+    List<ClientConnection> connections = List.of(new MockClientConnection(), new MockClientConnection());
     var mockServerSocket = new MockServerConnection(connections);
-    var mockConnectionHandler = new ClientConnectionHandler() {
+    var mockConnectionHandler = new MockClientConnectionHandler() {
       @Override
       public void handle(ClientConnection connection) {
+        super.handle(connection);
         throw new RuntimeException("oops");
       }
     };
@@ -46,7 +45,8 @@ public class TcpServerTest {
     server.start(DEFAULT_PORT);
 
     assertEquals(DEFAULT_PORT, mockServerSocket.address.getPort());
-    assertTrue(connection.isClosed);
+    assertEquals(connections, mockConnectionHandler.handledConnections);
+    assertTrue(connections.stream().allMatch(c -> ((MockClientConnection)c).isClosed));
   }
 
   @Test
