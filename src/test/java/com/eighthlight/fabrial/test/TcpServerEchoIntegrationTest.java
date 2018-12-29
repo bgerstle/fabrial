@@ -41,7 +41,7 @@ public class TcpServerEchoIntegrationTest {
   }
 
   @Test
-  void consecutiveConnections() throws Exception {
+  void consecutiveConnections() {
     startServer(80);
     var echoInputs = List.of("foo", "bar", "baz");
 
