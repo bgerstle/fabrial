@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TcpServerTest {
   @Test
@@ -21,5 +22,14 @@ public class TcpServerTest {
 
     assertEquals(port, mockServerSocket.address.getPort());
     assertEquals(connections, mockConnectionHandler.handledConnections);
+  }
+
+  @Test
+  void whenClosed_thenClosesSocket() throws Exception {
+    var mockServerSocket = new MockServerSocket(List.of());
+    var mockConnectionHandler = new MockClientConnectionHandler();
+    var server = new TcpServer(mockServerSocket, mockConnectionHandler);
+    server.close();
+    assertTrue(mockServerSocket.isClosed);
   }
 }

@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 public class MockServerSocket implements ServerSocket {
   public final List<ClientConnection> connections;
   public InetSocketAddress address;
+  public boolean isClosed = false;
 
   public MockServerSocket(List<ClientConnection> connections) {
     this.connections = connections;
@@ -20,5 +21,10 @@ public class MockServerSocket implements ServerSocket {
   public Spliterator<ClientConnection> acceptConnections(InetSocketAddress address) {
     this.address = address;
     return connections.stream().spliterator();
+  }
+
+  @Override
+  public void close() throws Exception {
+    isClosed = true;
   }
 }

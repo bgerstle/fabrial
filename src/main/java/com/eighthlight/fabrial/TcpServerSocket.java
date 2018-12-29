@@ -43,4 +43,9 @@ public class TcpServerSocket implements ServerSocket, Spliterator<ClientConnecti
   public Spliterator<ClientConnection> trySplit() {
     return null;
   }
+
+  @Override
+  public void close() throws Exception {
+    socket.close();
+  }
 }

@@ -3,7 +3,7 @@ package com.eighthlight.fabrial;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-public class TcpServer {
+public class TcpServer implements AutoCloseable {
   private final ServerSocket serverSocket;
   private final ClientConnectionHandler handler;
 
@@ -14,5 +14,10 @@ public class TcpServer {
 
   public void start(int port) throws IOException {
     serverSocket.acceptConnections(new InetSocketAddress(port)).forEachRemaining(handler::handle);
+  }
+
+  @Override
+  public void close() throws Exception {
+    serverSocket.close();
   }
 }
