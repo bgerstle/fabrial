@@ -1,7 +1,9 @@
 package com.eighthlight.fabrial;
 
-import java.util.stream.Stream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Spliterator;
 
 public interface ServerSocket {
-  Stream<ClientConnection> acceptConnections(int port);
+  Spliterator<ClientConnection> acceptConnections(InetSocketAddress address) throws IOException;
 }

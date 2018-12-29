@@ -1,8 +1,11 @@
 package com.eighthlight.fabrial.test;
 
+import com.eighthlight.fabrial.ClientSocketWrapper;
 import com.eighthlight.fabrial.TcpServerSocket;
 import org.junit.jupiter.api.Test;
 
+import java.net.InetSocketAddress;
+import java.util.Spliterators;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -12,9 +15,10 @@ public class TcpServerSocketIntegrationTests {
   @Test
   void whenClientConnects_thenEmitsConnection() throws Exception {
     var serverSocket = new TcpServerSocket();
+    var address = new InetSocketAddress(80);
 
     var futureAcceptedConnection = Executors.newSingleThreadExecutor().submit(() -> {
-      return serverSocket.acceptConnections(80).findFirst();
+      return Spliterators.iterator(serverSocket.acceptConnections(address)).next();
     });
 
     try (var client = new TcpClient("localhost", 80)) {
@@ -23,6 +27,6 @@ public class TcpServerSocketIntegrationTests {
 
     var acceptedConnection = futureAcceptedConnection.get(2, TimeUnit.SECONDS);
 
-    assertTrue(acceptedConnection.isPresent());
+    assertTrue(acceptedConnection instanceof ClientSocketWrapper);
   }
 }

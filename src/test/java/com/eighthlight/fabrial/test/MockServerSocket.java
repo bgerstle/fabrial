@@ -3,21 +3,22 @@ package com.eighthlight.fabrial.test;
 import com.eighthlight.fabrial.ClientConnection;
 import com.eighthlight.fabrial.ServerSocket;
 
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Spliterator;
 import java.util.stream.Stream;
 
 public class MockServerSocket implements ServerSocket {
   public final List<ClientConnection> connections;
-  public int port;
+  public InetSocketAddress address;
 
   public MockServerSocket(List<ClientConnection> connections) {
     this.connections = connections;
-    port = -1;
   }
 
   @Override
-  public Stream<ClientConnection> acceptConnections(int port) {
-    this.port = port;
-    return connections.stream();
+  public Spliterator<ClientConnection> acceptConnections(InetSocketAddress address) {
+    this.address = address;
+    return connections.stream().spliterator();
   }
 }

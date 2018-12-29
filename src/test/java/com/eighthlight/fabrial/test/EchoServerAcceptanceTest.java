@@ -20,7 +20,6 @@ public class EchoServerAcceptanceTest {
   @BeforeEach
   void setUp() throws Exception {
     serverProcess = new ServerProcess();
-    serverProcess.assertNoErrors();
   }
 
   @Test
@@ -38,5 +37,31 @@ public class EchoServerAcceptanceTest {
   @AfterEach
   void tearDown() throws Exception {
     serverProcess.stop();
+  }
+
+  @Test
+  void whenStarted_thenHasNoErrors() throws IOException {
+    assertEquals("Starting server...", serverProcess.readOutputLine());
+    serverProcess.assertNoErrors();
+  }
+
+  @Test
+  void givenRunning_whenConsecutiveEchoesAreSent_thenTheyReceiveResponses() {
+    var echoInputs = List.of("foo", "bar", "baz");
+
+    var echoResponses =
+        echoInputs.stream()
+                  .map(input -> {
+                    try (var client = TcpClient.forLocalServer()) {
+                      client.connect();
+                      return client.echo(input);
+                    } catch (Exception e) {
+                      fail(e);
+                    }
+                    return null;
+                  })
+                  .collect(Collectors.toList());
+
+    assertEquals(echoInputs, echoResponses);
   }
 }

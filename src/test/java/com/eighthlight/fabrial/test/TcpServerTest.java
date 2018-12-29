@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TcpServerTest {
   @Test
-  void givenPort_whenStarted_thenStartsAcceptingConnections() {
+  void givenPort_whenStarted_thenStartsAcceptingConnections() throws Exception {
     var port = 80;
     List<ClientConnection> connections = List.of(new MockClientConnection(), new MockClientConnection());
     var mockServerSocket = new MockServerSocket(connections);
@@ -19,7 +19,7 @@ public class TcpServerTest {
 
     server.start(port);
 
-    assertEquals(port, mockServerSocket.port);
+    assertEquals(port, mockServerSocket.address.getPort());
     assertEquals(connections, mockConnectionHandler.handledConnections);
   }
 }

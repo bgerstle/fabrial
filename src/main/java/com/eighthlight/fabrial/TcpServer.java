@@ -1,5 +1,8 @@
 package com.eighthlight.fabrial;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+
 public class TcpServer {
   private final ServerSocket serverSocket;
   private final ClientConnectionHandler handler;
@@ -9,7 +12,7 @@ public class TcpServer {
     this.handler = handler;
   }
 
-  public void start(int port) {
-    serverSocket.acceptConnections(port).forEach(handler::handle);
+  public void start(int port) throws IOException {
+    serverSocket.acceptConnections(new InetSocketAddress(port)).forEachRemaining(handler::handle);
   }
 }
