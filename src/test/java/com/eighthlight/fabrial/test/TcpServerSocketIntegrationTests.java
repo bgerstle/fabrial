@@ -11,8 +11,7 @@ import java.util.Spliterators;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TcpServerSocketIntegrationTests {
   @Test
@@ -47,7 +46,7 @@ public class TcpServerSocketIntegrationTests {
       var connIterator = serverSocket.acceptConnections(address);
 
       for (int i = 0; i < numConnections; i++) {
-        connIterator.tryAdvance(acceptedConnections::add);
+        assertTrue(connIterator.tryAdvance(acceptedConnections::add));
       }
 
       return acceptedConnections;
@@ -63,5 +62,19 @@ public class TcpServerSocketIntegrationTests {
     assertEquals(numConnections, acceptedConnections.size());
 
     serverSocket.close();
+  }
+
+  @Test
+  void whenSocketClosed_thenFailsToAdvance() throws Exception {
+    var serverSocket = new TcpServerSocket();
+    var address = new InetSocketAddress(80);
+
+    var futureAdvanceResult = Executors.newSingleThreadExecutor().submit(() -> {
+      var iter = serverSocket.acceptConnections(address);
+      serverSocket.close();
+      return iter.tryAdvance(unused -> fail());
+    });
+
+    assertFalse(futureAdvanceResult.get(2, TimeUnit.SECONDS));
   }
 }

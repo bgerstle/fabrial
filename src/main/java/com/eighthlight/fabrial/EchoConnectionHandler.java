@@ -8,7 +8,7 @@ public class EchoConnectionHandler implements ClientConnectionHandler {
 
   @Override
   public void handle(ClientConnection connection) {
-    try (connection) {
+    try {
       connection.getInputStream().transferTo(connection.getOutputStream());
     } catch (IOException e) {
       logger.warning("Connection error: " + e.getMessage());

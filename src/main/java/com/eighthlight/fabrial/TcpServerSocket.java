@@ -6,7 +6,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-public class TcpServerSocket implements ServerSocket, Spliterator<ClientConnection> {
+public class TcpServerSocket implements ServerSocket {
   private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
 
   private java.net.ServerSocket socket;
@@ -15,35 +15,43 @@ public class TcpServerSocket implements ServerSocket, Spliterator<ClientConnecti
   public Spliterator<ClientConnection> acceptConnections(InetSocketAddress address) throws IOException  {
     socket = new java.net.ServerSocket();
     socket.bind(address);
-    return this;
+    return new ConnectionSpliterator(socket);
   }
 
-  @Override
-  public boolean tryAdvance(Consumer<? super ClientConnection> action) {
-    try {
-      var clientSocket = socket.accept();
-      logger.finer("Accepted connection: " + Integer.toHexString(clientSocket.getRemoteSocketAddress().hashCode()));
-      action.accept(new ClientSocketWrapper(clientSocket));
-    } catch (IOException e) {
-      logger.info("Can't accept any more connections due to " + e.getMessage());
+  private static final class ConnectionSpliterator implements Spliterator<ClientConnection> {
+    private final java.net.ServerSocket boundSocket;
+
+    public ConnectionSpliterator(java.net.ServerSocket boundSocket) {
+      this.boundSocket = boundSocket;
+    }
+
+    @Override
+    public boolean tryAdvance(Consumer<? super ClientConnection> action) {
+      try {
+        var clientSocket = boundSocket.accept();
+        logger.finer("Accepted connection: " + Integer.toHexString(clientSocket.getRemoteSocketAddress().hashCode()));
+        action.accept(new ClientSocketWrapper(clientSocket));
+        return true;
+      } catch (IOException e) {
+        logger.info("Can't accept any more connections due to " + e.getMessage());
+      }
       return false;
     }
-    return true;
-  }
 
-  @Override
-  public long estimateSize() {
-    return Long.MAX_VALUE;
-  }
+    @Override
+    public long estimateSize() {
+      return Long.MAX_VALUE;
+    }
 
-  @Override
-  public int characteristics() {
-    return 0;
-  }
+    @Override
+    public int characteristics() {
+      return 0;
+    }
 
-  @Override
-  public Spliterator<ClientConnection> trySplit() {
-    return null;
+    @Override
+    public Spliterator<ClientConnection> trySplit() {
+      return null;
+    }
   }
 
   @Override
