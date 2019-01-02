@@ -41,11 +41,6 @@ public class EchoServerAcceptanceTest {
   }
 
   @Test
-  void whenStarted_thenHasNoErrors() throws IOException {
-    serverProcess.assertNoErrors();
-  }
-
-  @Test
   void givenRunning_whenConsecutiveEchoesAreSent_thenTheyReceiveResponses() {
     var echoInputs = List.of("foo", "bar", "baz");
 
