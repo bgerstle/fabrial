@@ -11,16 +11,16 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class EchoConnectionHandlerTests {
   @Test
-  void whenOutputHasData_thenInputReceivesIt() {
-    var mockData = "foo".getBytes();
+  void whenInputHasData_thenSameDataWrittenToOutput() {
+    var mockInputData = "foo".getBytes();
     var mockConnection = new MockClientConnection();
     mockConnection.outputStream = new ByteArrayOutputStream();
-    mockConnection.inputStream = new ByteArrayInputStream(mockData);
+    mockConnection.inputStream = new ByteArrayInputStream(mockInputData);
 
     var echoHandler = new EchoConnectionHandler();
 
     echoHandler.handle(mockConnection);
 
-    assertArrayEquals(mockData, mockConnection.outputStream.toByteArray());
+    assertArrayEquals(mockInputData, mockConnection.outputStream.toByteArray());
   }
 }
