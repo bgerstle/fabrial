@@ -16,13 +16,15 @@ public class TcpServer implements AutoCloseable {
   }
 
   public void start(int port) throws IOException {
-    serverConnection.acceptConnections(new InetSocketAddress(port)).forEachRemaining(conn -> {
-      try (conn) {
-        handler.handle(conn);
-      } catch (Exception e) {
-        logger.warning("Connection exception: " + e.getMessage());
-      }
-    });
+    serverConnection
+        .acceptConnections(new InetSocketAddress(port))
+        .forEachRemaining(conn -> {
+          try (conn) {
+            handler.handle(conn);
+          } catch (Exception e) {
+            logger.warning("Connection exception: " + e.getMessage());
+          }
+        });
   }
 
   @Override
