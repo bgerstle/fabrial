@@ -24,3 +24,10 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+mainClassName = 'com.eighthlight.fabrial.App'
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
