@@ -25,7 +25,11 @@ public class ServerProcess {
 
   private ExecutorService consoleLoggerService;
 
-  public ServerProcess() throws IOException {
+  public static ServerProcess start() throws IOException {
+    return new ServerProcess();
+  }
+
+  private ServerProcess() throws IOException {
     this.app =
         new ProcessBuilder(
             "java",

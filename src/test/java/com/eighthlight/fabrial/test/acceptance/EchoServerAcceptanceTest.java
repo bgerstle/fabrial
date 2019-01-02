@@ -20,7 +20,7 @@ public class EchoServerAcceptanceTest {
 
   @BeforeEach
   void setUp() throws Exception {
-    serverProcess = new ServerProcess();
+    serverProcess = ServerProcess.start();
   }
 
   @AfterEach
